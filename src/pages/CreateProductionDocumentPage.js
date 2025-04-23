@@ -19,8 +19,9 @@ const CreateProductionDocumentPage = () => {
   const theme = useTheme();
   const deptObj = departments.find(d => d.department_code === department) || {};
   const bgColor = deptObj.color || 'transparent';
+  const contrastText = theme.palette.getContrastText(bgColor);
   return (
-    <div className="create-production-page" style={{ backgroundColor: bgColor }}>
+    <div className="create-production-page" style={{ backgroundColor: bgColor, color: contrastText }}>
       <PageHeader title="Create Production Document" />
       <DepartmentTabs />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2, mb: 2 }}>
@@ -40,7 +41,7 @@ const CreateProductionDocumentPage = () => {
         <InfoCard title="Batch Codes" value="" />
       </div>
       <div className="form-grid two-column">
-        <ProductionForm />
+        <ProductionForm deptColor={bgColor} />
       </div>
     </div>
   );
