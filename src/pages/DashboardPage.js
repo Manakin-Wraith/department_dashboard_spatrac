@@ -1,17 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Grid,
-  Card,
-  CardHeader,
-  CardContent,
-  CardActions,
-  Button,
-  Typography,
-  Avatar,
-  Box, // Use Box for layout flexibility if needed
-  useTheme // Keep theme for potential advanced styling
-} from '@mui/material';
+import { Grid, Card, CardHeader, CardContent, CardActions, Button, Typography, Avatar, Box, useTheme } from '@mui/material';
 // Import specific icons you'll use
 import BakeryDiningIcon from '@mui/icons-material/BakeryDining';
 import SetMealIcon from '@mui/icons-material/SetMeal'; // Example for Butchery
@@ -30,9 +19,9 @@ const DashboardPage = () => {
     <Box sx={{ p: 2, flexGrow: 1, minHeight: '100vh', backgroundColor: theme.palette.grey[100] }}> {/* Use Box for padding, full-height, and subtle grey background */}
       <PageHeader title="SPATRAC Dashboard" /* subtitle="Overview & Quick Actions" */ /> {/* Cleaner title */}
 
-      <Grid container rowSpacing={3} columnSpacing={3} columns={{ xs: 12, sm: 12, md: 12 }} sx={{ mt: 2 }}> {/* Updated to Grid v2: use rowSpacing, columnSpacing, and columns */}
+      <Grid container spacing={3} sx={{ mt: 2 }}> {/* Updated to Grid v2: use rowSpacing, columnSpacing, and columns */}
         {departments.map((dept) => (
-          <Grid key={dept.department_code} columnSpan={{ xs: 12, sm: 6, md: 4 }}> {/* Removed legacy item, xs/sm/md props; use columnSpan */}
+          <Grid item key={dept.department_code} xs={12} sm={6} md={4}> {/* Use new span prop for item width */}
             <Card
               sx={{
                 display: 'flex',

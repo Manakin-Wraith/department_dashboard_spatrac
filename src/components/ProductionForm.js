@@ -176,7 +176,11 @@ const ProductionForm = ({ deptColor }) => {
         Ingredients Required
       </Typography>
       {fields.map((item, index) => (
-        <Card key={item.id} sx={{ mb: 2 }}>
+        <Card
+          key={item.id}
+          elevation={0}
+          sx={{ mb: 2, backgroundColor: theme.palette.grey[100], boxShadow: 'none', border: 'none' }}
+        >
           <CardContent>
             <Grid container spacing={2} alignItems="center">
               <Grid item xs={12} sm={3}>

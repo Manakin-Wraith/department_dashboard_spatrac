@@ -24,7 +24,7 @@ const CreateProductionDocumentPage = () => {
   const accentColor = deptObj.color;
   return (
     <Box component="main" sx={{ backgroundColor: pageBg, minHeight: '100vh', p: 2 }}>
-      <Box sx={{ bgcolor: 'background.paper', color: pageTextColor, borderRadius: 2, p: 3, maxWidth: '1200px', mx: 'auto' }}>
+      <Box sx={{ backgroundColor: theme.palette.grey[100], color: pageTextColor, borderRadius: 2, p: 3, maxWidth: '1200px', mx: 'auto' }}>
         <PageHeader title="Create Production Document" />
         <DepartmentTabs />
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2, mb: 2 }}>
@@ -43,7 +43,7 @@ const CreateProductionDocumentPage = () => {
           <InfoCard title="Product" value="" />
           <InfoCard title="Batch Codes" value="" />
         </Box>
-        <Box className="form-grid two-column">
+        <Box sx={{ width: '100%', mt: 4 }}>  {/* Remove two-column wrapper to let form use full width */}
           <ProductionForm deptColor={accentColor} />
         </Box>
       </Box>
