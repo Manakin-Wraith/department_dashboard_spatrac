@@ -6,7 +6,7 @@ import InfoCard from '../components/InfoCard';
 import ProductionForm from '../components/ProductionForm';
 import departments from '../data/department_table.json';
 import { Box, Avatar, Typography } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, alpha } from '@mui/material/styles';
 import BakeryDiningIcon from '@mui/icons-material/BakeryDining';
 import SetMealIcon from '@mui/icons-material/SetMeal';
 import SoupKitchenIcon from '@mui/icons-material/SoupKitchen';
@@ -18,32 +18,36 @@ const CreateProductionDocumentPage = () => {
   const { department } = useParams();
   const theme = useTheme();
   const deptObj = departments.find(d => d.department_code === department) || {};
-  const bgColor = deptObj.color || 'transparent';
-  const contrastText = theme.palette.getContrastText(bgColor);
+  const pageBg = alpha(deptObj.color || '#000', 1.0);
+  const pageTextColor = theme.palette.text.primary;
+  // Keep full-department color for accents
+  const accentColor = deptObj.color;
   return (
-    <div className="create-production-page" style={{ backgroundColor: bgColor, color: contrastText }}>
-      <PageHeader title="Create Production Document" />
-      <DepartmentTabs />
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2, mb: 2 }}>
-        <Avatar sx={{ bgcolor: deptObj.color, color: theme.palette.getContrastText(deptObj.color) }} aria-label={deptObj.department}>
-          {(() => {
-            const IconComponent = iconMap[deptObj.icon];
-            return IconComponent ? <IconComponent /> : deptObj.department.charAt(0);
-          })()}
-        </Avatar>
-        <Typography variant="h6" sx={{ color: theme.palette.getContrastText(bgColor), fontWeight: 'bold', ml: 1 }}>
-          {deptObj.department}
-        </Typography>
+    <Box component="main" sx={{ backgroundColor: pageBg, minHeight: '100vh', p: 2 }}>
+      <Box sx={{ bgcolor: 'background.paper', color: pageTextColor, borderRadius: 2, p: 3, maxWidth: '1200px', mx: 'auto' }}>
+        <PageHeader title="Create Production Document" />
+        <DepartmentTabs />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2, mb: 2 }}>
+          <Avatar sx={{ bgcolor: accentColor, color: theme.palette.getContrastText(accentColor) }} aria-label={deptObj.department}>
+            {(() => {
+              const IconComponent = iconMap[deptObj.icon];
+              return IconComponent ? <IconComponent /> : deptObj.department.charAt(0);
+            })()}
+          </Avatar>
+          <Typography variant="h6" sx={{ color: pageTextColor, fontWeight: 'bold', ml: 1 }}>
+            {deptObj.department}
+          </Typography>
+        </Box>
+        <Box className="info-cards-row">
+          <InfoCard title="Department" value="" />
+          <InfoCard title="Product" value="" />
+          <InfoCard title="Batch Codes" value="" />
+        </Box>
+        <Box className="form-grid two-column">
+          <ProductionForm deptColor={accentColor} />
+        </Box>
       </Box>
-      <div className="info-cards-row">
-        <InfoCard title="Department" value="" />
-        <InfoCard title="Product" value="" />
-        <InfoCard title="Batch Codes" value="" />
-      </div>
-      <div className="form-grid two-column">
-        <ProductionForm deptColor={bgColor} />
-      </div>
-    </div>
+    </Box>
   );
 };
 

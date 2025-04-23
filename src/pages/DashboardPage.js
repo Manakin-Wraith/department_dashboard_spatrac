@@ -27,7 +27,7 @@ const DashboardPage = () => {
   const theme = useTheme(); // Keep if needed for more complex theme logic
 
   return (
-    <Box sx={{ p: 2, flexGrow: 1 }}> {/* Use Box for padding and flexible layout */}
+    <Box sx={{ p: 2, flexGrow: 1, minHeight: '100vh', backgroundColor: theme.palette.grey[100] }}> {/* Use Box for padding, full-height, and subtle grey background */}
       <PageHeader title="SPATRAC Dashboard" /* subtitle="Overview & Quick Actions" */ /> {/* Cleaner title */}
 
       <Grid container spacing={3} sx={{ mt: 2 }}> {/* Increased spacing slightly */}

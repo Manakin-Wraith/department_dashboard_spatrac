@@ -222,9 +222,9 @@ const ProductionForm = ({ deptColor }) => {
         sx={{
           mb: 4,
           borderColor: deptColor,
-          color: contrastText,
-          '& svg': { color: contrastText },
-          '&:hover': { borderColor: contrastText }
+          color: theme.palette.text.primary,
+          '& svg': { color: theme.palette.text.primary },
+          '&:hover': { borderColor: theme.palette.text.primary }
         }}
       >
         Add Ingredient
@@ -233,7 +233,7 @@ const ProductionForm = ({ deptColor }) => {
         <Button
           variant="outlined"
           onClick={() => navigate(-1)}
-          sx={{ borderColor: deptColor, color: contrastText, '&:hover': { borderColor: contrastText } }}
+          sx={{ borderColor: deptColor, color: theme.palette.text.primary, '&:hover': { borderColor: theme.palette.text.primary } }}
         >
           Cancel
         </Button>
