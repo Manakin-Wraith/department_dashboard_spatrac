@@ -28,20 +28,24 @@ const CreateProductionDocumentPage = () => {
         <PageHeader title="Create Production Document" />
         <DepartmentTabs />
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2, mb: 2 }}>
-          <Avatar sx={{ bgcolor: accentColor, color: theme.palette.getContrastText(accentColor) }} aria-label={deptObj.department}>
-            {(() => {
-              const IconComponent = iconMap[deptObj.icon];
-              return IconComponent ? <IconComponent /> : deptObj.department.charAt(0);
-            })()}
-          </Avatar>
-          <Typography variant="h6" sx={{ color: pageTextColor, fontWeight: 'bold', ml: 1 }}>
-            {deptObj.department}
-          </Typography>
         </Box>
         <Box className="info-cards-row">
-          <InfoCard title="Department" value="" />
-          <InfoCard title="Product" value="" />
-          <InfoCard title="Batch Codes" value="" />
+          <InfoCard
+            title="Department"
+            value={
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Avatar sx={{ bgcolor: accentColor, color: theme.palette.getContrastText(accentColor), width: 24, height: 24 }}>
+                  {(() => {
+                    const IconComponent = iconMap[deptObj.icon];
+                    return IconComponent ? <IconComponent fontSize="small" /> : deptObj.department.charAt(0);
+                  })()}
+                </Avatar>
+                <Typography variant="body2" sx={{ ml: 1 }}>{deptObj.department}</Typography>
+              </Box>
+            }
+          />
+          <InfoCard title="Recipes" value="" />
+          <InfoCard title="Ingredients" value="" />
         </Box>
         <Box sx={{ width: '100%', mt: 4 }}>  {/* Remove two-column wrapper to let form use full width */}
           <ProductionForm deptColor={accentColor} />
