@@ -60,8 +60,26 @@ const ProductionForm = ({ deptColor }) => {
   const hoverBg = darken(deptColor, 0.2);
 
   const onSubmit = async (data) => {
+    // Build audit JSON payload per build_docs/audit_recipe_form.json
+    const payload = {
+      uid: '',
+      department,
+      department_manager: data.department_manager,
+      food_handler_responsible: data.food_handler_responsible,
+      packing_batch_code: data.packing_batch_code.split(',').map(s => s.trim()),
+      product_name: data.product_name.split(',').map(s => s.trim()),
+      ingredient_list: data.ingredients.map(i => i.ingredient),
+      supplier_name: data.ingredients.map(i => i.supplier_name),
+      address_of_supplier: data.ingredients.map(i => i.address_of_supplier || ''),
+      batch_code: data.ingredients.map(i => i.batch_code),
+      sell_by_date: [data.sell_by_date],
+      receiving_date: data.ingredients.map(i => i.receiving_date || ''),
+      country_of_origin: data.ingredients.map(i => i.country_of_origin || '')
+    };
+    console.log('Audit JSON payload:', JSON.stringify(payload, null, 2));
     try {
-      await saveProductionDoc(department, data, data.ingredients);
+      // TODO: send payload to audit endpoint
+      await saveProductionDoc(department, payload, []);
       navigate(`/production/${department}/audit`);
     } catch (err) {
       console.error(err);

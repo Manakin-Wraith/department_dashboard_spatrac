@@ -30,9 +30,9 @@ const DashboardPage = () => {
     <Box sx={{ p: 2, flexGrow: 1, minHeight: '100vh', backgroundColor: theme.palette.grey[100] }}> {/* Use Box for padding, full-height, and subtle grey background */}
       <PageHeader title="SPATRAC Dashboard" /* subtitle="Overview & Quick Actions" */ /> {/* Cleaner title */}
 
-      <Grid container spacing={3} sx={{ mt: 2 }}> {/* Increased spacing slightly */}
+      <Grid container rowSpacing={3} columnSpacing={3} columns={{ xs: 12, sm: 12, md: 12 }} sx={{ mt: 2 }}> {/* Updated to Grid v2: use rowSpacing, columnSpacing, and columns */}
         {departments.map((dept) => (
-          <Grid item key={dept.department_code} xs={12} sm={6} md={4}>
+          <Grid key={dept.department_code} columnSpan={{ xs: 12, sm: 6, md: 4 }}> {/* Removed legacy item, xs/sm/md props; use columnSpan */}
             <Card
               sx={{
                 display: 'flex',
