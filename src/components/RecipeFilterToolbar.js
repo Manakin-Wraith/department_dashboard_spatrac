@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
 
 const RecipeFilterToolbar = ({ onFilterChange, onCreate }) => {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
-  const { department } = useParams();
 
   const handleSearch = e => {
     const value = e.target.value;

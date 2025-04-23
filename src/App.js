@@ -1,5 +1,5 @@
 import './App.css';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import DashboardPage from './pages/DashboardPage';
 import CreateProductionDocumentPage from './pages/CreateProductionDocumentPage';
 import AuditProductionDocumentsPage from './pages/AuditProductionDocumentsPage';
@@ -16,6 +16,7 @@ function App() {
         <Route path="/production/:department/recipes" element={<RecipeListPage />} />
         <Route path="/production/:department/recipes/new" element={<RecipeEditorPage />} />
         <Route path="/production/:department/recipes/:recipeId" element={<RecipeEditorPage />} />
+        <Route path="/production/:department" element={<Navigate to="create" replace />} />
         <Route path="*" element={<div>404 Not Found</div>} />
       </Routes>
     </BrowserRouter>
