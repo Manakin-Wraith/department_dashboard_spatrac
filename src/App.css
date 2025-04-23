@@ -36,3 +36,91 @@
     transform: rotate(360deg);
   }
 }
+
+/* Page wrappers */
+.create-production-page,
+.recipe-editor-page {
+  padding: 1rem;
+}
+
+/* Info cards */
+.info-cards-row {
+  display: flex;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+.info-card {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 1rem;
+  flex: 1;
+  text-align: left;
+}
+
+/* Grid layout */
+.form-grid.two-column {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+/* Department tabs */
+.department-tabs {
+  display: flex;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+.department-tabs a {
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  color: #333;
+  border-bottom: 2px solid transparent;
+}
+.department-tabs a.active {
+  border-color: #007bff;
+  color: #007bff;
+}
+
+/* Form actions */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.form-actions button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.form-actions button[type="submit"] {
+  background-color: #007bff;
+  color: #fff;
+}
+.form-actions button[type="button"] {
+  background-color: #6c757d;
+  color: #fff;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 4px;
+  max-width: 80%;
+  max-height: 80%;
+  overflow-y: auto;
+}
