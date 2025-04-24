@@ -23,7 +23,9 @@ const RecipeListPage = () => {
     async function load() {
       try {
         const data = await fetchRecipes(department, filters);
-        setRecipes(data);
+        // flatten nested array from mock server
+        const recipesData = Array.isArray(data[0]) ? data[0] : data;
+        setRecipes(recipesData);
       } catch (error) {
         console.error(error);
       }

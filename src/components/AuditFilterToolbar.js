@@ -30,7 +30,7 @@ const AuditFilterToolbar = ({ onOpenPreview, onOpenExport }) => {
           />
         </Grid>
         <Grid item xs={12} sm={3}>
-          <FormControl fullWidth sx={{ minWidth: 150 }}>
+          <FormControl fullWidth sx={{ minWidth: 100 }}>
             <InputLabel id="product-filter-label">Product</InputLabel>
             <Select
               labelId="product-filter-label"
@@ -44,7 +44,7 @@ const AuditFilterToolbar = ({ onOpenPreview, onOpenExport }) => {
           </FormControl>
         </Grid>
         <Grid item xs={12} sm={2}>
-          <FormControl fullWidth sx={{ minWidth: 150 }}>
+          <FormControl fullWidth sx={{ minWidth: 100 }}>
             <InputLabel id="status-filter-label">Status</InputLabel>
             <Select
               labelId="status-filter-label"
@@ -58,7 +58,7 @@ const AuditFilterToolbar = ({ onOpenPreview, onOpenExport }) => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} sm={1} sx={{ display: 'flex', gap: 1 }}>
+        <Grid item sx={{ display: 'flex', gap: 1 }}>
           <Button variant="outlined" onClick={onOpenPreview}>Preview</Button>
           <Button variant="contained" onClick={onOpenExport}>Export</Button>
         </Grid>
