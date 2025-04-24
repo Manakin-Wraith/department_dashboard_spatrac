@@ -9,13 +9,19 @@ import {
   Grid,
   TextField,
   Button,
-  IconButton,
   Typography,
   Card,
-  CardContent
+  CardContent,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
-import { AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
+import { AddCircleOutline } from '@mui/icons-material';
 import { useTheme, darken } from '@mui/material/styles';
+
+// Available units of measure
+const unitOptions = ['g','kg','ml','l','pcs','each'];
 
 // Validation schema
 const schema = yup.object().shape({
@@ -29,7 +35,10 @@ const schema = yup.object().shape({
       ingredient: yup.string().required('Ingredient is required'),
       batch_code: yup.string().required('Batch Code is required'),
       qty_used: yup.number().typeError('Must be a number').required('Quantity is required'),
-      supplier_name: yup.string().required('Supplier is required')
+      supplier_name: yup.string().required('Supplier is required'),
+      amount: yup.number().typeError('Must be a number').required('Amount is required'),
+      unit_of_measure: yup.string().required('Unit is required'),
+      receiving_date: yup.date().required('Receiving Date is required')
     })
   )
 });
@@ -49,7 +58,7 @@ const ProductionForm = ({ deptColor }) => {
       product_name: '',
       packing_batch_code: '',
       sell_by_date: '',
-      ingredients: [{ ingredient: '', batch_code: '', qty_used: '', supplier_name: '' }]
+      ingredients: [{ ingredient: '', batch_code: '', qty_used: '', supplier_name: '', amount: '', unit_of_measure: '', receiving_date: '' }]
     }
   });
   const { fields, append, remove } = useFieldArray({ control, name: 'ingredients' });
@@ -70,6 +79,8 @@ const ProductionForm = ({ deptColor }) => {
       product_name: data.product_name.split(',').map(s => s.trim()),
       ingredient_list: data.ingredients.map(i => i.ingredient),
       supplier_name: data.ingredients.map(i => i.supplier_name),
+      amount: data.ingredients.map(i => i.amount),
+      unit_of_measure: data.ingredients.map(i => i.unit_of_measure),
       address_of_supplier: data.ingredients.map(i => i.address_of_supplier || ''),
       batch_code: data.ingredients.map(i => i.batch_code),
       sell_by_date: [data.sell_by_date],
@@ -91,7 +102,7 @@ const ProductionForm = ({ deptColor }) => {
       <Typography variant="h5" gutterBottom>
         Production Overview
       </Typography>
-      <Grid container spacing={2}>
+      <Grid container spacing={2} alignItems="center">
         <Grid item xs={12} sm={6}>
           <Controller
             name="department_manager"
@@ -176,14 +187,10 @@ const ProductionForm = ({ deptColor }) => {
         Ingredients Required
       </Typography>
       {fields.map((item, index) => (
-        <Card
-          key={item.id}
-          elevation={0}
-          sx={{ mb: 2, backgroundColor: theme.palette.grey[100], boxShadow: 'none', border: 'none' }}
-        >
-          <CardContent>
+        <Card key={item.id} elevation={0} sx={{ mb: 2, backgroundColor: theme.palette.grey[100], boxShadow: 'none', border: 'none' }}>
+          <CardContent sx={{ px: 0 }}>
             <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} sm={3}>
+              <Grid item xs={12} sm={2}>
                 <Controller
                   name={`ingredients.${index}.ingredient`}
                   control={control}
@@ -198,7 +205,7 @@ const ProductionForm = ({ deptColor }) => {
                   )}
                 />
               </Grid>
-              <Grid item xs={12} sm={3}>
+              <Grid item xs={12} sm={2}>
                 <Controller
                   name={`ingredients.${index}.batch_code`}
                   control={control}
@@ -213,7 +220,7 @@ const ProductionForm = ({ deptColor }) => {
                   )}
                 />
               </Grid>
-              <Grid item xs={10} sm={4}>
+              <Grid item xs={12} sm={2}>
                 <Controller
                   name={`ingredients.${index}.supplier_name`}
                   control={control}
@@ -228,10 +235,79 @@ const ProductionForm = ({ deptColor }) => {
                   )}
                 />
               </Grid>
-              <Grid item xs={2} sm={2}>
-                <IconButton color="error" onClick={() => remove(index)}>
-                  <RemoveCircleOutline />
-                </IconButton>
+              <Grid item xs={6} sm={2}>
+                <Controller
+                  name={`ingredients.${index}.amount`}
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Amount"
+                      error={!!errors.ingredients?.[index]?.amount}
+                      helperText={errors.ingredients?.[index]?.amount?.message}
+                      fullWidth
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={6} sm={3} sx={{ minWidth: 120 }}>
+                <Controller
+                  name={`ingredients.${index}.unit_of_measure`}
+                  control={control}
+                  render={({ field }) => (
+                    <FormControl fullWidth>
+                      <InputLabel id={`unit-label-${index}`}>Unit</InputLabel>
+                      <Select
+                        {...field}
+                        labelId={`unit-label-${index}`}
+                        displayEmpty
+                        label="Unit"
+                        sx={{
+                          fontWeight: theme.typography.fontWeightRegular,
+                          color: theme.palette.text.secondary
+                        }}
+                        renderValue={(selected) => selected || 'Unit'}
+                      >
+                        <MenuItem value="" disabled>
+                          Unit
+                        </MenuItem>
+                        {unitOptions.map(unit => (
+                          <MenuItem key={unit} value={unit}>{unit}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={2}>
+                <Controller
+                  name={`ingredients.${index}.receiving_date`}
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Receiving Date"
+                      type="date"
+                      InputLabelProps={{ shrink: true }}
+                      error={!!errors.ingredients?.[index]?.receiving_date}
+                      helperText={errors.ingredients?.[index]?.receiving_date?.message}
+                      fullWidth
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} sm={1}>
+                <Button
+                  variant="contained"
+                  onClick={() => remove(index)}
+                  sx={{
+                    bgcolor: theme.palette.error.main,
+                    color: theme.palette.error.contrastText,
+                    '&:hover': { bgcolor: darken(theme.palette.error.main, 0.2) }
+                  }}
+                >
+                  Remove
+                </Button>
               </Grid>
             </Grid>
           </CardContent>
@@ -240,7 +316,7 @@ const ProductionForm = ({ deptColor }) => {
       <Button
         variant="outlined"
         startIcon={<AddCircleOutline />}
-        onClick={() => append({ ingredient: '', batch_code: '', qty_used: '', supplier_name: '' })}
+        onClick={() => append({ ingredient: '', batch_code: '', qty_used: '', supplier_name: '', amount: '', unit_of_measure: '', receiving_date: '' })}
         sx={{
           mb: 4,
           borderColor: deptColor,

@@ -1,14 +1,14 @@
 import React from 'react';
-import { NavLink, useParams } from 'react-router-dom';
+import { NavLink, useParams, useLocation } from 'react-router-dom';
 import departments from '../data/department_table.json';
-import { useTheme } from '@mui/material/styles';
+import { Box, Tabs, Tab, useTheme } from '@mui/material';
 
 const DepartmentTabs = () => {
   const { department } = useParams();
-  const deptObj = departments.find(d => d.department_code === department) || {};
-  const color = deptObj.color || '#007bff';
+  const location = useLocation();
   const theme = useTheme();
-  const contrastText = theme.palette.getContrastText(color);
+  const deptObj = departments.find(d => d.department_code === department) || {};
+  const color = deptObj.color || theme.palette.primary.main;
   const base = `/production/${department}`;
   const tabs = [
     { label: 'Create', to: `${base}/create` },
@@ -17,22 +17,29 @@ const DepartmentTabs = () => {
   ];
 
   return (
-    <nav className="department-tabs">
-      {tabs.map(tab => (
-        <NavLink
-          key={tab.to}
-          to={tab.to}
-          className={({ isActive }) => (isActive ? 'active' : '')}
-          style={({ isActive }) =>
-            isActive
-              ? { borderBottom: `2px solid ${contrastText}`, color: contrastText }
-              : { color: contrastText }
-          }
-        >
-          {tab.label}
-        </NavLink>
-      ))}
-    </nav>
+    <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+      <Tabs
+        value={location.pathname}
+        textColor="inherit"
+        variant="fullWidth"
+        centered
+        sx={{
+          '& .MuiTab-root': { color: '#000', fontWeight: 600 },
+          '& .MuiTabs-indicator': { backgroundColor: color, height: 3 },
+        }}
+      >
+        {tabs.map(tab => (
+          <Tab
+            key={tab.to}
+            component={NavLink}
+            to={tab.to}
+            value={tab.to}
+            label={tab.label}
+            sx={{ textTransform: 'none' }}
+          />
+        ))}
+      </Tabs>
+    </Box>
   );
 };
 
