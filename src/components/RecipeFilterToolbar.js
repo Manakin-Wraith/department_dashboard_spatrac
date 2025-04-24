@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Box, Grid, TextField, FormControl, InputLabel, Select, MenuItem, Button } from '@mui/material';
 
 const RecipeFilterToolbar = ({ onFilterChange, onCreate }) => {
   const [search, setSearch] = useState('');
@@ -16,20 +17,39 @@ const RecipeFilterToolbar = ({ onFilterChange, onCreate }) => {
   };
 
   return (
-    <div className="recipe-filter-toolbar">
-      <input
-        type="text"
-        placeholder="Search recipes..."
-        value={search}
-        onChange={handleSearch}
-      />
-      <select value={status} onChange={handleStatus}>
-        <option value="">All Statuses</option>
-        <option value="active">Active</option>
-        <option value="archived">Archived</option>
-      </select>
-      <button onClick={onCreate}>Create New Recipe</button>
-    </div>
+    <Box sx={{ mt: 4, mb: 2 }}>
+      <Grid container spacing={2} alignItems="center">
+        <Grid item xs={12} sm={5}>
+          <TextField
+            label="Search"
+            placeholder="Search recipes..."
+            value={search}
+            onChange={handleSearch}
+            fullWidth
+          />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <FormControl fullWidth sx={{ minWidth: 150 }}>
+            <InputLabel id="status-filter-label">Status</InputLabel>
+            <Select
+              labelId="status-filter-label"
+              value={status}
+              label="Status"
+              onChange={handleStatus}
+            >
+              <MenuItem value="">All Statuses</MenuItem>
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="archived">Archived</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} sm={3} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button variant="contained" onClick={onCreate}>
+            Create New Recipe
+          </Button>
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Box, Grid, TextField, Typography } from '@mui/material';
 
 const RecipeDetailsSection = ({ details, setDetails }) => {
   const handleChange = e => {
@@ -7,35 +8,62 @@ const RecipeDetailsSection = ({ details, setDetails }) => {
   };
 
   return (
-    <div className="recipe-details-section">
-      <h2>Recipe Details</h2>
-      <label>
-        Recipe Title:
-        <input
-          type="text"
-          name="title"
-          value={details.title}
-          onChange={handleChange}
-        />
-      </label>
-      <label>
-        Yield:
-        <input
-          type="text"
-          name="yield"
-          value={details.yield}
-          onChange={handleChange}
-        />
-      </label>
-      <label>
-        Instructions:
-        <textarea
-          name="instructions"
-          value={details.instructions}
-          onChange={handleChange}
-        />
-      </label>
-    </div>
+    <Box>
+      <Typography variant="h5" gutterBottom>
+        Recipe Details
+      </Typography>
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            label="Recipe Title"
+            name="title"
+            value={details.title}
+            onChange={handleChange}
+            fullWidth
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            label="Department Manager"
+            name="department_manager"
+            value={details.department_manager || ''}
+            onChange={handleChange}
+            fullWidth
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            label="Yield"
+            name="yield"
+            value={details.yield}
+            onChange={handleChange}
+            fullWidth
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            label="Date Created"
+            name="date_created"
+            type="date"
+            InputLabelProps={{ shrink: true }}
+            value={details.date_created || ''}
+            onChange={handleChange}
+            fullWidth
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            label="Allergens"
+            name="allergens"
+            value={details.allergens || ''}
+            onChange={handleChange}
+            fullWidth
+            multiline
+            rows={4}
+          />
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 

@@ -28,7 +28,7 @@ const schema = yup.object().shape({
   department_manager: yup.string().required('Department Manager is required'),
   food_handler_responsible: yup.string().required('Food Handler is required'),
   product_name: yup.string().required('Product Name is required'),
-  packing_batch_code: yup.string().required('Batch Code is required'),
+  packing_batch_code: yup.string().required('Packaging Batch Code is required'),
   sell_by_date: yup.date().required('Sell-by Date is required'),
   ingredients: yup.array().of(
     yup.object().shape({
@@ -149,23 +149,23 @@ const ProductionForm = ({ deptColor }) => {
             )}
           />
         </Grid>
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={2}>
           <Controller
             name="packing_batch_code"
             control={control}
             render={({ field }) => (
               <TextField
                 {...field}
-                label="Batch Code(s)"
+                label="Packaging Batch Code(s)"
                 placeholder="Comma separated"
                 error={!!errors.packing_batch_code}
                 helperText={errors.packing_batch_code?.message}
-                fullWidth
+                fullWidth sx={{ minWidth: 250 }}
               />
             )}
           />
         </Grid>
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={2}>
           <Controller
             name="sell_by_date"
             control={control}

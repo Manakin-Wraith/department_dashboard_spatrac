@@ -6,9 +6,16 @@ import AuditFilterToolbar from '../components/AuditFilterToolbar';
 import AuditTable from '../components/AuditTable';
 import AuditPreviewModal from '../components/AuditPreviewModal';
 import { fetchAudits } from '../services/api';
+import departments from '../data/department_table.json';
+import { Box } from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
 
 const AuditProductionDocumentsPage = () => {
   const { department } = useParams();
+  const theme = useTheme();
+  const deptObj = departments.find(d => d.department_code === department) || {};
+  const pageBg = alpha(deptObj.color || '#000', 1.0);
+  const pageTextColor = theme.palette.text.primary;
   const [data, setData] = useState([]);
   const [previewItem, setPreviewItem] = useState(null);
 
@@ -38,13 +45,19 @@ const AuditProductionDocumentsPage = () => {
   const handleClosePreview = () => setPreviewItem(null);
 
   return (
-    <div>
-      <PageHeader title="Audit Production Documents" />
-      <DepartmentTabs />
-      <AuditFilterToolbar onOpenPreview={handleOpenPreview} onOpenExport={handleOpenExport} />
-      <AuditTable data={data} onView={handleView} />
-      <AuditPreviewModal item={previewItem} onClose={handleClosePreview} />
-    </div>
+    <Box component="main" sx={{ backgroundColor: pageBg, minHeight: '100vh', p: 2 }}>
+      <Box sx={{ backgroundColor: theme.palette.grey[100], color: pageTextColor, borderRadius: 2, p: 3, maxWidth: '1200px', mx: 'auto' }}>
+        <PageHeader title="Audit Production Documents" />
+        <DepartmentTabs />
+        <Box sx={{ mt: 4 }}>
+          <AuditFilterToolbar onOpenPreview={handleOpenPreview} onOpenExport={handleOpenExport} />
+        </Box>
+        <Box sx={{ mt: 3 }}>
+          <AuditTable data={data} onView={handleView} />
+        </Box>
+        <AuditPreviewModal item={previewItem} onClose={handleClosePreview} />
+      </Box>
+    </Box>
   );
 };
 

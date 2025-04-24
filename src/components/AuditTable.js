@@ -1,26 +1,29 @@
 import React from 'react';
+import { TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper, Button } from '@mui/material';
 
 const AuditTable = ({ data = [], onView }) => (
-  <table className="audit-table">
-    <thead>
-      <tr>
-        <th>UID</th>
-        <th>Date</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {data.map(item => (
-        <tr key={item.uid}>
-          <td>{item.uid}</td>
-          <td>{item.date || '-'}</td>
-          <td>
-            <button onClick={() => onView(item)}>View</button>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
+  <TableContainer component={Paper} sx={{}}>
+    <Table>
+      <TableHead>
+        <TableRow>
+          <TableCell>UID</TableCell>
+          <TableCell>Date</TableCell>
+          <TableCell align="right">Actions</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {data.map(item => (
+          <TableRow hover key={item.uid}>
+            <TableCell>{item.uid}</TableCell>
+            <TableCell>{item.date || '-'}</TableCell>
+            <TableCell align="right">
+              <Button variant="text" size="small" onClick={() => onView(item)}>View</Button>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </TableContainer>
 );
 
 export default AuditTable;
