@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { saveProductionDoc } from '../services/api';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
@@ -15,7 +15,10 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Snackbar,
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import { AddCircleOutline } from '@mui/icons-material';
 import { useTheme, darken } from '@mui/material/styles';
@@ -87,15 +90,19 @@ const ProductionForm = ({ deptColor }) => {
       receiving_date: data.ingredients.map(i => i.receiving_date || ''),
       country_of_origin: data.ingredients.map(i => i.country_of_origin || '')
     };
-    console.log('Audit JSON payload:', JSON.stringify(payload, null, 2));
     try {
-      // TODO: send payload to audit endpoint
       await saveProductionDoc(department, payload, []);
+      setSnackbar({ open: true, message: 'Document saved successfully!', severity: 'success' });
       navigate(`/production/${department}/audit`);
     } catch (err) {
       console.error(err);
+      setSnackbar({ open: true, message: 'Failed to save document.', severity: 'error' });
     }
   };
+
+  // Snackbar state
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const handleClose = () => setSnackbar(s => ({ ...s, open: false }));
 
   return (
     <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ width: '100%' }}>
@@ -341,9 +348,14 @@ const ProductionForm = ({ deptColor }) => {
           disabled={isSubmitting}
           sx={{ bgcolor: deptColor, color: contrastText, '&:hover': { bgcolor: hoverBg } }}
         >
-          Submit
+          {isSubmitting ? <CircularProgress size={20} color="inherit" /> : 'Submit'}
         </Button>
       </Box>
+      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert onClose={handleClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

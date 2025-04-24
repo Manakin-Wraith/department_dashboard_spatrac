@@ -7,7 +7,7 @@ import RecipeDetailsSection from '../components/RecipeDetailsSection';
 import RecipeIngredientsSection from '../components/RecipeIngredientsSection';
 import RecipeFormActions from '../components/RecipeFormActions';
 import departments from '../data/department_table.json';
-import { Box, Grid, Avatar, Typography } from '@mui/material';
+import { Box, Grid, Avatar, Typography, Snackbar, Alert } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
 import BakeryDiningIcon from '@mui/icons-material/BakeryDining';
 import SetMealIcon from '@mui/icons-material/SetMeal';
@@ -26,6 +26,9 @@ const RecipeEditorPage = () => {
   const [details, setDetails] = useState({ title: '', yield: '', instructions: '' });
   const [ingredients, setIngredients] = useState([{ ingredient: '', quantity: '', unit: '' }]);
   const [lastModified, setLastModified] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const handleClose = () => setSnackbar(s => ({ ...s, open: false }));
 
   useEffect(() => {
     if (recipeId) {
@@ -43,13 +46,18 @@ const RecipeEditorPage = () => {
     }
   }, [department, recipeId]);
 
-  const handleSubmit = async e => {
+  const onSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       await saveRecipe(department, recipeId, { ...details, ingredients });
+      setSnackbar({ open: true, message: 'Recipe saved successfully!', severity: 'success' });
       navigate(`/production/${department}/recipes`);
     } catch (err) {
       console.error(err);
+      setSnackbar({ open: true, message: 'Failed to save recipe. Please try again.', severity: 'error' });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -86,7 +94,7 @@ const RecipeEditorPage = () => {
           <InfoCard title="Yield" value={details.yield} />
           <InfoCard title="Last Modified" value={lastModified} />
         </Box>
-        <Box sx={{ width: '100%', mt: 4 }} component="form" onSubmit={handleSubmit}>
+        <Box sx={{ width: '100%', mt: 4 }} component="form" onSubmit={onSubmit}>
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
               <RecipeDetailsSection details={details} setDetails={setDetails} />
@@ -96,10 +104,15 @@ const RecipeEditorPage = () => {
             </Grid>
           </Grid>
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-            <RecipeFormActions />
+            <RecipeFormActions isSubmitting={isLoading} />
           </Box>
         </Box>
       </Box>
+      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert onClose={handleClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

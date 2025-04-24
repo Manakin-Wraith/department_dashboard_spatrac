@@ -1,0 +1,8 @@
+{
+  "/api/recipes": "/recipes",
+  "/api/recipes/:id": "/recipes/:id",
+  "/api/audits": "/audits",
+  "/api/audits/:id": "/audits/:id",
+  "/api/production-documents": "/production-documents",
+  "/api/production-documents/:id": "/production-documents/:id"
+}

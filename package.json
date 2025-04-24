@@ -20,11 +20,15 @@
     "web-vitals": "^2.1.4",
     "yup": "^1.6.1"
   },
+  "devDependencies": {
+    "json-server": "^0.17.0"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "mock": "json-server --watch mock/db.json --routes mock/routes.json --port 4000"
   },
   "eslintConfig": {
     "extends": [
