@@ -7,7 +7,7 @@ import RecipeDetailsSection from '../components/RecipeDetailsSection';
 import RecipeIngredientsSection from '../components/RecipeIngredientsSection';
 import RecipeFormActions from '../components/RecipeFormActions';
 import departments from '../data/department_table.json';
-import { Box, Grid, Avatar, Typography, Snackbar, Alert } from '@mui/material';
+import { GridLegacy as Grid, Box, Avatar, Typography, Snackbar, Alert } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
 import BakeryDiningIcon from '@mui/icons-material/BakeryDining';
 import SetMealIcon from '@mui/icons-material/SetMeal';

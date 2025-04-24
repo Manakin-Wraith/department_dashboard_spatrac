@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Card, CardHeader, CardContent, Grid, Typography, Chip, Stack } from '@mui/material';
+import { GridLegacy as Grid, Dialog, DialogTitle, DialogContent, DialogActions, Button, Card, CardHeader, CardContent, Typography, Chip, Stack } from '@mui/material';
 
 // Removed unused useTheme import
 

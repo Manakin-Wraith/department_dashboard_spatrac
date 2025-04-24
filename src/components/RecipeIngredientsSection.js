@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Grid, Typography, TextField, Button } from '@mui/material';
+import { GridLegacy as Grid, Box, Typography, TextField, Button } from '@mui/material';
 
 const RecipeIngredientsSection = ({ ingredients, setIngredients }) => {
   const handleRowChange = (index, name, value) => {

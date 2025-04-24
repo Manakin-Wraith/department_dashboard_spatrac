@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Grid, TextField, FormControl, InputLabel, Select, MenuItem, Button } from '@mui/material';
+import { GridLegacy as Grid, Box, TextField, FormControl, InputLabel, Select, MenuItem, Button } from '@mui/material';
 
 const RecipeFilterToolbar = ({ onFilterChange, onCreate }) => {
   const [search, setSearch] = useState('');

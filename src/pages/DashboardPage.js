@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Grid, Card, CardHeader, CardContent, CardActions, Button, Typography, Avatar, Box, useTheme } from '@mui/material';
+import { GridLegacy as Grid, Card, CardHeader, CardContent, CardActions, Button, Typography, Avatar, Box, useTheme } from '@mui/material';
 // Import specific icons you'll use
 import BakeryDiningIcon from '@mui/icons-material/BakeryDining';
 import SetMealIcon from '@mui/icons-material/SetMeal'; // Example for Butchery
