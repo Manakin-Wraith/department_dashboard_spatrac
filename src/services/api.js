@@ -88,3 +88,30 @@ export async function deleteSchedule(scheduleId) {
   if (!res.ok) throw new Error('Failed to delete schedule');
   return res.json();
 }
+
+// Handlers CRUD API
+export async function fetchHandlers(department) {
+  const res = await fetch(`${API_BASE}/api/handlers?department=${department}`);
+  if (!res.ok) throw new Error('Failed to fetch handlers');
+  return res.json();
+}
+
+export async function saveHandler(department, handler) {
+  const method = handler.id ? 'PUT' : 'POST';
+  const url = handler.id
+    ? `${API_BASE}/api/handlers/${handler.id}`
+    : `${API_BASE}/api/handlers?department=${department}`;
+  const res = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ department, name: handler.name })
+  });
+  if (!res.ok) throw new Error('Failed to save handler');
+  return res.json();
+}
+
+export async function deleteHandler(handlerId) {
+  const res = await fetch(`${API_BASE}/api/handlers/${handlerId}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete handler');
+  return res.json();
+}

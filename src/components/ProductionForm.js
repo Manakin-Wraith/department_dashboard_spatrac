@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import departments from '../data/department_table.json';
 import { saveProductionDoc } from '../services/api';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -49,6 +50,7 @@ const schema = yup.object().shape({
 const ProductionForm = ({ deptColor }) => {
   const { department } = useParams();
   const navigate = useNavigate();
+  const deptObj = departments.find(d => d.department_code === department) || {};
   const {
     control,
     handleSubmit,
@@ -56,7 +58,7 @@ const ProductionForm = ({ deptColor }) => {
   } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
-      department_manager: '',
+      department_manager: Array.isArray(deptObj.department_manager) ? deptObj.department_manager[0] : deptObj.department_manager || '',
       food_handler_responsible: '',
       product_name: '',
       packing_batch_code: '',

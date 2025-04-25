@@ -3870,6 +3870,28 @@
         }
       ],
       "id": 12
+    },
+    {
+      "department": "1152",
+      "weekStartDate": "2025-05-02",
+      "managerName": "Clive",
+      "handlersNames": "",
+      "ingredientSuppliers": [
+        [
+          "AIRPORT INTERNATIONAL TRADING",
+          "EXCELLENT MEAT CORP (T & T)",
+          "CHIPKINS PURATOS (BIDVEST SOL)",
+          "PRICE RITE SPICES PTY LTD",
+          "PRICE RITE SPICES PTY LTD"
+        ]
+      ],
+      "items": [
+        {
+          "recipeCode": "26665",
+          "plannedQty": 1
+        }
+      ],
+      "id": 13
     }
   ],
   "audits": [
@@ -3911,7 +3933,51 @@
         "South Africa"
       ],
       "id": 1
+    },
+    {
+      "uid": "2025-05-02-26665-0",
+      "department": "1152",
+      "date": "2025-05-02",
+      "department_manager": "Clive",
+      "food_handler_responsible": "",
+      "packing_batch_code": [],
+      "product_name": [
+        "BABALAS BRAAI WORS"
+      ],
+      "ingredient_list": [
+        "FROZEN MDM",
+        "BEEF KIDNEY FAT",
+        "SPAR WATER",
+        "PRS PARTY BRAAIWORS",
+        "HOG CASINGS 28/32 LONGS"
+      ],
+      "supplier_name": [
+        "AIRPORT INTERNATIONAL TRADING",
+        "EXCELLENT MEAT CORP (T & T)",
+        "CHIPKINS PURATOS (BIDVEST SOL)",
+        "PRICE RITE SPICES PTY LTD",
+        "PRICE RITE SPICES PTY LTD"
+      ],
+      "address_of_supplier": [
+        "34 MANHATTEN ST, AIRPORT INDUSTRIA,CAPE TOWN, 7525",
+        "",
+        "",
+        "UNIT 2, TYGERBERG JUNCTION, 31 JUNCTION ROAD,PAROW INDUSTRIA, CAPE TOWN, 7493",
+        "UNIT 2, TYGERBERG JUNCTION, 31 JUNCTION ROAD,PAROW INDUSTRIA, CAPE TOWN, 7493"
+      ],
+      "batch_code": [],
+      "sell_by_date": [],
+      "receiving_date": [],
+      "country_of_origin": [
+        "South Africa",
+        "",
+        "",
+        "South Africa",
+        "South Africa"
+      ],
+      "id": 2
     }
   ],
-  "production-documents": []
+  "production-documents": [],
+  "handlers": []
 }

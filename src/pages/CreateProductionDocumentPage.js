@@ -1,10 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import DepartmentTabs from '../components/DepartmentTabs';
 import InfoCard from '../components/InfoCard';
-import ProductionForm from '../components/ProductionForm';
-import departments from '../data/department_table.json';
 import { Box, Avatar, Typography, Button } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
 import BakeryDiningIcon from '@mui/icons-material/BakeryDining';
@@ -12,6 +10,8 @@ import SetMealIcon from '@mui/icons-material/SetMeal';
 import SoupKitchenIcon from '@mui/icons-material/SoupKitchen';
 import { Link } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { fetchSchedules, fetchAudits } from '../services/api';
+import departments from '../data/department_table.json';
 
 // Map JSON icon key to component
 const iconMap = { SetMealIcon, SoupKitchenIcon, BakeryDiningIcon };
@@ -24,6 +24,19 @@ const CreateProductionDocumentPage = () => {
   const pageTextColor = theme.palette.text.primary;
   // Keep full-department color for accents
   const accentColor = deptObj.color;
+  const [schedules, setSchedules] = useState([]);
+  const [audits, setAudits] = useState([]);
+  useEffect(() => {
+    async function loadData() {
+      const [sch, aud] = await Promise.all([
+        fetchSchedules(department),
+        fetchAudits(department)
+      ]);
+      setSchedules(sch);
+      setAudits(aud);
+    }
+    loadData();
+  }, [department]);
   return (
     <Box component="main" sx={{ backgroundColor: pageBg, minHeight: '100vh', p: 2 }}>
       <Box sx={{ backgroundColor: theme.palette.grey[100], color: pageTextColor, borderRadius: 2, p: 3, maxWidth: '1200px', mx: 'auto', position: 'relative' }}>
@@ -32,7 +45,7 @@ const CreateProductionDocumentPage = () => {
             Back to Dashboard
           </Button>
         </Box>
-        <PageHeader title="Create Production Document" />
+        <PageHeader title="Department Overview" />
         <DepartmentTabs />
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2, mb: 2 }}>
         </Box>
@@ -51,11 +64,8 @@ const CreateProductionDocumentPage = () => {
               </Box>
             }
           />
-          <InfoCard title="Recipes" value="" />
-          <InfoCard title="Ingredients" value="" />
-        </Box>
-        <Box sx={{ width: '100%', mt: 4 }}>  {/* Remove two-column wrapper to let form use full width */}
-          <ProductionForm deptColor={accentColor} />
+          <InfoCard title="Scheduled Recipes" value={schedules.length} />
+          <InfoCard title="Audits" value={audits.length} />
         </Box>
       </Box>
     </Box>

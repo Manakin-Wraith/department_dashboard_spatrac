@@ -15,6 +15,7 @@ const DepartmentTabs = () => {
     { label: 'Schedule', to: `${base}/schedule` },
     { label: 'Audit', to: `${base}/audit` },
     { label: 'Recipes', to: `${base}/recipes` },
+    { label: 'Staff', to: `${base}/staff` },
   ];
 
   return (

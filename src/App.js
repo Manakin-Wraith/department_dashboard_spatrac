@@ -6,6 +6,7 @@ import AuditProductionDocumentsPage from './pages/AuditProductionDocumentsPage';
 import RecipeListPage from './pages/RecipeListPage';
 import RecipeEditorPage from './pages/RecipeEditorPage';
 import WeeklySchedulePage from './pages/WeeklySchedulePage';
+import StaffManagementPage from './pages/StaffManagementPage';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/production/:department/recipes" element={<RecipeListPage />} />
         <Route path="/production/:department/recipes/new" element={<RecipeEditorPage />} />
         <Route path="/production/:department/recipes/:recipeId" element={<RecipeEditorPage />} />
+        <Route path="/production/:department/staff" element={<StaffManagementPage />} />
         <Route path="/production/:department" element={<Navigate to="create" replace />} />
         <Route path="*" element={<div>404 Not Found</div>} />
       </Routes>
