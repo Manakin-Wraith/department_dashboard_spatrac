@@ -33,6 +33,24 @@ export async function fetchAudits(department) {
   return res.json();
 }
 
+export async function saveAudit(department, auditRecord) {
+  const url = `${API_BASE}/api/audits`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(auditRecord)
+  });
+  if (!res.ok) throw new Error('Failed to save audit');
+  return res.json();
+}
+
+export async function deleteAudit(auditId) {
+  const url = `${API_BASE}/api/audits/${auditId}`;
+  const res = await fetch(url, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete audit');
+  return res.json();
+}
+
 export async function saveProductionDoc(department, overview, ingredients) {
   const res = await fetch(`${API_BASE}/api/production-documents?department=${department}`, {
     method: 'POST',
@@ -61,5 +79,12 @@ export async function saveSchedule(department, schedule) {
     body: JSON.stringify(schedule),
   });
   if (!res.ok) throw new Error('Failed to save schedule');
+  return res.json();
+}
+
+export async function deleteSchedule(scheduleId) {
+  const url = `${API_BASE}/api/schedules/${scheduleId}`;
+  const res = await fetch(url, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete schedule');
   return res.json();
 }

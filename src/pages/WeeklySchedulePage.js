@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { fetchSchedules, saveSchedule, fetchRecipes } from '../services/api';
+import { fetchSchedules, saveSchedule, fetchRecipes, saveAudit, fetchAudits, deleteAudit, deleteSchedule } from '../services/api';
 import { Box, Button, Card, CardContent, Accordion, AccordionSummary, AccordionDetails, Typography } from '@mui/material';
 import ConfirmScheduleModal from '../components/ConfirmScheduleModal';
 import ExportScheduleModal from '../components/ExportScheduleModal';
@@ -66,6 +66,29 @@ const WeeklySchedulePage = () => {
         const saved = await saveSchedule(department, schedule);
         setSchedules(prev => [...prev, saved]);
       }
+      // persist audits for each scheduled recipe
+      const auditPromises = newItems.map((item, idx) => {
+        const recipe = recipes.find(r => r.product_code === item.recipeCode) || {};
+        // prepare audit record
+        const record = {
+          uid: `${date}-${item.recipeCode}-${idx}`,
+          department,
+          date,
+          department_manager: managerName,
+          food_handler_responsible: handlersNames,
+          packing_batch_code: [],
+          product_name: [recipe.description || item.recipeCode],
+          ingredient_list: recipe.ingredients?.map(ing => ing.description) || [],
+          supplier_name: ingredientSuppliers[idx] || [],
+          address_of_supplier: [],
+          batch_code: [],
+          sell_by_date: [],
+          receiving_date: [],
+          country_of_origin: []
+        };
+        return saveAudit(department, record);
+      });
+      await Promise.all(auditPromises);
       setConfirmOpen(false);
     } catch (e) {
       console.error('Failed to save schedule', e);
@@ -76,11 +99,40 @@ const WeeklySchedulePage = () => {
     try {
       const sel = schedules.find(s => s.id === scheduleId);
       if (!sel) return;
+      // delete related audit entries for this recipe
+      const itemToDel = sel.items[idxToDelete];
+      // update schedule items
       const updated = { ...sel, items: sel.items.filter((_, i) => i !== idxToDelete) };
       const saved = await saveSchedule(department, updated);
       setSchedules(schedules.map(s => s.id === scheduleId ? saved : s));
+      // remove audit entry
+      try {
+        const audits = await fetchAudits(department);
+        // delete all audits for this recipe on the same date
+        const toDelete = audits.filter(a => a.uid.includes(`-${itemToDel.recipeCode}-`));
+        await Promise.all(toDelete.map(a => deleteAudit(a.id)));
+      } catch (er) {
+        console.error('Failed to delete audit record', er);
+      }
     } catch (e) {
       console.error('Failed to delete item', e);
+    }
+  };
+
+  const handleDeleteSchedule = async (scheduleId) => {
+    try {
+      const sel = schedules.find(s => s.id === scheduleId);
+      if (!sel) return;
+      // remove schedule
+      await deleteSchedule(scheduleId);
+      setSchedules(schedules.filter(s => s.id !== scheduleId));
+      // remove related audits
+      const audits = await fetchAudits(department);
+      const toDelete = audits.filter(a => a.uid.startsWith(`${sel.weekStartDate}-`));
+      await Promise.all(toDelete.map(a => deleteAudit(a.id)));
+      setConfirmOpen(false);
+    } catch (err) {
+      console.error('Failed to delete schedule', err);
     }
   };
 
@@ -181,8 +233,10 @@ const WeeklySchedulePage = () => {
           initialDate={scheduledDate}
           items={items}
           recipes={recipes}
+          scheduleId={selectedId}
           onClose={() => setConfirmOpen(false)}
           onConfirm={handleConfirm}
+          onDelete={handleDeleteSchedule}
         />
         <ExportScheduleModal
           open={exportOpen}

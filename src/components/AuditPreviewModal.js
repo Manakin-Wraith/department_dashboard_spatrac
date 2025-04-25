@@ -6,6 +6,7 @@ import { GridLegacy as Grid, Dialog, DialogTitle, DialogContent, DialogActions, 
 const AuditPreviewModal = ({ item, onClose }) => {
   // Removed unused theme
   const {
+    date,
     uid,
     department,
     department_manager,
@@ -41,6 +42,10 @@ const AuditPreviewModal = ({ item, onClose }) => {
                   <Grid item xs={12} sm={4}>
                     <Typography variant="subtitle2" fontWeight="bold">Department Manager</Typography>
                     <Typography variant="body2">{department_manager}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="subtitle2" fontWeight="bold">Scheduled Date</Typography>
+                    <Typography variant="body2">{date || '-'}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <Typography variant="subtitle2" fontWeight="bold">Food Handler Responsible</Typography>

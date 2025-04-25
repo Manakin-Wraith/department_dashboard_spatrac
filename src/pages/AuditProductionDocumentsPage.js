@@ -5,7 +5,7 @@ import DepartmentTabs from '../components/DepartmentTabs';
 import AuditFilterToolbar from '../components/AuditFilterToolbar';
 import AuditTable from '../components/AuditTable';
 import AuditPreviewModal from '../components/AuditPreviewModal';
-import { fetchAudits } from '../services/api';
+import { fetchAudits, fetchSchedules, deleteAudit } from '../services/api';
 import departments from '../data/department_table.json';
 import { Box, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
@@ -25,10 +25,23 @@ const AuditProductionDocumentsPage = () => {
   useEffect(() => {
     async function load() {
       try {
-        const audits = await fetchAudits(department);
-        setData(audits);
+        // fetch both schedules and audits
+        const [schedules, audits] = await Promise.all([
+          fetchSchedules(department),
+          fetchAudits(department)
+        ]);
+        // build valid UIDs from schedules
+        const validUids = schedules.flatMap(s =>
+          s.items.map((item, idx) => `${s.weekStartDate}-${item.recipeCode}-${idx}`)
+        );
+        // delete stale audits
+        const stale = audits.filter(a => !validUids.includes(a.uid));
+        await Promise.all(stale.map(a => deleteAudit(a.id)));
+        // set only valid audits
+        const filtered = audits.filter(a => validUids.includes(a.uid));
+        setData(filtered);
       } catch (err) {
-        console.error(err);
+        console.error('Failed to load audits', err);
       }
     }
     load();

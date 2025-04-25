@@ -1388,7 +1388,7 @@
           },
           {
             "prod_code": "31545",
-            "description": "OUTYDSE BOERWORS",
+            "description": "OUTYDSE BOEREWORS",
             "pack_size": "550G",
             "weight": "0.550",
             "cost": "63.50",
@@ -3654,119 +3654,7 @@
       }
     ]
   ],
-  "schedules": [
-    {
-      "id": "sched-1",
-      "department": "BAKERY",
-      "weekStartDate": "2025-05-05",
-      "items": [
-        {
-          "recipeCode": "26710",
-          "plannedQty": 120
-        },
-        {
-          "recipeCode": "26711",
-          "plannedQty": 80
-        }
-      ]
-    },
-    {
-      "id": "sched-2",
-      "department": "BAKERY",
-      "weekStartDate": "2025-05-12",
-      "items": []
-    },
-    {
-      "department": "1152",
-      "weekStartDate": "2025-05-01",
-      "managerName": "Tets Manager",
-      "handlersNames": "Test Handler",
-      "ingredientSuppliers": [
-        [
-          "",
-          "",
-          "",
-          "",
-          ""
-        ]
-      ],
-      "items": [
-        {
-          "recipeCode": "26799",
-          "plannedQty": 20
-        }
-      ],
-      "id": "uYiPkjN"
-    },
-    {
-      "department": "1152",
-      "weekStartDate": "2025-05-02",
-      "managerName": "Test Manager",
-      "handlersNames": "Test Handler 2",
-      "ingredientSuppliers": [
-        [
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          ""
-        ]
-      ],
-      "items": [
-        {
-          "recipeCode": "26908",
-          "plannedQty": 5
-        }
-      ],
-      "id": "5kKTYgA"
-    },
-    {
-      "department": "1155",
-      "weekStartDate": "2025-05-01",
-      "managerName": "Department Test Manager",
-      "handlersNames": "Test Handler",
-      "ingredientSuppliers": [
-        [
-          ""
-        ]
-      ],
-      "items": [],
-      "id": "5lbiIZi"
-    },
-    {
-      "department": "1155",
-      "weekStartDate": "2025-05-01",
-      "managerName": "Department Test Manager",
-      "handlersNames": "Test Handler",
-      "ingredientSuppliers": [
-        [
-          ""
-        ]
-      ],
-      "items": [],
-      "id": "-YvDpBp"
-    },
-    {
-      "department": "1155",
-      "weekStartDate": "2025-05-01",
-      "managerName": "Department Test Manager",
-      "handlersNames": "Test Handler",
-      "ingredientSuppliers": [
-        [
-          ""
-        ]
-      ],
-      "items": [
-        {
-          "recipeCode": "31942",
-          "plannedQty": 1
-        }
-      ],
-      "id": "GLqgMGT"
-    }
-  ],
+  "schedules": [],
   "audits": [],
   "production-documents": []
 }
