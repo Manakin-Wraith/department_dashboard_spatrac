@@ -5,6 +5,7 @@ import CreateProductionDocumentPage from './pages/CreateProductionDocumentPage';
 import AuditProductionDocumentsPage from './pages/AuditProductionDocumentsPage';
 import RecipeListPage from './pages/RecipeListPage';
 import RecipeEditorPage from './pages/RecipeEditorPage';
+import WeeklySchedulePage from './pages/WeeklySchedulePage';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
       <Routes>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/production/:department/create" element={<CreateProductionDocumentPage />} />
+        <Route path="/production/:department/schedule" element={<WeeklySchedulePage />} />
         <Route path="/production/:department/audit" element={<AuditProductionDocumentsPage />} />
         <Route path="/production/:department/recipes" element={<RecipeListPage />} />
         <Route path="/production/:department/recipes/new" element={<RecipeEditorPage />} />

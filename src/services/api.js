@@ -42,3 +42,23 @@ export async function saveProductionDoc(department, overview, ingredients) {
   if (!res.ok) throw new Error('Failed to save production document');
   return res.json();
 }
+
+export async function fetchSchedules(department) {
+  const res = await fetch(`${API_BASE}/api/schedules?department=${department}`);
+  if (!res.ok) throw new Error('Failed to fetch schedules');
+  return res.json();
+}
+
+export async function saveSchedule(department, schedule) {
+  const url = schedule.id
+    ? `${API_BASE}/api/schedules/${schedule.id}?department=${department}`
+    : `${API_BASE}/api/schedules?department=${department}`;
+  const method = schedule.id ? 'PUT' : 'POST';
+  const res = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(schedule),
+  });
+  if (!res.ok) throw new Error('Failed to save schedule');
+  return res.json();
+}

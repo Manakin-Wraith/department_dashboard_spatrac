@@ -3654,6 +3654,29 @@
       }
     ]
   ],
+  "schedules": [
+    {
+      "id": "sched-1",
+      "department": "BAKERY",
+      "weekStartDate": "2025-05-05",
+      "items": [
+        {
+          "recipeCode": "26710",
+          "plannedQty": 120
+        },
+        {
+          "recipeCode": "26711",
+          "plannedQty": 80
+        }
+      ]
+    },
+    {
+      "id": "sched-2",
+      "department": "BAKERY",
+      "weekStartDate": "2025-05-12",
+      "items": []
+    }
+  ],
   "audits": [],
   "production-documents": []
 }
