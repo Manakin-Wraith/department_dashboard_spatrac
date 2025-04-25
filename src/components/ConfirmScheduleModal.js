@@ -3,13 +3,15 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Accordion, AccordionSummary, AccordionDetails,
   Typography, List, ListItem, Grid, TextField, Card, CardContent,
-  Select, MenuItem
+  Select, MenuItem, FormControl, InputLabel
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { useTheme, darken } from '@mui/material/styles';
 import departments from '../data/department_table.json';
+import supplierTable from '../data/supplier_table.json';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddCircleOutline from '@mui/icons-material/AddCircleOutline';
+import useDeptProductSupplier from '../utils/useDeptProductSupplier';
 
 const ConfirmScheduleModal = ({ open, onClose, items, recipes, onConfirm, initialDate }) => {
   const [localItems, setLocalItems] = useState([]);
@@ -22,20 +24,43 @@ const ConfirmScheduleModal = ({ open, onClose, items, recipes, onConfirm, initia
   const { department } = useParams();
   const deptObj = departments.find(d => d.department_code === department) || {};
   const accentColor = deptObj.color || theme.palette.primary.main;
+  const suppliers = supplierTable.filter(s => !s.department || s.department === deptObj.department);
+
+  // load department-specific product->supplier mappings (using department name for CSV lookup)
+  const productSupplierMap = useDeptProductSupplier(deptObj.department);
 
   useEffect(() => {
     setLocalItems(items);
-    // init suppliers map
+    // init suppliers map from dept CSV mapping
     const init = items.map(item => {
       const recipe = recipes.find(r => r.product_code === item.recipeCode) || {};
-      return Array(recipe.ingredients?.length || 0).fill('');
+      return recipe.ingredients?.map(ing => 
+        productSupplierMap[ing.prod_code]?.supplier_name 
+        || productSupplierMap[ing.description]?.supplier_name 
+        || '') || [];
     });
     setIngredientSuppliers(init);
-  }, [items, recipes]);
+  }, [items, recipes, productSupplierMap]);
 
   useEffect(() => {
     if (initialDate) setScheduledDate(initialDate);
   }, [initialDate]);
+
+  useEffect(() => {
+    const dm = deptObj.department_manager;
+    if (Array.isArray(dm) && dm.length) {
+      setManagerName(dm[0]);
+    } else if (typeof dm === 'string' && dm) {
+      setManagerName(dm);
+    }
+  }, [deptObj.department_manager]);
+
+  useEffect(() => {
+    const handlersList = deptObj.handlers;
+    if (Array.isArray(handlersList) && handlersList.length) {
+      setHandlersNames(handlersList[0]);
+    }
+  }, [deptObj.handlers]);
 
   const handleQtyChange = (idx, qty) => {
     const updated = [...localItems];
@@ -54,11 +79,14 @@ const ConfirmScheduleModal = ({ open, onClose, items, recipes, onConfirm, initia
     const updated = [...localItems];
     updated[idx].recipeCode = code;
     setLocalItems(updated);
-    // reset suppliers for new recipe
+    // reset suppliers for new recipe from mapping
     const recipe = recipes.find(r => r.product_code === code) || {};
     setIngredientSuppliers(prev => {
       const arr = [...prev];
-      arr[idx] = Array(recipe.ingredients?.length || 0).fill('');
+      arr[idx] = recipe.ingredients?.map(ing => 
+        productSupplierMap[ing.prod_code]?.supplier_name 
+        || productSupplierMap[ing.description]?.supplier_name 
+        || '') || [];
       return arr;
     });
   };
@@ -78,7 +106,21 @@ const ConfirmScheduleModal = ({ open, onClose, items, recipes, onConfirm, initia
             <TextField label="Department Manager" fullWidth value={managerName} onChange={e => setManagerName(e.target.value)} />
           </Grid>
           <Grid item xs={4}>
-            <TextField label="Food Handlers" placeholder="Comma separated" fullWidth value={handlersNames} onChange={e => setHandlersNames(e.target.value)} />
+            <FormControl fullWidth size="small">
+              <InputLabel>Food Handler</InputLabel>
+              <Select
+                label="Food Handler"
+                size="small"
+                value={handlersNames}
+                onChange={e => setHandlersNames(e.target.value)}
+              >
+                {deptObj.handlers?.map((h, idx) => (
+                  <MenuItem key={idx} value={h}>
+                    {h}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Grid>
           <Grid item xs={4}>
             <TextField
@@ -104,8 +146,8 @@ const ConfirmScheduleModal = ({ open, onClose, items, recipes, onConfirm, initia
                       onChange={e => handleRecipeChange(idx, e.target.value)}
                       sx={{ mr: 2, minWidth: 200 }}
                     >
-                      {recipes.map(r => (
-                        <MenuItem key={r.product_code} value={r.product_code}>
+                      {recipes.map((r, recipeIdx) => (
+                        <MenuItem key={`${r.product_code}-${recipeIdx}`} value={r.product_code}>
                           {r.description}
                         </MenuItem>
                       ))}
@@ -127,24 +169,35 @@ const ConfirmScheduleModal = ({ open, onClose, items, recipes, onConfirm, initia
                           {recipe.ingredients?.map((ing, i) => (
                             <ListItem key={i}>
                               <Grid container spacing={2} alignItems="center">
-                                <Grid item xs={5}>
+                                <Grid item xs={4}>
                                   <Typography>{ing.description}</Typography>
                                   <Typography variant="caption">Code: {ing.prod_code}</Typography>
                                 </Grid>
-                                <Grid item xs={4}>
-                                  <TextField
+                                <Grid item xs={6}>
+                                  <Select
                                     label="Supplier"
                                     size="small"
                                     fullWidth
+                                    sx={{ minWidth: 200 }}
                                     value={ingredientSuppliers[idx]?.[i] || ''}
                                     onChange={e => {
-                                      const sup = [...ingredientSuppliers];
-                                      sup[idx][i] = e.target.value;
-                                      setIngredientSuppliers(sup);
+                                      const supArr = [...ingredientSuppliers];
+                                      supArr[idx][i] = e.target.value;
+                                      setIngredientSuppliers(supArr);
                                     }}
-                                  />
+                                  >
+                                    <MenuItem value=""><em>None</em></MenuItem>
+                                    {(() => {
+                                      const entry = productSupplierMap[ing.prod_code] || productSupplierMap[ing.description];
+                                      return entry ? [entry] : suppliers;
+                                    })().map(s => (
+                                      <MenuItem key={s.supplier_code} value={s.supplier_name}>
+                                        {s.supplier_name}
+                                      </MenuItem>
+                                    ))}
+                                  </Select>
                                 </Grid>
-                                <Grid item xs={3}>
+                                <Grid item xs={2}>
                                   <TextField
                                     label="Qty Used"
                                     size="small"

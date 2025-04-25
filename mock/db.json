@@ -3654,7 +3654,264 @@
       }
     ]
   ],
-  "schedules": [],
-  "audits": [],
+  "schedules": [
+    {
+      "id": 1,
+      "department": "1154",
+      "weekStartDate": "2025-04-25",
+      "managerName": "",
+      "handlersNames": "",
+      "ingredientSuppliers": [
+        [
+          "WESTERN CAPE MILLING",
+          "AUSTRIAN PREMIX BAKING CO",
+          "Bakery In House",
+          "SPAR WESTERN CAPE"
+        ]
+      ],
+      "items": []
+    },
+    {
+      "department": "1152",
+      "weekStartDate": "2025-04-25",
+      "managerName": "Clive",
+      "handlersNames": "Test handler",
+      "ingredientSuppliers": [
+        [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      ],
+      "items": [],
+      "id": 2
+    },
+    {
+      "department": "1154",
+      "weekStartDate": "2025-04-25",
+      "managerName": "Monica",
+      "handlersNames": "Test handler",
+      "ingredientSuppliers": [
+        [
+          "",
+          "",
+          ""
+        ]
+      ],
+      "items": [],
+      "id": 3
+    },
+    {
+      "department": "1154",
+      "weekStartDate": "2025-04-25",
+      "managerName": "Monica",
+      "handlersNames": "Trainee",
+      "ingredientSuppliers": [
+        [
+          "",
+          "",
+          "",
+          ""
+        ]
+      ],
+      "items": [],
+      "id": 4
+    },
+    {
+      "department": "1154",
+      "weekStartDate": "2025-04-25",
+      "managerName": "Monica",
+      "handlersNames": "Trainee",
+      "ingredientSuppliers": [
+        [
+          "",
+          "",
+          "",
+          ""
+        ]
+      ],
+      "items": [],
+      "id": 5
+    },
+    {
+      "department": "1154",
+      "weekStartDate": "2025-04-25",
+      "managerName": "Monica",
+      "handlersNames": "Trainee",
+      "ingredientSuppliers": [
+        [
+          "",
+          "",
+          "",
+          ""
+        ]
+      ],
+      "items": [],
+      "id": 6
+    },
+    {
+      "department": "1154",
+      "weekStartDate": "2025-04-25",
+      "managerName": "Monica",
+      "handlersNames": "trainee",
+      "ingredientSuppliers": [
+        [
+          "WESTERN CAPE MILLING",
+          "CHIPKINS PURATOS (BIDVEST SOL)",
+          "Bakery In House",
+          "ACE PACKAGING (CAPE)(DESERTMOO"
+        ]
+      ],
+      "items": [],
+      "id": 7
+    },
+    {
+      "department": "1152",
+      "weekStartDate": "2025-04-30",
+      "managerName": "Clive",
+      "handlersNames": "Trainee",
+      "ingredientSuppliers": [
+        [
+          "AIRPORT INTERNATIONAL TRADING",
+          "EXCELLENT MEAT CORP (T & T)",
+          "EXCELLENT MEAT CORP (T & T)",
+          "PRICE RITE SPICES PTY LTD",
+          "PRICE RITE SPICES PTY LTD"
+        ]
+      ],
+      "items": [],
+      "id": 8
+    },
+    {
+      "id": 9,
+      "department": "1152",
+      "weekStartDate": "2025-05-01",
+      "managerName": "",
+      "handlersNames": "",
+      "ingredientSuppliers": [
+        [
+          "AIRPORT INTERNATIONAL TRADING",
+          "BAKE IT EASY",
+          "FREDDY HIRSCH GROUP(PTY) LTD"
+        ],
+        [
+          "AIRPORT INTERNATIONAL TRADING",
+          "",
+          "CROWN FOOD GROUP",
+          "PRICE RITE SPICES PTY LTD"
+        ],
+        [
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      ],
+      "items": []
+    },
+    {
+      "department": "1154",
+      "weekStartDate": "2025-04-26",
+      "managerName": "monica",
+      "handlersNames": "zuki",
+      "ingredientSuppliers": [
+        [
+          "WESTERN CAPE MILLING",
+          "DARLING ROMERY (EDMS) BPK",
+          "CHIPKINS PURATOS (BIDVEST SOL)",
+          "CHIPKINS PURATOS (BIDVEST SOL)",
+          "GOLDEN YOLK / SUCCESS VENTURES",
+          "SOUTHBAKELS (PTY) LTD"
+        ]
+      ],
+      "items": [],
+      "id": 10
+    },
+    {
+      "department": "1155",
+      "weekStartDate": "2025-04-25",
+      "managerName": "Monica",
+      "handlersNames": "Bulana",
+      "ingredientSuppliers": [
+        [
+          "SPAR WESTERN CAPE",
+          "RIBCOR",
+          "PRICE RITE SPICES PTY LTD",
+          "SPAR WESTERN CAPE"
+        ]
+      ],
+      "items": [],
+      "id": 11
+    },
+    {
+      "department": "1154",
+      "weekStartDate": "2025-04-25",
+      "managerName": "Monica",
+      "handlersNames": "Swazi",
+      "ingredientSuppliers": [
+        [
+          "WESTERN CAPE MILLING",
+          "CHIPKINS PURATOS (BIDVEST SOL)",
+          "Bakery In House",
+          "ACE PACKAGING (CAPE)(DESERTMOO"
+        ]
+      ],
+      "items": [
+        {
+          "recipeCode": "26710",
+          "plannedQty": 51
+        }
+      ],
+      "id": 12
+    }
+  ],
+  "audits": [
+    {
+      "uid": "2025-04-25-26710-0",
+      "department": "1154",
+      "date": "2025-04-25",
+      "department_manager": "Monica",
+      "food_handler_responsible": "Swazi",
+      "packing_batch_code": [],
+      "product_name": [
+        "WHITE BREAD"
+      ],
+      "ingredient_list": [
+        "W/CAPE MILL  MIX WHT BRD",
+        "YEAST WET",
+        "SPAR WATER",
+        "SPAR WHITE BREAD BAG"
+      ],
+      "supplier_name": [
+        "WESTERN CAPE MILLING",
+        "CHIPKINS PURATOS (BIDVEST SOL)",
+        "Bakery In House",
+        "ACE PACKAGING (CAPE)(DESERTMOO"
+      ],
+      "address_of_supplier": [
+        "",
+        "",
+        "",
+        ""
+      ],
+      "batch_code": [],
+      "sell_by_date": [],
+      "receiving_date": [],
+      "country_of_origin": [
+        "",
+        "",
+        "",
+        "South Africa"
+      ],
+      "id": 1
+    }
+  ],
   "production-documents": []
 }

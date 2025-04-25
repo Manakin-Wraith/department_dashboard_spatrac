@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { GridLegacy as Grid, Box, TextField, FormControl, InputLabel, Select, MenuItem, Button } from '@mui/material';
 
-const AuditFilterToolbar = ({ onOpenPreview, onOpenExport }) => {
+const AuditFilterToolbar = ({ onOpenExport }) => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [productFilter, setProductFilter] = useState('');
@@ -59,7 +59,6 @@ const AuditFilterToolbar = ({ onOpenPreview, onOpenExport }) => {
           </FormControl>
         </Grid>
         <Grid item sx={{ display: 'flex', gap: 1 }}>
-          <Button variant="outlined" onClick={onOpenPreview}>Preview</Button>
           <Button variant="contained" onClick={onOpenExport}>Export</Button>
         </Grid>
       </Grid>

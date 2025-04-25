@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchSchedules, saveSchedule, fetchRecipes, saveAudit, fetchAudits, deleteAudit, deleteSchedule } from '../services/api';
+import supplierTable from '../data/supplier_table.json';
 import { Box, Button, Card, CardContent, Accordion, AccordionSummary, AccordionDetails, Typography } from '@mui/material';
 import ConfirmScheduleModal from '../components/ConfirmScheduleModal';
 import ExportScheduleModal from '../components/ExportScheduleModal';
@@ -42,13 +43,16 @@ const WeeklySchedulePage = () => {
           fetchRecipes(department)
         ]);
         setSchedules(sch);
-        setRecipes(Array.isArray(rec[0]) ? rec.flat() : rec);
+        // only include recipes for this department
+        const flat = Array.isArray(rec[0]) ? rec.flat() : rec;
+        const deptRecipes = flat.filter(r => r.department === deptObj.department);
+        setRecipes(deptRecipes);
       } catch (e) {
         console.error(e);
       }
     }
     load();
-  }, [department]);
+  }, [department, deptObj.department]);
 
 
   const handleSave = () => setConfirmOpen(true);
@@ -70,6 +74,12 @@ const WeeklySchedulePage = () => {
       const auditPromises = newItems.map((item, idx) => {
         const recipe = recipes.find(r => r.product_code === item.recipeCode) || {};
         // prepare audit record
+        const supplierNames = ingredientSuppliers[idx] || [];
+        const addressOfSupplier = supplierNames.map(name => {
+          const sup = supplierTable.find(s => s.supplier_name === name);
+          return sup?.address || '';
+        });
+        const countries = supplierNames.map(name => supplierTable.find(s => s.supplier_name === name)?.country_of_origin || '');
         const record = {
           uid: `${date}-${item.recipeCode}-${idx}`,
           department,
@@ -79,12 +89,12 @@ const WeeklySchedulePage = () => {
           packing_batch_code: [],
           product_name: [recipe.description || item.recipeCode],
           ingredient_list: recipe.ingredients?.map(ing => ing.description) || [],
-          supplier_name: ingredientSuppliers[idx] || [],
-          address_of_supplier: [],
+          supplier_name: supplierNames,
+          address_of_supplier: addressOfSupplier,
           batch_code: [],
           sell_by_date: [],
           receiving_date: [],
-          country_of_origin: []
+          country_of_origin: countries
         };
         return saveAudit(department, record);
       });

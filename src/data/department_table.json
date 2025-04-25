@@ -3,7 +3,7 @@
     "department_code": "1152",
     "supplier_code": "1152",
     "department": "BUTCHERY",
-    "department_manager": [],
+    "department_manager": "Clive",
     "icon": "SetMealIcon",
     "color": "#C0392B"
   },
@@ -11,7 +11,8 @@
     "department_code": "1155",
     "supplier_code": "1155",
     "department": "HMR",
-    "department_manager": [],
+    "department_manager": "Monica",
+    "handlers": ["Ntombi", "Zintle", "Zuzu", "Nomhle", "Bulana", "Nonnie", "Faniswa", "Nolubabalo", "Agie", "Nandipha", "Khanyisa"],
     "icon": "SoupKitchenIcon",
     "color": "#2980B9"
   },
@@ -19,7 +20,8 @@
     "department_code": "1154",
     "supplier_code": "1154",
     "department": "BAKERY",
-    "department_manager": [],
+    "department_manager": "Monica",
+    "handlers": ["Swazi", "Princess", "Phumla", "Max", "Tami", "Qhawe", "Lutho", "Skwash", "Phelisa", "Zikhona", "Cebisa" ],
     "icon": "BakeryDiningIcon",
     "color": "#F39C12"
   }
