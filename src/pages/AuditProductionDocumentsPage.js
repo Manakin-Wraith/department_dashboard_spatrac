@@ -7,7 +7,9 @@ import AuditTable from '../components/AuditTable';
 import AuditPreviewModal from '../components/AuditPreviewModal';
 import { fetchAudits } from '../services/api';
 import departments from '../data/department_table.json';
-import { Box } from '@mui/material';
+import { Box, Button } from '@mui/material';
+import { Link } from 'react-router-dom';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useTheme, alpha } from '@mui/material/styles';
 
 const AuditProductionDocumentsPage = () => {
@@ -16,6 +18,7 @@ const AuditProductionDocumentsPage = () => {
   const deptObj = departments.find(d => d.department_code === department) || {};
   const pageBg = alpha(deptObj.color || '#000', 1.0);
   const pageTextColor = theme.palette.text.primary;
+  const accentColor = deptObj.color;
   const [data, setData] = useState([]);
   const [previewItem, setPreviewItem] = useState(null);
 
@@ -46,7 +49,12 @@ const AuditProductionDocumentsPage = () => {
 
   return (
     <Box component="main" sx={{ backgroundColor: pageBg, minHeight: '100vh', p: 2 }}>
-      <Box sx={{ backgroundColor: theme.palette.grey[100], color: pageTextColor, borderRadius: 2, p: 3, maxWidth: '1200px', mx: 'auto' }}>
+      <Box sx={{ backgroundColor: theme.palette.grey[100], color: pageTextColor, borderRadius: 2, p: 3, maxWidth: '1200px', mx: 'auto', position: 'relative' }}>
+        <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+          <Button component={Link} to='/' startIcon={<ArrowBackIcon />} sx={{ color: accentColor, textTransform: 'none' }}>
+            Back to Dashboard
+          </Button>
+        </Box>
         <PageHeader title="Audit Production Documents" />
         <DepartmentTabs />
         <Box sx={{ mt: 4 }}>

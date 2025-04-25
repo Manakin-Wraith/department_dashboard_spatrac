@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { fetchRecipes } from '../services/api';
 import PageHeader from '../components/PageHeader';
 import DepartmentTabs from '../components/DepartmentTabs';
 import RecipeFilterToolbar from '../components/RecipeFilterToolbar';
 import RecipeListTable from '../components/RecipeListTable';
 import departments from '../data/department_table.json';
-import { Box } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const RecipeListPage = () => {
   const { department } = useParams();
@@ -16,6 +17,7 @@ const RecipeListPage = () => {
   const deptObj = departments.find(d => d.department_code === department) || {};
   const pageBg = alpha(deptObj.color || '#000', 1.0);
   const pageTextColor = theme.palette.text.primary;
+  const accentColor = departments.find(d => d.department_code === department)?.color;
   const [recipes, setRecipes] = useState([]);
   const [filters, setFilters] = useState({ search: '', status: '' });
 
@@ -47,7 +49,12 @@ const RecipeListPage = () => {
 
   return (
     <Box component="main" sx={{ backgroundColor: pageBg, minHeight: '100vh', p: 2 }}>
-      <Box sx={{ backgroundColor: theme.palette.grey[100], color: pageTextColor, borderRadius: 2, p: 3, maxWidth: '1200px', mx: 'auto' }}>
+      <Box sx={{ backgroundColor: theme.palette.grey[100], color: pageTextColor, borderRadius: 2, p: 3, maxWidth: '1200px', mx: 'auto', position: 'relative' }}>
+        <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+          <Button component={Link} to='/' startIcon={<ArrowBackIcon />} sx={{ color: accentColor, textTransform: 'none' }}>
+            Back to Dashboard
+          </Button>
+        </Box>
         <PageHeader title="Recipes" />
         <DepartmentTabs />
         <Box sx={{ mt: 2 }}>

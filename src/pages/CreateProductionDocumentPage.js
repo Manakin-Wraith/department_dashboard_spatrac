@@ -5,11 +5,13 @@ import DepartmentTabs from '../components/DepartmentTabs';
 import InfoCard from '../components/InfoCard';
 import ProductionForm from '../components/ProductionForm';
 import departments from '../data/department_table.json';
-import { Box, Avatar, Typography } from '@mui/material';
+import { Box, Avatar, Typography, Button } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
 import BakeryDiningIcon from '@mui/icons-material/BakeryDining';
 import SetMealIcon from '@mui/icons-material/SetMeal';
 import SoupKitchenIcon from '@mui/icons-material/SoupKitchen';
+import { Link } from 'react-router-dom';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 // Map JSON icon key to component
 const iconMap = { SetMealIcon, SoupKitchenIcon, BakeryDiningIcon };
@@ -24,7 +26,12 @@ const CreateProductionDocumentPage = () => {
   const accentColor = deptObj.color;
   return (
     <Box component="main" sx={{ backgroundColor: pageBg, minHeight: '100vh', p: 2 }}>
-      <Box sx={{ backgroundColor: theme.palette.grey[100], color: pageTextColor, borderRadius: 2, p: 3, maxWidth: '1200px', mx: 'auto' }}>
+      <Box sx={{ backgroundColor: theme.palette.grey[100], color: pageTextColor, borderRadius: 2, p: 3, maxWidth: '1200px', mx: 'auto', position: 'relative' }}>
+        <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+          <Button component={Link} to='/' startIcon={<ArrowBackIcon />} sx={{ color: accentColor, textTransform: 'none' }}>
+            Back to Dashboard
+          </Button>
+        </Box>
         <PageHeader title="Create Production Document" />
         <DepartmentTabs />
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2, mb: 2 }}>

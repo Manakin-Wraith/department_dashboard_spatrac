@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchSchedules, saveSchedule, fetchRecipes } from '../services/api';
-import { Box, Button, Select, MenuItem, TextField, Card, CardContent, Accordion, AccordionSummary, AccordionDetails, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Accordion, AccordionSummary, AccordionDetails, Typography } from '@mui/material';
 import ConfirmScheduleModal from '../components/ConfirmScheduleModal';
+import ExportScheduleModal from '../components/ExportScheduleModal';
 import { useTheme, alpha, darken } from '@mui/material/styles';
 import PageHeader from '../components/PageHeader';
 import DepartmentTabs from '../components/DepartmentTabs';
@@ -12,6 +13,10 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import PrintIcon from '@mui/icons-material/Print';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { Link } from 'react-router-dom';
+import { IconButton } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const WeeklySchedulePage = () => {
   const { department } = useParams();
@@ -20,6 +25,7 @@ const WeeklySchedulePage = () => {
   const [selectedId, setSelectedId] = useState('');
   const [items, setItems] = useState([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().slice(0,10));
 
   const theme = useTheme();
@@ -45,18 +51,6 @@ const WeeklySchedulePage = () => {
   }, [department]);
 
 
-  const handleQtyChange = (idx, qty) => {
-    const next = [...items];
-    next[idx].plannedQty = Number(qty);
-    setItems(next);
-  };
-
-  const handleRecipeChange = (idx, code) => {
-    const next = [...items];
-    next[idx].recipeCode = code;
-    setItems(next);
-  };
-
   const handleSave = () => setConfirmOpen(true);
 
   const handleConfirm = async ({ items: newItems, scheduledDate: date, managerName, handlersNames, ingredientSuppliers }) => {
@@ -78,9 +72,26 @@ const WeeklySchedulePage = () => {
     }
   };
 
+  const handleDeleteItem = async (scheduleId, idxToDelete) => {
+    try {
+      const sel = schedules.find(s => s.id === scheduleId);
+      if (!sel) return;
+      const updated = { ...sel, items: sel.items.filter((_, i) => i !== idxToDelete) };
+      const saved = await saveSchedule(department, updated);
+      setSchedules(schedules.map(s => s.id === scheduleId ? saved : s));
+    } catch (e) {
+      console.error('Failed to delete item', e);
+    }
+  };
+
   return (
     <Box component="main" sx={{ backgroundColor: pageBg, minHeight: '100vh', p: 2 }}>
-      <Box sx={{ backgroundColor: theme.palette.grey[100], color: pageTextColor, borderRadius: 2, p: 3, maxWidth: '1200px', mx: 'auto' }}>
+      <Box sx={{ backgroundColor: theme.palette.grey[100], color: pageTextColor, borderRadius: 2, p: 3, maxWidth: '1200px', mx: 'auto', position: 'relative' }}>
+        <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+          <Button component={Link} to='/' startIcon={<ArrowBackIcon />} sx={{ color: accentColor, textTransform: 'none' }}>
+            Back to Dashboard
+          </Button>
+        </Box>
         <PageHeader title="Weekly Schedule" />
         <DepartmentTabs />
         <Box sx={{ my: 2 }}>
@@ -115,13 +126,14 @@ const WeeklySchedulePage = () => {
           <Button
             variant="outlined"
             startIcon={<PrintIcon />}
-            onClick={() => window.print()}
+            onClick={() => setExportOpen(true)}
             sx={{ ml: 2, borderColor: accentColor, color: accentColor, '&:hover': { borderColor: accentColor } }}
           >Print/Export</Button>
         </Box>
 
         <Card>
           <CardContent>
+            <Typography variant="h6" sx={{ mb: 2 }}>Scheduled Recipes</Typography>
             {schedules.flatMap(s =>
               s.items.map((item, idx) => {
                 const rec = recipes.find(r => r.product_code === item.recipeCode) || {};
@@ -141,6 +153,11 @@ const WeeklySchedulePage = () => {
                       </Box>
                       <Box sx={{ mt: 1 }}>
                         <Typography variant="body2">Handlers: {s.handlersNames}</Typography>
+                      </Box>
+                      <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                        <IconButton size="small" onClick={() => handleDeleteItem(s.id, idx)} sx={{ color: theme.palette.error.main }}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
                       </Box>
                     </AccordionDetails>
                   </Accordion>
@@ -166,6 +183,12 @@ const WeeklySchedulePage = () => {
           recipes={recipes}
           onClose={() => setConfirmOpen(false)}
           onConfirm={handleConfirm}
+        />
+        <ExportScheduleModal
+          open={exportOpen}
+          onClose={() => setExportOpen(false)}
+          schedules={schedules}
+          recipes={recipes}
         />
       </Box>
     </Box>

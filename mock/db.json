@@ -3721,6 +3721,50 @@
         }
       ],
       "id": "5kKTYgA"
+    },
+    {
+      "department": "1155",
+      "weekStartDate": "2025-05-01",
+      "managerName": "Department Test Manager",
+      "handlersNames": "Test Handler",
+      "ingredientSuppliers": [
+        [
+          ""
+        ]
+      ],
+      "items": [],
+      "id": "5lbiIZi"
+    },
+    {
+      "department": "1155",
+      "weekStartDate": "2025-05-01",
+      "managerName": "Department Test Manager",
+      "handlersNames": "Test Handler",
+      "ingredientSuppliers": [
+        [
+          ""
+        ]
+      ],
+      "items": [],
+      "id": "-YvDpBp"
+    },
+    {
+      "department": "1155",
+      "weekStartDate": "2025-05-01",
+      "managerName": "Department Test Manager",
+      "handlersNames": "Test Handler",
+      "ingredientSuppliers": [
+        [
+          ""
+        ]
+      ],
+      "items": [
+        {
+          "recipeCode": "31942",
+          "plannedQty": 1
+        }
+      ],
+      "id": "GLqgMGT"
     }
   ],
   "audits": [],
