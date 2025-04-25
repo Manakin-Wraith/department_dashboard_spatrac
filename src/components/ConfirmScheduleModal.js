@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Accordion, AccordionSummary, AccordionDetails,
-  Typography, List, ListItem, Grid, TextField, Card, CardContent
+  Typography, List, ListItem, Grid, TextField, Card, CardContent,
+  Select, MenuItem
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { useTheme, darken } from '@mui/material/styles';
 import departments from '../data/department_table.json';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import AddCircleOutline from '@mui/icons-material/AddCircleOutline';
 
 const ConfirmScheduleModal = ({ open, onClose, items, recipes, onConfirm, initialDate }) => {
   const [localItems, setLocalItems] = useState([]);
@@ -41,10 +43,36 @@ const ConfirmScheduleModal = ({ open, onClose, items, recipes, onConfirm, initia
     setLocalItems(updated);
   };
 
+  const addItem = () => {
+    const defaultCode = recipes[0]?.product_code || '';
+    setLocalItems(prev => [...prev, { recipeCode: defaultCode, plannedQty: 0 }]);
+    const count = recipes.find(r => r.product_code === defaultCode)?.ingredients?.length || 0;
+    setIngredientSuppliers(prev => [...prev, Array(count).fill('')]);
+  };
+
+  const handleRecipeChange = (idx, code) => {
+    const updated = [...localItems];
+    updated[idx].recipeCode = code;
+    setLocalItems(updated);
+    // reset suppliers for new recipe
+    const recipe = recipes.find(r => r.product_code === code) || {};
+    setIngredientSuppliers(prev => {
+      const arr = [...prev];
+      arr[idx] = Array(recipe.ingredients?.length || 0).fill('');
+      return arr;
+    });
+  };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ borderBottom: `2px solid ${accentColor}`, color: accentColor }}>Confirm Schedule</DialogTitle>
       <DialogContent dividers>
+        <Button
+          variant="outlined"
+          startIcon={<AddCircleOutline />}
+          onClick={addItem}
+          sx={{ mb: 2, borderColor: accentColor, color: accentColor, '&:hover': { borderColor: accentColor } }}
+        >Add Item</Button>
         <Grid container spacing={2} sx={{ mb: 2 }}>
           <Grid item xs={4}>
             <TextField label="Department Manager" fullWidth value={managerName} onChange={e => setManagerName(e.target.value)} />
@@ -70,9 +98,18 @@ const ConfirmScheduleModal = ({ open, onClose, items, recipes, onConfirm, initia
               <CardContent>
                 <Accordion sx={{ boxShadow: 'none' }}>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography sx={{ flexGrow: 1 }}>
-                      {recipe.description || item.recipeCode}
-                    </Typography>
+                    <Select
+                      value={localItems[idx].recipeCode}
+                      size="small"
+                      onChange={e => handleRecipeChange(idx, e.target.value)}
+                      sx={{ mr: 2, minWidth: 200 }}
+                    >
+                      {recipes.map(r => (
+                        <MenuItem key={r.product_code} value={r.product_code}>
+                          {r.description}
+                        </MenuItem>
+                      ))}
+                    </Select>
                     <TextField
                       label="Qty"
                       type="number"

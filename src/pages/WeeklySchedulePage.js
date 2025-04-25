@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchSchedules, saveSchedule, fetchRecipes } from '../services/api';
-import { Box, Button, Select, MenuItem, TextField, Grid, Card, CardContent } from '@mui/material';
-import { AddCircleOutline } from '@mui/icons-material';
+import { Box, Button, Select, MenuItem, TextField, Card, CardContent, Accordion, AccordionSummary, AccordionDetails, Typography } from '@mui/material';
 import ConfirmScheduleModal from '../components/ConfirmScheduleModal';
 import { useTheme, alpha, darken } from '@mui/material/styles';
 import PageHeader from '../components/PageHeader';
@@ -12,6 +11,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import PrintIcon from '@mui/icons-material/Print';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 const WeeklySchedulePage = () => {
   const { department } = useParams();
@@ -44,12 +44,6 @@ const WeeklySchedulePage = () => {
     load();
   }, [department]);
 
-  const handleSelectWeek = e => {
-    const id = e.target.value;
-    setSelectedId(id);
-    const sel = schedules.find(s => s.id === id);
-    setItems(sel ? sel.items : []);
-  };
 
   const handleQtyChange = (idx, qty) => {
     const next = [...items];
@@ -63,33 +57,24 @@ const WeeklySchedulePage = () => {
     setItems(next);
   };
 
-  const addRow = () => {
-    setItems([...items, { recipeCode: recipes[0]?.product_code || '', plannedQty: 0 }]);
-  };
-
   const handleSave = () => setConfirmOpen(true);
 
   const handleConfirm = async ({ items: newItems, scheduledDate: date, managerName, handlersNames, ingredientSuppliers }) => {
-    const existing = schedules.find(s => s.id === selectedId);
-    const id = existing?.id || `sched-${Date.now()}`;
-    const schedule = {
-      id,
-      department,
-      weekStartDate: date,
-      managerName,
-      handlersNames,
-      ingredientSuppliers,
-      items: newItems
-    };
     try {
-      await saveSchedule(department, schedule);
-      const updated = existing
-        ? schedules.map(s => s.id === id ? schedule : s)
-        : [...schedules, schedule];
-      setSchedules(updated);
+      if (selectedId) {
+        // update existing schedule via PUT
+        const schedule = { id: selectedId, department, weekStartDate: date, managerName, handlersNames, ingredientSuppliers, items: newItems };
+        const saved = await saveSchedule(department, schedule);
+        setSchedules(schedules.map(s => s.id === selectedId ? saved : s));
+      } else {
+        // create new schedule via POST
+        const schedule = { department, weekStartDate: date, managerName, handlersNames, ingredientSuppliers, items: newItems };
+        const saved = await saveSchedule(department, schedule);
+        setSchedules(prev => [...prev, saved]);
+      }
       setConfirmOpen(false);
     } catch (e) {
-      console.error(e);
+      console.error('Failed to save schedule', e);
     }
   };
 
@@ -102,7 +87,12 @@ const WeeklySchedulePage = () => {
           <FullCalendar
             plugins={[dayGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
-            events={schedules.map(s => ({ title: s.weekStartDate, date: s.weekStartDate }))}
+            events={schedules.flatMap(s =>
+              s.items.map(item => {
+                const rec = recipes.find(r => r.product_code === item.recipeCode) || {};
+                return { title: `${rec.description || item.recipeCode} (${item.plannedQty})`, date: s.weekStartDate };
+              })
+            )}
             dateClick={info => {
               setSelectedId('');
               setItems([]);
@@ -122,17 +112,6 @@ const WeeklySchedulePage = () => {
           />
         </Box>
         <Box sx={{ my: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Select value={selectedId} onChange={handleSelectWeek} displayEmpty>
-            <MenuItem value="" disabled>Select a week</MenuItem>
-            {schedules.map(s => (
-              <MenuItem key={s.id} value={s.id}>{s.weekStartDate}</MenuItem>
-            ))}
-          </Select>
-          <Button
-            variant="outlined"
-            onClick={() => { setSelectedId(''); setItems([]); }}
-            sx={{ borderColor: accentColor, color: accentColor, '&:hover': { borderColor: accentColor } }}
-          >New Week</Button>
           <Button
             variant="outlined"
             startIcon={<PrintIcon />}
@@ -143,42 +122,31 @@ const WeeklySchedulePage = () => {
 
         <Card>
           <CardContent>
-            <Grid container spacing={2}>
-              {items.map((item, idx) => (
-                <React.Fragment key={idx}>
-                  <Grid item xs={6}>
-                    <Select
-                      fullWidth
-                      value={item.recipeCode}
-                      onChange={e => handleRecipeChange(idx, e.target.value)}
-                    >
-                      {recipes.map(r => (
-                        <MenuItem key={r.product_code} value={r.product_code}>
-                          {r.description}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </Grid>
-                  <Grid item xs={4}>
-                    <TextField
-                      fullWidth
-                      type="number"
-                      label="Quantity"
-                      value={item.plannedQty}
-                      onChange={e => handleQtyChange(idx, e.target.value)}
-                    />
-                  </Grid>
-                </React.Fragment>
-              ))}
-            </Grid>
-            <Button
-              variant="outlined"
-              startIcon={<AddCircleOutline />}
-              sx={{ mt: 2, borderColor: accentColor, color: accentColor, '&:hover': { borderColor: accentColor } }}
-              onClick={addRow}
-            >
-              Add Item
-            </Button>
+            {schedules.flatMap(s =>
+              s.items.map((item, idx) => {
+                const rec = recipes.find(r => r.product_code === item.recipeCode) || {};
+                return (
+                  <Accordion key={`${s.id}-${item.recipeCode}-${idx}`} sx={{ mb: 1 }}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ backgroundColor: alpha(accentColor, 0.1) }}>
+                      <Typography>{s.weekStartDate} — {rec.description || item.recipeCode} ({item.plannedQty})</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Box sx={{ flex: 2 }}>
+                          <Typography variant="body2">Recipe: {rec.description}</Typography>
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="body2">Qty: {item.plannedQty}</Typography>
+                        </Box>
+                      </Box>
+                      <Box sx={{ mt: 1 }}>
+                        <Typography variant="body2">Handlers: {s.handlersNames}</Typography>
+                      </Box>
+                    </AccordionDetails>
+                  </Accordion>
+                );
+              })
+            )}
           </CardContent>
         </Card>
 

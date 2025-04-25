@@ -3675,6 +3675,52 @@
       "department": "BAKERY",
       "weekStartDate": "2025-05-12",
       "items": []
+    },
+    {
+      "department": "1152",
+      "weekStartDate": "2025-05-01",
+      "managerName": "Tets Manager",
+      "handlersNames": "Test Handler",
+      "ingredientSuppliers": [
+        [
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      ],
+      "items": [
+        {
+          "recipeCode": "26799",
+          "plannedQty": 20
+        }
+      ],
+      "id": "uYiPkjN"
+    },
+    {
+      "department": "1152",
+      "weekStartDate": "2025-05-02",
+      "managerName": "Test Manager",
+      "handlersNames": "Test Handler 2",
+      "ingredientSuppliers": [
+        [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      ],
+      "items": [
+        {
+          "recipeCode": "26908",
+          "plannedQty": 5
+        }
+      ],
+      "id": "5kKTYgA"
     }
   ],
   "audits": [],

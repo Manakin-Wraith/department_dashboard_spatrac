@@ -50,9 +50,10 @@ export async function fetchSchedules(department) {
 }
 
 export async function saveSchedule(department, schedule) {
+  const baseUrl = `${API_BASE}/api/schedules`;
   const url = schedule.id
-    ? `${API_BASE}/api/schedules/${schedule.id}?department=${department}`
-    : `${API_BASE}/api/schedules?department=${department}`;
+    ? `${baseUrl}/${schedule.id}`
+    : baseUrl;
   const method = schedule.id ? 'PUT' : 'POST';
   const res = await fetch(url, {
     method,
