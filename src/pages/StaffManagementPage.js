@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { fetchHandlers, saveHandler, deleteHandler, fetchSchedules, fetchRecipes, saveSchedule } from '../services/api';
-import { Box, Grid, Typography, Card, CardContent, Button } from '@mui/material';
+import { Box, Button, TextField, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper, Chip, IconButton } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import PageHeader from '../components/PageHeader';
 import DepartmentTabs from '../components/DepartmentTabs';
 import StaffModal from '../components/StaffModal';
@@ -18,6 +20,7 @@ const StaffManagementPage = () => {
   const accentColor = deptObj.color || theme.palette.primary.main;
   const [handlers, setHandlers] = useState([]);
   const [schedules, setSchedules] = useState([]);
+  const [filter, setFilter] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedHandler, setSelectedHandler] = useState(null);
   const [recipeMap, setRecipeMap] = useState({});
@@ -46,7 +49,11 @@ const StaffManagementPage = () => {
   };
 
   const handleEdit = (handler) => {
-    setSelectedHandler(handler);
+    const handlerScheds = schedules.filter(s => s.handlersNames === handler.name);
+    const assignments = handlerScheds.flatMap(s =>
+      s.items.map(item => ({ id: s.id, date: s.weekStartDate, recipeCode: item.recipeCode, plannedQty: item.plannedQty }))
+    );
+    setSelectedHandler({ ...handler, assignments });
     setModalOpen(true);
   };
 
@@ -62,6 +69,7 @@ const StaffManagementPage = () => {
     if (handler.assignments?.length) {
       const newScheds = await Promise.all(
         handler.assignments.map(a => saveSchedule(department, {
+          id: a.id,
           department,
           weekStartDate: a.date,
           managerName: '',
@@ -69,7 +77,11 @@ const StaffManagementPage = () => {
           items: [{ recipeCode: a.recipeCode, plannedQty: a.plannedQty }]
         }))
       );
-      setSchedules(prev => [...prev, ...newScheds]);
+      // replace old schedules for this handler with updated ones
+      setSchedules(prev => [
+        ...prev.filter(s => s.handlersNames !== saved.name),
+        ...newScheds
+      ]);
     }
     setModalOpen(false);
   };
@@ -96,50 +108,62 @@ const StaffManagementPage = () => {
         </Box>
         <PageHeader title="Staff Management" />
         <DepartmentTabs />
-        <Box sx={{ mt: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4, mb: 2 }}>
+          <TextField
+            placeholder="Search staff..."
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+            size="small"
+            sx={{ width: 200 }}
+          />
           <Button variant="contained" onClick={handleAdd} sx={{ backgroundColor: accentColor, color: '#fff', '&:hover': { backgroundColor: darken(accentColor, 0.2) } }}>
             Add Staff
           </Button>
         </Box>
-        <Grid container spacing={2} sx={{ mt: 2 }}>
-          {handlers.map(h => (
-            <Grid item xs={12} sm={6} md={4} key={h.id}>
-              <Card sx={{
-                backgroundColor: theme.palette.common.white,
-                borderRadius: 2,
-                p: 2,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
-                }
-              }}>
-                <CardContent>
-                  <Typography variant="h6" sx={{ color: accentColor, mb: 1 }} gutterBottom>{h.name}</Typography>
-                  <Typography variant="subtitle2" gutterBottom>Assignments:</Typography>
-                  {getAssignments(h.name).map(({ date, recipes }) => (
-                    <Box key={date} sx={{ mb: 1 }}>
-                      <Typography variant="body2">{date}</Typography>
-                      <Typography variant="body2">
-                        {recipes.map(it => `${it.recipeCode} – ${recipeMap[it.recipeCode] || it.recipeCode} (${it.plannedQty})`).join(', ')}
-                      </Typography>
-                    </Box>
-                  ))}
-                  <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-                    <Button size="small" onClick={() => handleEdit(h)}>Edit</Button>
-                    <Button size="small" color="error" onClick={() => handleDelete(h.id)}>Delete</Button>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+        <TableContainer component={Paper} sx={{ mt: 2 }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Staff Name</TableCell>
+                <TableCell>Assignments</TableCell>
+                <TableCell align="right">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {handlers.filter(h => h.name.toLowerCase().includes(filter.toLowerCase())).map((h, idx) => (
+                <TableRow key={`${h.id ?? h.name}-${idx}`}>
+                  <TableCell>{h.name}</TableCell>
+                  <TableCell>
+                    {getAssignments(h.name).map(({ date, recipes }) => (
+                      <Chip
+                        key={date}
+                        label={`${date}: ${recipes.map(it => `${it.plannedQty}x ${recipeMap[it.recipeCode] || it.recipeCode}`).join(', ')}`}
+                        size="small"
+                        sx={{ mr: 0.5, mb: 0.5 }}
+                      />
+                    ))}
+                  </TableCell>
+                  <TableCell align="right">
+                    <IconButton size="small" onClick={() => handleEdit(h)}>
+                      <EditIcon />
+                    </IconButton>
+                    {h.id && (
+                      <IconButton size="small" color="error" onClick={() => handleDelete(h.id)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
         <StaffModal
           open={modalOpen}
           handler={selectedHandler}
           onClose={() => setModalOpen(false)}
           onSave={handleSave}
+          onDelete={handleDelete}
         />
       </Box>
     </Box>

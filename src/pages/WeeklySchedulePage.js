@@ -163,7 +163,10 @@ const WeeklySchedulePage = () => {
             events={schedules.flatMap(s =>
               s.items.map(item => {
                 const rec = recipes.find(r => r.product_code === item.recipeCode) || {};
-                return { title: `${rec.description || item.recipeCode} (${item.plannedQty})`, date: s.weekStartDate };
+                return {
+                  title: `${rec.description || item.recipeCode} (${item.plannedQty}) – ${s.handlersNames}`,
+                  date: s.weekStartDate
+                };
               })
             )}
             dateClick={info => {
@@ -202,7 +205,7 @@ const WeeklySchedulePage = () => {
                 return (
                   <Accordion key={`${s.id}-${item.recipeCode}-${idx}`} sx={{ mb: 1 }}>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ backgroundColor: alpha(accentColor, 0.1) }}>
-                      <Typography>{s.weekStartDate} — {rec.description || item.recipeCode} ({item.plannedQty})</Typography>
+                      <Typography>{s.weekStartDate} — {rec.description || item.recipeCode} ({item.plannedQty}) — {s.handlersNames}</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                       <Box sx={{ display: 'flex', gap: 2 }}>
