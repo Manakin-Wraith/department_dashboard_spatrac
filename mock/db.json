@@ -3892,6 +3892,19 @@
         }
       ],
       "id": 13
+    },
+    {
+      "department": "1155",
+      "weekStartDate": "2025-05-16",
+      "managerName": "",
+      "handlersNames": "Bulana",
+      "items": [
+        {
+          "recipeCode": "26751",
+          "plannedQty": "40"
+        }
+      ],
+      "id": 14
     }
   ],
   "audits": [
@@ -3979,5 +3992,11 @@
     }
   ],
   "production-documents": [],
-  "handlers": []
+  "handlers": [
+    {
+      "department": "1155",
+      "name": "Bulana",
+      "id": 1
+    }
+  ]
 }

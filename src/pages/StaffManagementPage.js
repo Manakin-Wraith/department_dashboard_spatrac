@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { fetchHandlers, saveHandler, deleteHandler, fetchSchedules, fetchRecipes } from '../services/api';
+import { fetchHandlers, saveHandler, deleteHandler, fetchSchedules, fetchRecipes, saveSchedule } from '../services/api';
 import { Box, Grid, Typography, Card, CardContent, Button } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PageHeader from '../components/PageHeader';
@@ -51,12 +51,26 @@ const StaffManagementPage = () => {
   };
 
   const handleSave = async (handler) => {
+    // Save handler first
     const saved = await saveHandler(department, handler);
     setHandlers(prev => {
       const exists = prev.find(h => h.id === saved.id);
       if (exists) return prev.map(h => h.id === saved.id ? saved : h);
       return [...prev, saved];
     });
+    // Save assignments as schedules
+    if (handler.assignments?.length) {
+      const newScheds = await Promise.all(
+        handler.assignments.map(a => saveSchedule(department, {
+          department,
+          weekStartDate: a.date,
+          managerName: '',
+          handlersNames: saved.name,
+          items: [{ recipeCode: a.recipeCode, plannedQty: a.plannedQty }]
+        }))
+      );
+      setSchedules(prev => [...prev, ...newScheds]);
+    }
     setModalOpen(false);
   };
 
