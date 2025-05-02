@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchSchedules, saveSchedule, fetchRecipes, saveAudit, fetchAudits, deleteAudit, deleteSchedule } from '../services/api';
 import supplierTable from '../data/supplier_table.json';
-import { Box, Button, Card, CardContent, Accordion, AccordionSummary, AccordionDetails, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Accordion, AccordionSummary, AccordionDetails, Typography, Snackbar, Alert } from '@mui/material';
 import ConfirmScheduleModal from '../components/ConfirmScheduleModal';
 import ExportScheduleModal from '../components/ExportScheduleModal';
 import { useTheme, alpha, darken } from '@mui/material/styles';
@@ -18,6 +18,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Link } from 'react-router-dom';
 import { IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { bus } from '../utils/eventBus';
 
 const WeeklySchedulePage = () => {
   const { department } = useParams();
@@ -28,6 +29,7 @@ const WeeklySchedulePage = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().slice(0,10));
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const theme = useTheme();
   const deptObj = departments.find(d => d.department_code === department) || {};
@@ -135,7 +137,17 @@ const WeeklySchedulePage = () => {
       if (!sel) return;
       // remove schedule
       await deleteSchedule(scheduleId);
+      // record delete audit and broadcast
+      const auditRec = await saveAudit(department, {
+        entity: 'schedule',
+        action: 'delete',
+        details: sel
+      });
+      bus.emit('audit', auditRec);
+      bus.emit('scheduleDeleted', scheduleId);
       setSchedules(schedules.filter(s => s.id !== scheduleId));
+      // show feedback
+      setSnackbar({ open: true, message: 'Schedule deleted successfully', severity: 'success' });
       // remove related audits
       const audits = await fetchAudits(department);
       const toDelete = audits.filter(a => a.uid.startsWith(`${sel.weekStartDate}-`));
@@ -257,6 +269,20 @@ const WeeklySchedulePage = () => {
           schedules={schedules}
           recipes={recipes}
         />
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert
+            onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Box>
     </Box>
   );

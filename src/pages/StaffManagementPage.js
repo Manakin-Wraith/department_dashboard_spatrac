@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { fetchHandlers, saveHandler, deleteHandler, fetchSchedules, fetchRecipes, saveSchedule } from '../services/api';
-import { Box, Button, TextField, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper, Chip, IconButton } from '@mui/material';
+import { saveHandler, deleteHandler, fetchSchedules, fetchRecipes, saveSchedule, saveAudit } from '../services/api';
+import { bus } from '../utils/eventBus';
+import { Box, Typography, Button, TextField, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper, Chip, IconButton } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -27,13 +28,13 @@ const StaffManagementPage = () => {
 
   useEffect(() => {
     async function load() {
-      const [hrs, sch, recs] = await Promise.all([
-        fetchHandlers(department),
+      const [sch, recs] = await Promise.all([
         fetchSchedules(department),
         fetchRecipes(department)
       ]);
       const defaultList = (deptObj.handlers || []).map((name, idx) => ({ id: null, department, name }));
-      setHandlers(hrs.length ? hrs : defaultList);
+      // always use the hard-coded staff list
+      setHandlers(defaultList);
       setSchedules(sch);
       // Flatten nested array of recipes if needed
       const flatRecs = Array.isArray(recs[0]) ? recs.flat() : recs;
@@ -42,6 +43,12 @@ const StaffManagementPage = () => {
     }
     load();
   }, [department, deptObj.handlers]);
+
+  useEffect(() => {
+    const onDel = id => setSchedules(prev => prev.filter(s => s.id !== id));
+    bus.on('scheduleDeleted', onDel);
+    return () => bus.off('scheduleDeleted', onDel);
+  }, []);
 
   const handleAdd = () => {
     setSelectedHandler(null);
@@ -65,22 +72,39 @@ const StaffManagementPage = () => {
       if (exists) return prev.map(h => h.id === saved.id ? saved : h);
       return [...prev, saved];
     });
-    // Save assignments as schedules
+    // Save assignments as grouped schedules
     if (handler.assignments?.length) {
-      const newScheds = await Promise.all(
-        handler.assignments.map(a => saveSchedule(department, {
-          id: a.id,
-          department,
-          weekStartDate: a.date,
-          managerName: '',
-          handlersNames: saved.name,
-          items: [{ recipeCode: a.recipeCode, plannedQty: a.plannedQty }]
-        }))
-      );
-      // replace old schedules for this handler with updated ones
+      // group by schedule id or date to update existing schedules
+      const grouped = handler.assignments.reduce((acc, a) => {
+        const key = a.id ?? a.date;
+        if (!acc[key]) acc[key] = { id: a.id, weekStartDate: a.date, items: [] };
+        acc[key].items.push({ recipeCode: a.recipeCode, plannedQty: a.plannedQty });
+        return acc;
+      }, {});
+      const payloads = Object.values(grouped).map(g => ({
+        id: g.id,
+        department,
+        weekStartDate: g.weekStartDate,
+        managerName: '',
+        handlersNames: saved.name,
+        items: g.items
+      }));
+      const updatedScheds = [];
+      for (const payload of payloads) {
+        const sched = await saveSchedule(department, payload);
+        updatedScheds.push(sched);
+        // record audit
+        const auditRec = await saveAudit(department, {
+          entity: 'schedule',
+          action: payload.id ? 'update' : 'create',
+          details: payload
+        });
+        bus.emit('audit', auditRec);
+      }
+      // replace schedules for this handler
       setSchedules(prev => [
         ...prev.filter(s => s.handlersNames !== saved.name),
-        ...newScheds
+        ...updatedScheds
       ]);
     }
     setModalOpen(false);
@@ -97,6 +121,11 @@ const StaffManagementPage = () => {
     schedules
       .filter(s => s.handlersNames === handlerName)
       .map(s => ({ date: s.weekStartDate, recipes: s.items }));
+
+  // Partition handlers by assignment status
+  const filteredHandlers = handlers.filter(h => h.name.toLowerCase().includes(filter.toLowerCase()));
+  const unassigned = filteredHandlers.filter(h => getAssignments(h.name).length === 0);
+  const assigned = filteredHandlers.filter(h => getAssignments(h.name).length > 0);
 
   return (
     <Box component="main" sx={{ backgroundColor: pageBg, minHeight: '100vh', p: 2 }}>
@@ -120,44 +149,79 @@ const StaffManagementPage = () => {
             Add Staff
           </Button>
         </Box>
-        <TableContainer component={Paper} sx={{ mt: 2 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Staff Name</TableCell>
-                <TableCell>Assignments</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {handlers.filter(h => h.name.toLowerCase().includes(filter.toLowerCase())).map((h, idx) => (
-                <TableRow key={`${h.id ?? h.name}-${idx}`}>
-                  <TableCell>{h.name}</TableCell>
-                  <TableCell>
-                    {getAssignments(h.name).map(({ date, recipes }) => (
-                      <Chip
-                        key={date}
-                        label={`${date}: ${recipes.map(it => `${it.plannedQty}x ${recipeMap[it.recipeCode] || it.recipeCode}`).join(', ')}`}
-                        size="small"
-                        sx={{ mr: 0.5, mb: 0.5 }}
-                      />
-                    ))}
-                  </TableCell>
-                  <TableCell align="right">
-                    <IconButton size="small" onClick={() => handleEdit(h)}>
-                      <EditIcon />
-                    </IconButton>
-                    {h.id && (
-                      <IconButton size="small" color="error" onClick={() => handleDelete(h.id)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    )}
-                  </TableCell>
+        {/* Staff with Assignments */}
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="h6" sx={{ mb: 1 }}>Staff with Assignments</Typography>
+          <TableContainer component={Paper}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Staff Name</TableCell>
+                  <TableCell>Assignments</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {assigned.map((h, idx) => (
+                  <TableRow key={`${h.id ?? h.name}-${idx}`}> 
+                    <TableCell>{h.name}</TableCell>
+                    <TableCell>
+                      {getAssignments(h.name).map(({ date, recipes }) => (
+                        <Chip
+                          key={date}
+                          label={`${date}: ${recipes.map(it => `${it.plannedQty}x ${recipeMap[it.recipeCode] || it.recipeCode}`).join(', ')}`}
+                          size="small"
+                          sx={{ mr: 0.5, mb: 0.5 }}
+                        />
+                      ))}
+                    </TableCell>
+                    <TableCell align="right">
+                      <IconButton size="small" onClick={() => handleEdit(h)}>
+                        <EditIcon />
+                      </IconButton>
+                      {h.id && (
+                        <IconButton size="small" color="error" onClick={() => handleDelete(h.id)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+        {/* Current Staff */}
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h6" sx={{ mb: 1 }}>Current Staff</Typography>
+          <TableContainer component={Paper}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Staff Name</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {unassigned.map((h, idx) => (
+                  <TableRow key={`${h.id ?? h.name}-${idx}`}> 
+                    <TableCell>{h.name}</TableCell>
+                    <TableCell align="right">
+                      <IconButton size="small" onClick={() => handleEdit(h)}>
+                        <EditIcon />
+                      </IconButton>
+                      {h.id && (
+                        <IconButton size="small" color="error" onClick={() => handleDelete(h.id)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
         <StaffModal
           open={modalOpen}
           handler={selectedHandler}

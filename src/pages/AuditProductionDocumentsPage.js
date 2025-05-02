@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { bus } from '../utils/eventBus';
 import PageHeader from '../components/PageHeader';
 import DepartmentTabs from '../components/DepartmentTabs';
 import AuditFilterToolbar from '../components/AuditFilterToolbar';
@@ -46,6 +47,12 @@ const AuditProductionDocumentsPage = () => {
     }
     load();
   }, [department]);
+
+  useEffect(() => {
+    const handleNewAudit = rec => setData(prev => [rec, ...prev]);
+    bus.on('audit', handleNewAudit);
+    return () => bus.off('audit', handleNewAudit);
+  }, []);
 
   const handleOpenPreview = () => setPreviewItem({ uid: 'All Records', items: data });
   const handleOpenExport = () => {
