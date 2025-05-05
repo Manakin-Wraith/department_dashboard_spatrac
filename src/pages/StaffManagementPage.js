@@ -117,13 +117,18 @@ const StaffManagementPage = () => {
           food_handler_responsible: handlersNames,
           packing_batch_code: [],
           product_name: [recipe.description || item.recipeCode],
-          ingredient_list: recipe.ingredients?.map(ing => ing.description) || [],
+          ingredient_list: recipe.ingredients?.map(ing => {
+  const qty = Number(ing.recipe_use) || 0;
+  const planned = Number(item.plannedQty) || 0;
+  return `${ing.description} (${qty * planned})`;
+}) || [],
           supplier_name: supplierNames,
           address_of_supplier: addressOfSupplier,
           batch_code: [],
           sell_by_date: [],
           receiving_date: [],
-          country_of_origin: countries
+          country_of_origin: countries,
+          planned_qty: item.plannedQty
         };
         return saveAudit(department, record);
       });
@@ -172,7 +177,7 @@ const StaffManagementPage = () => {
             sx={{ width: 200 }}
           />
           <Button variant="contained" onClick={handleAdd} sx={{ backgroundColor: accentColor, color: '#fff', '&:hover': { backgroundColor: darken(accentColor, 0.2) } }}>
-            Add Staff
+            Add Assignment
           </Button>
         </Box>
         {/* Staff with Assignments */}

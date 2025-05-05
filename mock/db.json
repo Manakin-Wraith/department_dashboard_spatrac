@@ -3654,8 +3654,163 @@
       }
     ]
   ],
-  "schedules": [],
-  "audits": [],
+  "schedules": [
+    {
+      "department": "1155",
+      "weekStartDate": "2025-05-06",
+      "managerName": "Monica",
+      "handlersNames": "Ntombi",
+      "ingredientSuppliers": [
+        [
+          "GOLDEN YOLK / SUCCESS VENTURES",
+          "FRIDGE FOODS GROUP"
+        ]
+      ],
+      "items": [
+        {
+          "recipeCode": "29037",
+          "plannedQty": 2
+        }
+      ],
+      "id": 1
+    },
+    {
+      "department": "1155",
+      "weekStartDate": "2025-05-06",
+      "managerName": "Monica",
+      "handlersNames": "Zuzu",
+      "ingredientSuppliers": [
+        [
+          "GOLDEN YOLK / SUCCESS VENTURES",
+          "FRIDGE FOODS GROUP"
+        ]
+      ],
+      "items": [
+        {
+          "recipeCode": "29037",
+          "plannedQty": 3
+        }
+      ],
+      "id": 2
+    },
+    {
+      "department": "1155",
+      "weekStartDate": "2025-05-06",
+      "managerName": "Monica",
+      "handlersNames": "Bulana",
+      "ingredientSuppliers": [
+        [
+          "GOLDEN YOLK / SUCCESS VENTURES",
+          "FRIDGE FOODS GROUP"
+        ]
+      ],
+      "items": [
+        {
+          "recipeCode": "29037",
+          "plannedQty": 5
+        }
+      ],
+      "id": 3
+    }
+  ],
+  "audits": [
+    {
+      "uid": "2025-05-06-29037-0",
+      "department": "1155",
+      "date": "2025-05-06",
+      "department_manager": "Monica",
+      "food_handler_responsible": "Ntombi",
+      "planned_qty": 2,
+      "packing_batch_code": [],
+      "product_name": [
+        "EGG SALAD"
+      ],
+      "ingredient_list": [
+        "GOLDEN YOLK LOOSE H/FOODS EGGS (6)",
+        "MAYONAISE TANGY (2)"
+      ],
+      "supplier_name": [
+        "GOLDEN YOLK / SUCCESS VENTURES",
+        "FRIDGE FOODS GROUP"
+      ],
+      "address_of_supplier": [
+        "",
+        ""
+      ],
+      "batch_code": [],
+      "sell_by_date": [],
+      "receiving_date": [],
+      "country_of_origin": [
+        "",
+        ""
+      ],
+      "id": 1
+    },
+    {
+      "uid": "2025-05-06-29037-0",
+      "department": "1155",
+      "date": "2025-05-06",
+      "department_manager": "Monica",
+      "food_handler_responsible": "Zuzu",
+      "packing_batch_code": [],
+      "product_name": [
+        "EGG SALAD"
+      ],
+      "ingredient_list": [
+        "GOLDEN YOLK LOOSE H/FOODS EGGS (9)",
+        "MAYONAISE TANGY (3)"
+      ],
+      "supplier_name": [
+        "GOLDEN YOLK / SUCCESS VENTURES",
+        "FRIDGE FOODS GROUP"
+      ],
+      "address_of_supplier": [
+        "",
+        ""
+      ],
+      "batch_code": [],
+      "sell_by_date": [],
+      "receiving_date": [],
+      "country_of_origin": [
+        "",
+        ""
+      ],
+      "planned_qty": 3,
+      "id": 2
+    },
+    {
+      "uid": "2025-05-06-29037-0",
+      "department": "1155",
+      "date": "2025-05-06",
+      "department_manager": "Monica",
+      "food_handler_responsible": "Bulana",
+      "packing_batch_code": [],
+      "product_name": [
+        "EGG SALAD"
+      ],
+      "ingredient_list": [
+        "GOLDEN YOLK LOOSE H/FOODS EGGS (15)",
+        "MAYONAISE TANGY (5)"
+      ],
+      "supplier_name": [
+        "GOLDEN YOLK / SUCCESS VENTURES",
+        "FRIDGE FOODS GROUP"
+      ],
+      "address_of_supplier": [
+        "",
+        ""
+      ],
+      "batch_code": [],
+      "sell_by_date": [],
+      "receiving_date": [],
+      "country_of_origin": [
+        "",
+        ""
+      ],
+      "planned_qty": 5,
+      "id": 3
+    }
+  ],
   "production-documents": [],
   "handlers": []
 }
