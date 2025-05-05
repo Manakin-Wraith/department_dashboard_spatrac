@@ -155,7 +155,7 @@ const StaffManagementPage = () => {
 
   // Partition handlers by assignment status
   const filteredHandlers = handlers.filter(h => h.name.toLowerCase().includes(filter.toLowerCase()));
-  const unassigned = filteredHandlers.filter(h => getAssignments(h.name).length === 0);
+  // const unassigned = filteredHandlers.filter(h => getAssignments(h.name).length === 0);
   const assigned = filteredHandlers.filter(h => getAssignments(h.name).length > 0);
 
   return (
@@ -222,37 +222,7 @@ const StaffManagementPage = () => {
             </Table>
           </TableContainer>
         </Box>
-        {/* Current Staff */}
-        <Box sx={{ mt: 4 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>Current Staff</Typography>
-          <TableContainer component={Paper}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Staff Name</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {unassigned.map((h, idx) => (
-                  <TableRow key={`${h.id ?? h.name}-${idx}`}> 
-                    <TableCell>{h.name}</TableCell>
-                    <TableCell align="right">
-                      <IconButton size="small" onClick={() => handleEdit(h)}>
-                        <EditIcon />
-                      </IconButton>
-                      {h.id && (
-                        <IconButton size="small" color="error" onClick={() => handleDelete(h.id)}>
-                          <DeleteIcon />
-                        </IconButton>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
+
         <ConfirmScheduleModal
           open={modalOpen}
           onClose={() => setModalOpen(false)}
