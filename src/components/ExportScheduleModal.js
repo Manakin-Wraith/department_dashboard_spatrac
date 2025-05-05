@@ -116,6 +116,19 @@ const ExportScheduleModal = ({ open, onClose, schedules, recipes }) => {
                 <Typography variant="body2">Qty: {item.plannedQty}</Typography>
                 <Typography variant="body2">Handlers: {schedule.handlersNames}</Typography>
                 <Typography variant="body2">Manager: {schedule.managerName}</Typography>
+                <Box sx={{ mt: 1, mb: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Ingredients:</Typography>
+                  <ul style={{ margin: 0, paddingLeft: 16 }}>
+                    {(rec.ingredients || []).map((ing, i) => {
+                      const qty = Number(ing.recipe_use) || 0;
+                      const planned = Number(item.plannedQty) || 0;
+                      const scaled = qty * planned;
+                      return (
+                        <li key={i}>{ing.description} ({scaled}{ing.unit ? ` ${ing.unit}` : ''})</li>
+                      );
+                    })}
+                  </ul>
+                </Box>
               </Box>
             );
           })}
