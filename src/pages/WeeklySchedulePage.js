@@ -114,9 +114,20 @@ const WeeklySchedulePage = () => {
       // delete related audit entries for this recipe
       const itemToDel = sel.items[idxToDelete];
       // update schedule items
-      const updated = { ...sel, items: sel.items.filter((_, i) => i !== idxToDelete) };
-      const saved = await saveSchedule(department, updated);
-      setSchedules(schedules.map(s => s.id === scheduleId ? saved : s));
+      const updatedItems = sel.items.filter((_, i) => i !== idxToDelete);
+      if (updatedItems.length === 0) {
+        // If no items left, delete the schedule
+        await deleteSchedule(scheduleId);
+        setSchedules(schedules.filter(s => s.id !== scheduleId));
+        // emit event for full schedule deletion
+        bus.emit('scheduleDeleted', scheduleId);
+      } else {
+        const updated = { ...sel, items: updatedItems };
+        const saved = await saveSchedule(department, updated);
+        setSchedules(schedules.map(s => s.id === scheduleId ? saved : s));
+        // emit event for staff assignment update
+        bus.emit('scheduleRecipeDeleted', { handlerName: sel.handlersNames, date: sel.weekStartDate, recipeCode: itemToDel.recipeCode });
+      }
       // remove audit entry
       try {
         const audits = await fetchAudits(department);

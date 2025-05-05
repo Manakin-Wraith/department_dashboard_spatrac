@@ -62,7 +62,7 @@ const DashboardPage = () => {
               <CardActions sx={{ justifyContent: 'flex-end', p: 2, pt: 1 }}>
                 <Button
                   component={Link}
-                  to={`/production/${dept.department_code}/create`}
+                  to={`/production/${dept.department_code}/overview`}
                   variant="contained"
                   size="small"
                   sx={{

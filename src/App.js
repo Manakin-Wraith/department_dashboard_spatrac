@@ -13,7 +13,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<DashboardPage />} />
-        <Route path="/production/:department/create" element={<CreateProductionDocumentPage />} />
+        <Route path="/production/:department/overview" element={<CreateProductionDocumentPage />} />
         <Route path="/production/:department/schedule" element={<WeeklySchedulePage />} />
         <Route path="/production/:department/audit" element={<AuditProductionDocumentsPage />} />
         <Route path="/production/:department/recipes" element={<RecipeListPage />} />

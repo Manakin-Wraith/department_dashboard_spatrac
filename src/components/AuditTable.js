@@ -21,7 +21,7 @@ const AuditTable = ({ data = [], onView }) => (
             <TableCell>{item.date || '-'}</TableCell>
             <TableCell>{item.department_manager || '-'}</TableCell>
             <TableCell>{item.food_handler_responsible || '-'}</TableCell>
-            <TableCell>{(item.product_name && item.product_name[0]) || '-'}</TableCell>
+            <TableCell>{item.productDescription || item.description || (item.product_name && item.product_name[0]) || '-'}</TableCell>
             <TableCell align="right">
               <Button variant="text" size="small" onClick={() => onView(item)}>View</Button>
             </TableCell>

@@ -3654,29 +3654,7 @@
       }
     ]
   ],
-  "schedules": [
-    {
-      "department": "1152",
-      "weekStartDate": "2025-05-02",
-      "managerName": "Clive",
-      "handlersNames": "Sipho",
-      "ingredientSuppliers": [
-        [
-          "AIRPORT INTERNATIONAL TRADING",
-          "PRICE RITE SPICES PTY LTD",
-          "EXCELLENT MEAT CORP (T & T)",
-          "SPAR WESTERN CAPE",
-          "PRICE RITE SPICES PTY LTD",
-          "CROWN FOOD GROUP",
-          "PRICE RITE SPICES PTY LTD",
-          "CROWN FOOD GROUP",
-          "PRICE RITE SPICES PTY LTD"
-        ]
-      ],
-      "items": [],
-      "id": 1
-    }
-  ],
+  "schedules": [],
   "audits": [],
   "production-documents": [],
   "handlers": []

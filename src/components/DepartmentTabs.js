@@ -11,7 +11,7 @@ const DepartmentTabs = () => {
   const color = deptObj.color || theme.palette.primary.main;
   const base = `/production/${department}`;
   const tabs = [
-    { label: 'Create', to: `${base}/create` },
+    { label: 'Overview', to: `${base}/overview` },
     { label: 'Schedule', to: `${base}/schedule` },
     { label: 'Audit', to: `${base}/audit` },
     { label: 'Recipes', to: `${base}/recipes` },

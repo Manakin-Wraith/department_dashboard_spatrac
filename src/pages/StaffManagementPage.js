@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { saveHandler, deleteHandler, fetchSchedules, fetchRecipes, saveSchedule, saveAudit } from '../services/api';
+import { deleteHandler, fetchSchedules, fetchRecipes, saveSchedule, saveAudit } from '../services/api';
+import supplierTable from '../data/supplier_table.json';
 import { bus } from '../utils/eventBus';
 import { Box, Typography, Button, TextField, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper, Chip, IconButton } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -8,7 +9,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PageHeader from '../components/PageHeader';
 import DepartmentTabs from '../components/DepartmentTabs';
-import StaffModal from '../components/StaffModal';
+import ConfirmScheduleModal from '../components/ConfirmScheduleModal';
 import { useTheme, alpha, darken } from '@mui/material/styles';
 import departments from '../data/department_table.json';
 
@@ -23,8 +24,10 @@ const StaffManagementPage = () => {
   const [schedules, setSchedules] = useState([]);
   const [filter, setFilter] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedHandler, setSelectedHandler] = useState(null);
   const [recipeMap, setRecipeMap] = useState({});
+  const [modalItems, setModalItems] = useState([]);
+  const [modalDate, setModalDate] = useState('');
+  const [recipes, setRecipes] = useState([]);
 
   useEffect(() => {
     async function load() {
@@ -33,82 +36,105 @@ const StaffManagementPage = () => {
         fetchRecipes(department)
       ]);
       const defaultList = (deptObj.handlers || []).map((name, idx) => ({ id: null, department, name }));
-      // always use the hard-coded staff list
       setHandlers(defaultList);
       setSchedules(sch);
-      // Flatten nested array of recipes if needed
+      // Flatten and filter recipes for this department
       const flatRecs = Array.isArray(recs[0]) ? recs.flat() : recs;
-      const map = flatRecs.reduce((acc, r) => { acc[r.product_code] = r.description; return acc; }, {});
+      const deptRecipes = flatRecs.filter(r => r.department === deptObj.department);
+      setRecipes(deptRecipes);
+      const map = deptRecipes.reduce((acc, r) => { acc[r.product_code] = r.description; return acc; }, {});
       setRecipeMap(map);
     }
     load();
-  }, [department, deptObj.handlers]);
+  }, [department, deptObj.handlers, deptObj.department]);
 
   useEffect(() => {
     const onDel = id => setSchedules(prev => prev.filter(s => s.id !== id));
     bus.on('scheduleDeleted', onDel);
-    return () => bus.off('scheduleDeleted', onDel);
+    // Listen for a deleted recipe from a schedule (not the whole schedule)
+    const onRecipeDel = ({ handlerName, date, recipeCode }) => {
+      setSchedules(prev => prev.map(s => {
+        if (s.handlersNames === handlerName && s.weekStartDate === date) {
+          return { ...s, items: s.items.filter(item => item.recipeCode !== recipeCode) };
+        }
+        return s;
+      }));
+    };
+    bus.on('scheduleRecipeDeleted', onRecipeDel);
+    return () => {
+      bus.off('scheduleDeleted', onDel);
+      bus.off('scheduleRecipeDeleted', onRecipeDel);
+    };
   }, []);
 
   const handleAdd = () => {
-    setSelectedHandler(null);
+    setModalItems([]);
+    setModalDate('');
     setModalOpen(true);
   };
 
   const handleEdit = (handler) => {
     const handlerScheds = schedules.filter(s => s.handlersNames === handler.name);
-    const assignments = handlerScheds.flatMap(s =>
-      s.items.map(item => ({ id: s.id, date: s.weekStartDate, recipeCode: item.recipeCode, plannedQty: item.plannedQty }))
+    // For editing, flatten all items, but keep weekStartDate and plannedQty
+    const items = handlerScheds.flatMap(s =>
+      s.items.map(item => ({ recipeCode: item.recipeCode, plannedQty: item.plannedQty }))
     );
-    setSelectedHandler({ ...handler, assignments });
+    setModalItems(items);
+    setModalDate(handlerScheds[0]?.weekStartDate || '');
     setModalOpen(true);
   };
 
-  const handleSave = async (handler) => {
-    // Save handler first
-    const saved = await saveHandler(department, handler);
-    setHandlers(prev => {
-      const exists = prev.find(h => h.id === saved.id);
-      if (exists) return prev.map(h => h.id === saved.id ? saved : h);
-      return [...prev, saved];
-    });
-    // Save assignments as grouped schedules
-    if (handler.assignments?.length) {
-      // group by schedule id or date to update existing schedules
-      const grouped = handler.assignments.reduce((acc, a) => {
-        const key = a.id ?? a.date;
-        if (!acc[key]) acc[key] = { id: a.id, weekStartDate: a.date, items: [] };
-        acc[key].items.push({ recipeCode: a.recipeCode, plannedQty: a.plannedQty });
-        return acc;
-      }, {});
-      const payloads = Object.values(grouped).map(g => ({
-        id: g.id,
-        department,
-        weekStartDate: g.weekStartDate,
-        managerName: '',
-        handlersNames: saved.name,
-        items: g.items
-      }));
-      const updatedScheds = [];
-      for (const payload of payloads) {
-        const sched = await saveSchedule(department, payload);
-        updatedScheds.push(sched);
-        // record audit
-        const auditRec = await saveAudit(department, {
-          entity: 'schedule',
-          action: payload.id ? 'update' : 'create',
-          details: payload
+  // New handler for ConfirmScheduleModal
+  const handleConfirm = async ({ items: newItems, scheduledDate: date, managerName, handlersNames, ingredientSuppliers }) => {
+    try {
+      // Save schedule (new or update)
+      const schedule = { department, weekStartDate: date, managerName, handlersNames, ingredientSuppliers, items: newItems };
+      const saved = await saveSchedule(department, schedule);
+      setSchedules(prev => {
+        // Replace or add
+        const idx = prev.findIndex(s => s.weekStartDate === date && s.handlersNames === handlersNames);
+        if (idx !== -1) {
+          const arr = [...prev];
+          arr[idx] = saved;
+          return arr;
+        }
+        return [...prev, saved];
+      });
+      // Save audits for each scheduled recipe
+      const auditPromises = newItems.map((item, idx) => {
+        const recipe = (Array.isArray(recipes) ? recipes : []).find(r => r.product_code === item.recipeCode) || {};
+        const supplierNames = ingredientSuppliers[idx] || [];
+        const addressOfSupplier = supplierNames.map(name => {
+          const sup = supplierTable.find(s => s.supplier_name === name);
+          return sup?.address || '';
         });
-        bus.emit('audit', auditRec);
-      }
-      // replace schedules for this handler
-      setSchedules(prev => [
-        ...prev.filter(s => s.handlersNames !== saved.name),
-        ...updatedScheds
-      ]);
+        const countries = supplierNames.map(name => supplierTable.find(s => s.supplier_name === name)?.country_of_origin || '');
+        const record = {
+          uid: `${date}-${item.recipeCode}-${idx}`,
+          department,
+          date,
+          department_manager: managerName,
+          food_handler_responsible: handlersNames,
+          packing_batch_code: [],
+          product_name: [recipe.description || item.recipeCode],
+          ingredient_list: recipe.ingredients?.map(ing => ing.description) || [],
+          supplier_name: supplierNames,
+          address_of_supplier: addressOfSupplier,
+          batch_code: [],
+          sell_by_date: [],
+          receiving_date: [],
+          country_of_origin: countries
+        };
+        return saveAudit(department, record);
+      });
+      await Promise.all(auditPromises);
+      setModalOpen(false);
+    } catch (e) {
+      console.error('Failed to save schedule', e);
     }
-    setModalOpen(false);
   };
+
+
 
   const handleDelete = async (id) => {
     if (window.confirm('Delete handler?')) {
@@ -222,12 +248,13 @@ const StaffManagementPage = () => {
             </Table>
           </TableContainer>
         </Box>
-        <StaffModal
+        <ConfirmScheduleModal
           open={modalOpen}
-          handler={selectedHandler}
           onClose={() => setModalOpen(false)}
-          onSave={handleSave}
-          onDelete={handleDelete}
+          items={modalItems}
+          recipes={recipes}
+          onConfirm={handleConfirm}
+          initialDate={modalDate}
         />
       </Box>
     </Box>
