@@ -44,7 +44,7 @@ const RecipeListPage = () => {
   const handleCreate = () => navigate(`/production/${department}/recipes/new`);
 
   const handleEdit = recipe => {
-    const id = recipe.id || recipe.uid || '';
+    const id = recipe.product_code; // Use product_code as the unique identifier
     navigate(`/production/${department}/recipes/${id}`);
   };
 

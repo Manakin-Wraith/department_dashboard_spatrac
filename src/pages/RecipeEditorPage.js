@@ -35,8 +35,20 @@ const RecipeEditorPage = () => {
       async function loadRecipe() {
         try {
           const recipe = await fetchRecipe(department, recipeId);
-          setDetails({ title: recipe.title, yield: recipe.yield, instructions: recipe.instructions });
-          setIngredients(recipe.ingredients || []);
+          setDetails({
+            title: recipe.title || recipe.description || '',
+            yield: recipe.yield || recipe.quantity || recipe.cost_excl_per_each_kg || '',
+            instructions: recipe.instructions || ''
+          });
+          setIngredients((recipe.ingredients || []).map(ing => ({
+            description: ing.description || '',
+            prod_code: ing.prod_code || '',
+            qty_used: ing.recipe_use || ing.quantity || '',
+            supplier_name: ing.supplier_name || '',
+            batch_code: '',
+            receiving_date: '',
+            sell_by_date: ''
+          })));
           setLastModified(recipe.updated_at || recipe.lastModified || new Date().toLocaleString());
         } catch (err) {
           console.error(err);
