@@ -202,7 +202,13 @@ const ConfirmScheduleModal = ({ open, onClose, items, recipes, onConfirm, initia
                                     label="Qty Used"
                                     size="small"
                                     fullWidth
-                                    value={ing.recipe_use}
+                                    value={
+                                      (() => {
+                                        const qty = Number(ing.recipe_use) || 0;
+                                        const planned = Number(item.plannedQty) || 0;
+                                        return qty * planned;
+                                      })()
+                                    }
                                     InputProps={{ readOnly: true }}
                                   />
                                 </Grid>

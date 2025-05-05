@@ -1,7 +1,5 @@
 import React, { useRef } from 'react';
 import { GridLegacy as Grid, Dialog, DialogTitle, DialogContent, DialogActions, Button, Card, CardHeader, CardContent, Typography, Chip, Stack } from '@mui/material';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 const AuditPreviewModal = ({ item, onClose }) => {
   const previewRef = useRef(null);
@@ -12,6 +10,7 @@ const AuditPreviewModal = ({ item, onClose }) => {
     department,
     department_manager,
     food_handler_responsible,
+    planned_qty,
     packing_batch_code = [],
     product_name = [],
     ingredient_list = [],
@@ -28,10 +27,16 @@ const AuditPreviewModal = ({ item, onClose }) => {
     // recipe name heading
     const recipeName = product_name.join(', ');
     // CSV structure: heading, blank line, headers, data rows
-    const headers = ['UID','Department','Department Manager','Scheduled Date','Food Handler','Ingredient','Supplier Name','Supplier Address','Batch Code','Sell-by Date','Receiving Date','Country of Origin'];
-    const rows = ingredient_list.map((ing, idx) => [
-      uid, department, department_manager, date || '', food_handler_responsible, ing, supplier_name[idx]||'', address_of_supplier[idx]||'', batch_code[idx]||'', sell_by_date[idx]||'', receiving_date[idx]||'', country_of_origin[idx]||''
-    ]);
+    const headers = ['UID','Department','Department Manager','Scheduled Date','Food Handler','Ingredient','Ingredient Quantity','Supplier Name','Supplier Address','Batch Code','Sell-by Date','Receiving Date','Country of Origin','Planned Quantity'];
+    const rows = ingredient_list.map((ing, idx) => {
+      // Extract name and quantity (e.g., 'FROZEN MDM (25kg)' => name: 'FROZEN MDM', qty: '25kg')
+      const match = ing.match(/^(.*)\s*\(([^)]+)\)$/);
+      const name = match ? match[1] : ing;
+      const qty = match ? match[2] : '';
+      return [
+        uid, department, department_manager, date || '', food_handler_responsible, name, qty, supplier_name[idx]||'', address_of_supplier[idx]||'', batch_code[idx]||'', sell_by_date[idx]||'', receiving_date[idx]||'', country_of_origin[idx]||'', planned_qty !== undefined && planned_qty !== null ? planned_qty : '-'
+      ];
+    });
     const csvArray = [
       [`Recipe: ${recipeName}`],
       [],
@@ -52,18 +57,7 @@ const AuditPreviewModal = ({ item, onClose }) => {
     URL.revokeObjectURL(url);
   };
 
-  const handleExportPdf = () => {
-    if (!previewRef.current) return;
-    html2canvas(previewRef.current, { scale: 2 }).then(canvas => {
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'pt', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`audit_${uid}.pdf`);
-    });
-  };
-
+  
   return (
     <Dialog open={Boolean(item)} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>Recipe Audit Form Preview{item ? ` - ${item.uid}` : ''}</DialogTitle>
@@ -90,6 +84,13 @@ const AuditPreviewModal = ({ item, onClose }) => {
                       <Typography variant="subtitle2" fontWeight="bold">Scheduled Date</Typography>
                       <Typography variant="body2">{date || '-'}</Typography>
                     </Grid>
+                    <Grid item xs={12} sm={4}>
+                      <Typography variant="subtitle2" fontWeight="bold">Product Name</Typography>
+                      <Typography variant="body2">{product_name.join(', ')}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Planned Quantity: {planned_qty !== undefined && planned_qty !== null ? planned_qty : '-'}
+                      </Typography>
+                    </Grid>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="subtitle2" fontWeight="bold">Food Handler Responsible</Typography>
                       <Typography variant="body2">{food_handler_responsible}</Typography>
@@ -113,6 +114,9 @@ const AuditPreviewModal = ({ item, onClose }) => {
               <Card>
                 <CardHeader title="Ingredients" />
                 <CardContent>
+                  <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+                    <Chip label={`Planned Quantity: ${planned_qty !== undefined && planned_qty !== null ? planned_qty : '-'}`} color="info" />
+                  </Stack>
                   <Stack spacing={2}>
                     {ingredient_list.map((ing, idx) => (
                       <Card variant="outlined" key={idx}>
@@ -156,7 +160,7 @@ const AuditPreviewModal = ({ item, onClose }) => {
       </DialogContent>
       <DialogActions>
         <Button variant="outlined" onClick={handleExportCsv}>Export CSV</Button>
-        <Button variant="outlined" onClick={handleExportPdf}>Export PDF</Button>
+        <Button variant="outlined" onClick={() => window.print()}>Print</Button>
         <Button variant="contained" onClick={onClose} color="primary">
           Close
         </Button>

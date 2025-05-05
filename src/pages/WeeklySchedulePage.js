@@ -5,7 +5,7 @@ import supplierTable from '../data/supplier_table.json';
 import { Box, Button, Card, CardContent, Accordion, AccordionSummary, AccordionDetails, Typography, Snackbar, Alert } from '@mui/material';
 import ConfirmScheduleModal from '../components/ConfirmScheduleModal';
 import ExportScheduleModal from '../components/ExportScheduleModal';
-import { useTheme, alpha, darken } from '@mui/material/styles';
+import { useTheme, alpha } from '@mui/material/styles';
 import PageHeader from '../components/PageHeader';
 import DepartmentTabs from '../components/DepartmentTabs';
 import departments from '../data/department_table.json';
@@ -57,7 +57,7 @@ const WeeklySchedulePage = () => {
   }, [department, deptObj.department]);
 
 
-  const handleSave = () => setConfirmOpen(true);
+
 
   const handleConfirm = async ({ items: newItems, scheduledDate: date, managerName, handlersNames, ingredientSuppliers }) => {
     try {
@@ -88,9 +88,14 @@ const WeeklySchedulePage = () => {
           date,
           department_manager: managerName,
           food_handler_responsible: handlersNames,
+          planned_qty: item.plannedQty,
           packing_batch_code: [],
           product_name: [recipe.description || item.recipeCode],
-          ingredient_list: recipe.ingredients?.map(ing => ing.description) || [],
+          ingredient_list: recipe.ingredients?.map(ing => {
+  const qty = Number(ing.recipe_use) || 0;
+  const planned = Number(item.plannedQty) || 0;
+  return `${ing.description} (${qty * planned})`;
+}) || [],
           supplier_name: supplierNames,
           address_of_supplier: addressOfSupplier,
           batch_code: [],
@@ -255,15 +260,7 @@ const WeeklySchedulePage = () => {
           </CardContent>
         </Card>
 
-        <Box sx={{ mt: 2 }}>
-          <Button
-            variant="contained"
-            onClick={handleSave}
-            sx={{ backgroundColor: accentColor, '&:hover': { backgroundColor: darken(accentColor, 0.2) } }}
-          >
-            Save Schedule
-          </Button>
-        </Box>
+        
         <ConfirmScheduleModal
           open={confirmOpen}
           initialDate={scheduledDate}
