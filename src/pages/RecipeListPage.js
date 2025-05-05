@@ -19,25 +19,26 @@ const RecipeListPage = () => {
   const pageTextColor = theme.palette.text.primary;
   const accentColor = departments.find(d => d.department_code === department)?.color;
   const [recipes, setRecipes] = useState([]);
-  const [filters, setFilters] = useState({ search: '', status: '' });
+  const [filters, setFilters] = useState({ department: '' });
 
   useEffect(() => {
     async function load() {
       try {
-        const data = await fetchRecipes(department, filters);
+        const data = await fetchRecipes(); // fetch all recipes
         // flatten nested array from mock server
         const recipesData = Array.isArray(data[0]) ? data[0] : data;
-        setRecipes(recipesData);
+        // filter recipes by department name (e.g. 'BUTCHERY', 'BAKERY', 'HMR')
+        const filtered = filters.department ? recipesData.filter(r => r.department === filters.department) : recipesData;
+        setRecipes(filtered);
       } catch (error) {
         console.error(error);
       }
     }
     load();
-  }, [department, filters]);
+  }, [filters]);
 
   const handleFilterChange = newFilters => {
-    setFilters(newFilters);
-    // TODO: apply filter to recipes
+    setFilters(prev => ({ ...prev, ...newFilters }));
   };
 
   const handleCreate = () => navigate(`/production/${department}/recipes/new`);
