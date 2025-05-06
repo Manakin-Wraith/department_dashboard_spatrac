@@ -14,7 +14,8 @@ const RecipeListPage = () => {
   const { department } = useParams();
   const navigate = useNavigate();
   const theme = useTheme();
-  const deptObj = departments.find(d => d.department_code === department) || {};
+  // Memoize the department name so initialDepartment only changes if the department param changes
+  const deptObj = React.useMemo(() => departments.find(d => d.department_code === department) || {}, [department]);
   const pageBg = alpha(deptObj.color || '#000', 1.0);
   const pageTextColor = theme.palette.text.primary;
   const accentColor = departments.find(d => d.department_code === department)?.color;
@@ -59,7 +60,12 @@ const RecipeListPage = () => {
         <PageHeader title="Recipes" />
         <DepartmentTabs />
         <Box sx={{ mt: 2 }}>
-          <RecipeFilterToolbar onFilterChange={handleFilterChange} onCreate={handleCreate} />
+          <RecipeFilterToolbar
+            onFilterChange={handleFilterChange}
+            onCreate={handleCreate}
+            initialDepartment={deptObj.department || ''}
+            lockDepartment={!!department}
+          />
         </Box>
         <Box sx={{ mt: 3 }}>
           <RecipeListTable data={recipes} onEdit={handleEdit} />

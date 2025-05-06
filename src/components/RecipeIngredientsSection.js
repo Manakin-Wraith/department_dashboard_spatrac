@@ -79,7 +79,6 @@ const RecipeIngredientsSection = ({ ingredients, setIngredients }) => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                label="Product Code"
                 name="prod_code"
                 value={row.prod_code}
                 onChange={e => handleRowChange(index, 'prod_code', e.target.value)}
@@ -110,7 +109,6 @@ const RecipeIngredientsSection = ({ ingredients, setIngredients }) => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                label="Qty Used"
                 name="qty_used"
                 type="number"
                 value={row.qty_used}

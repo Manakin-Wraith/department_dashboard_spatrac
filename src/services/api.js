@@ -1,8 +1,13 @@
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:4000';
 
 export async function fetchRecipes(department, filters = {}) {
-  const params = new URLSearchParams({ department, ...filters });
-  const res = await fetch(`${API_BASE}/api/recipes?${params.toString()}`);
+  const params = new URLSearchParams({ ...filters });
+  if (department && department !== 'undefined' && department !== '') {
+    params.append('department', department);
+  }
+  const query = params.toString();
+  const url = query ? `${API_BASE}/api/recipes?${query}` : `${API_BASE}/api/recipes`;
+  const res = await fetch(url);
   if (!res.ok) throw new Error('Failed to fetch recipes');
   return res.json();
 }
