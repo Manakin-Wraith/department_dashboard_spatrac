@@ -1,51 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import { GridLegacy as Grid, Box, Button, Avatar } from '@mui/material';
+import { Grid, Box, Button, Avatar, Typography } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import BakeryDiningIcon from '@mui/icons-material/BakeryDining';
 import SetMealIcon from '@mui/icons-material/SetMeal';
 import SoupKitchenIcon from '@mui/icons-material/SoupKitchen';
 import departments from '../data/department_table.json';
+
 // Map JSON icon key to component
 const iconMap = { BakeryDiningIcon, SetMealIcon, SoupKitchenIcon };
 
-
 const RecipeFilterToolbar = ({ onFilterChange, onCreate, initialDepartment = '', lockDepartment = false }) => {
   const [department, setDepartment] = useState(initialDepartment);
+  const theme = useTheme();
 
-  // Only call onFilterChange once on mount if initialDepartment is set
-  // Only call onFilterChange once when initialDepartment is set for the first time
   useEffect(() => {
-    if (initialDepartment) {
-      setDepartment(initialDepartment);
-      onFilterChange({ department: initialDepartment });
-    }
-    // eslint-disable-next-line
+    // Sync local 'department' state with 'initialDepartment' prop when it changes.
+    // This ensures the toolbar accurately reflects the parent's filter state.
+    // No need to call onFilterChange here, as the parent (RecipeListPage) manages the filter state.
+    setDepartment(initialDepartment);
   }, [initialDepartment]);
 
-
   return (
-    <Box sx={{ mt: 4, mb: 2 }}>
-      <Grid container spacing={2} alignItems="center">
-        <Grid item xs={12} sm={5}>
-          <Box sx={{ display: 'flex', alignItems: 'center', minHeight: 56, pl: 1 }}>
+    <Box sx={{ mt: 2, mb: 2 }}>
+      <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+        <Grid item xs={12} sm={8} md={9}>
+          <Box sx={{ display: 'flex', alignItems: 'center', minHeight: 56 }}>
             {(() => {
+              // Use the internal 'department' state which is synced with 'initialDepartment'
               const deptObj = departments.find(d => d.department === department);
               if (deptObj && deptObj.icon && iconMap[deptObj.icon]) {
                 const IconComponent = iconMap[deptObj.icon];
+                const iconColor = theme.palette.getContrastText(deptObj.color);
                 return (
-                  <Avatar sx={{ bgcolor: deptObj.color, mr: 1 }}>
+                  <Avatar sx={{ bgcolor: deptObj.color, color: iconColor, mr: 1.5 }}>
                     <IconComponent />
                   </Avatar>
                 );
               }
-              return null;
+              return null; // No icon if 'All Departments' or department has no icon
             })()}
-            <span style={{ fontWeight: 600, fontSize: 20 }}>
-              {department || 'All Departments'}
-            </span>
+            <Typography variant="h6" component="span" sx={{ fontWeight: 500 }}>
+              {department || 'All Recipes'} {/* Display department name or 'All Recipes' */}
+            </Typography>
           </Box>
         </Grid>
-        <Grid item xs={12} sm={3} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant="contained" onClick={onCreate}>
+        <Grid item xs={12} sm={4} md={3} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', sm: 'flex-end' } }}>
+          <Button variant="contained" color="primary" onClick={onCreate} sx={{ width: { xs: '100%', sm: 'auto'} }}>
             Create New Recipe
           </Button>
         </Grid>
