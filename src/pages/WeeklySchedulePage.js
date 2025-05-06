@@ -7,7 +7,6 @@ import ConfirmScheduleModal from '../components/ConfirmScheduleModal';
 import ExportScheduleModal from '../components/ExportScheduleModal';
 import { useTheme, alpha } from '@mui/material/styles';
 import PageHeader from '../components/PageHeader';
-import DepartmentTabs from '../components/DepartmentTabs';
 import departments from '../data/department_table.json';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -183,7 +182,6 @@ const WeeklySchedulePage = () => {
           </Button>
         </Box>
         <PageHeader title="Weekly Schedule" />
-        <DepartmentTabs />
         <Box sx={{ my: 2 }}>
           <FullCalendar
             plugins={[dayGridPlugin, interactionPlugin]}

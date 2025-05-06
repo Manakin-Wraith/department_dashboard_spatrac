@@ -8,7 +8,6 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PageHeader from '../components/PageHeader';
-import DepartmentTabs from '../components/DepartmentTabs';
 import ConfirmScheduleModal from '../components/ConfirmScheduleModal';
 import { useTheme, alpha, darken } from '@mui/material/styles';
 import departments from '../data/department_table.json';
@@ -118,10 +117,10 @@ const StaffManagementPage = () => {
           packing_batch_code: [],
           product_name: [recipe.description || item.recipeCode],
           ingredient_list: recipe.ingredients?.map(ing => {
-  const qty = Number(ing.recipe_use) || 0;
-  const planned = Number(item.plannedQty) || 0;
-  return `${ing.description} (${qty * planned})`;
-}) || [],
+            const qty = Number(ing.recipe_use) || 0;
+            const planned = Number(item.plannedQty) || 0;
+            return `${ing.description} (${qty * planned})`;
+          }) || [],
           supplier_name: supplierNames,
           address_of_supplier: addressOfSupplier,
           batch_code: [],
@@ -167,7 +166,6 @@ const StaffManagementPage = () => {
           </Button>
         </Box>
         <PageHeader title="Staff Management" />
-        <DepartmentTabs />
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4, mb: 2 }}>
           <TextField
             placeholder="Search staff..."

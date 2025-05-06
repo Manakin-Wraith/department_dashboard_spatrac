@@ -1,3 +1,52 @@
+## Features & Functionality
+
+This application is a departmental production dashboard (SPATRAC) designed for food production environments, supporting multiple departments such as Butchery, Bakery, and HMR. It provides a comprehensive workflow for recipe management, production scheduling, auditing, and staff coordination.
+
+### Core Features
+
+- **Dashboard Overview**  
+  A central dashboard displays department-specific production stats and quick actions.
+
+- **Recipe Management**  
+  - Create, edit, and list recipes per department.
+  - Specify ingredients, quantities, units, and supplier associations.
+  - Filter recipes by department.
+
+- **Weekly Production Scheduling**  
+  - Schedule recipes for weekly production runs.
+  - Adjust production quantities per schedule.
+  - Assign staff and managers to scheduled runs.
+  - Export schedules as needed.
+
+- **Production Document Creation**  
+  - Auto-populate production documents from scheduled recipes.
+  - Capture batch codes, sell-by dates, and ingredient traceability.
+  - Ensure all required data for compliance and auditing is collected.
+
+- **Audit & Compliance**  
+  - View, filter, and export production audit records.
+  - Preview detailed audit data, including supplier and origin information for each ingredient.
+
+- **Supplier & Product Mapping**  
+  - Flexible mapping of products and suppliers to departments.
+  - Supports products available across multiple departments with department-specific supplier codes.
+
+- **Staff Management**  
+  - Assign and manage department staff and handlers for production runs.
+
+- **User Experience**  
+  - Modern, responsive UI built with Material-UI and React.
+  - Department color-coding and context-aware navigation.
+  - Modal dialogs for confirmations, previews, and exports.
+
+### Technical Stack
+
+- **Frontend:** React (Create React App), Material-UI
+- **State Management:** React Hooks
+- **API Integration:** RESTful endpoints via `src/services/api.js`
+- **Mock Data:** Local JSON files for suppliers, departments, and products
+- **Testing:** Jest (via Create React App)
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

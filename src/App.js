@@ -1,29 +1,30 @@
-import './App.css';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import AppLayout from './components/AppLayout'; 
 import DashboardPage from './pages/DashboardPage';
 import CreateProductionDocumentPage from './pages/CreateProductionDocumentPage';
-import AuditProductionDocumentsPage from './pages/AuditProductionDocumentsPage';
 import RecipeListPage from './pages/RecipeListPage';
 import RecipeEditorPage from './pages/RecipeEditorPage';
 import WeeklySchedulePage from './pages/WeeklySchedulePage';
+import AuditProductionDocumentsPage from './pages/AuditProductionDocumentsPage';
 import StaffManagementPage from './pages/StaffManagementPage';
+
+import './App.css'; 
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<DashboardPage />} />
-        <Route path="/production/:department/overview" element={<CreateProductionDocumentPage />} />
-        <Route path="/production/:department/schedule" element={<WeeklySchedulePage />} />
-        <Route path="/production/:department/audit" element={<AuditProductionDocumentsPage />} />
-        <Route path="/production/:department/recipes" element={<RecipeListPage />} />
-        <Route path="/production/:department/recipes/new" element={<RecipeEditorPage />} />
-        <Route path="/production/:department/recipes/:recipeId" element={<RecipeEditorPage />} />
-        <Route path="/production/:department/staff" element={<StaffManagementPage />} />
-        <Route path="/production/:department" element={<Navigate to="create" replace />} />
-        <Route path="*" element={<div>404 Not Found</div>} />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route path="/" element={<AppLayout pageTitle="Dashboard"><DashboardPage /></AppLayout>} />
+      <Route path="/production/:department/overview" element={<AppLayout pageTitle="Department Overview"><CreateProductionDocumentPage /></AppLayout>} />
+      <Route path="/production/:department/schedule" element={<AppLayout pageTitle="Weekly Schedule"><WeeklySchedulePage /></AppLayout>} />
+      <Route path="/production/:department/audit" element={<AppLayout pageTitle="Audit Production Documents"><AuditProductionDocumentsPage /></AppLayout>} />
+      <Route path="/production/:department/recipes" element={<AppLayout pageTitle="Recipes"><RecipeListPage /></AppLayout>} />
+      <Route path="/production/:department/recipes/new" element={<AppLayout pageTitle="Create New Recipe"><RecipeEditorPage /></AppLayout>} />
+      <Route path="/production/:department/recipes/:recipeId" element={<AppLayout pageTitle="Edit Recipe"><RecipeEditorPage /></AppLayout>} />
+      <Route path="/production/:department/staff" element={<AppLayout pageTitle="Staff Management"><StaffManagementPage /></AppLayout>} />
+      <Route path="/production/:department" element={<AppLayout pageTitle="Department Overview"><Navigate to="overview" replace /></AppLayout>} />
+      <Route path="*" element={<AppLayout pageTitle="404 Not Found"><div>404 Not Found</div></AppLayout>} />
+    </Routes>
   );
 }
 
