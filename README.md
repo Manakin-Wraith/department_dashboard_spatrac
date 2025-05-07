@@ -12,32 +12,41 @@ This application is a departmental production dashboard (SPATRAC) designed for f
   - Specify ingredients, quantities, units, and supplier associations.
   - Filter recipes by department.
 
-- **Weekly Production Scheduling**  
-  - Schedule recipes for weekly production runs.
-  - Adjust production quantities per schedule.
+- **Consolidated Production Scheduling**  
+  - Schedule recipes for production with an interactive calendar interface.
+  - Drag and drop time slots for easy scheduling.
+  - Adjust production quantities in real-time with improved input validation.
   - Assign staff and managers to scheduled runs.
   - Export schedules as needed.
+  - All scheduling functionality consolidated in one place for better user experience.
 
 - **Production Document Creation**  
   - Auto-populate production documents from scheduled recipes.
   - Capture batch codes, sell-by dates, and ingredient traceability.
   - Ensure all required data for compliance and auditing is collected.
+  - Real-time updates when recipes are scheduled or confirmed.
 
 - **Audit & Compliance**  
   - View, filter, and export production audit records.
   - Preview detailed audit data, including supplier and origin information for each ingredient.
+  - Integrated audit workflow with scheduling and production.
 
 - **Supplier & Product Mapping**  
   - Flexible mapping of products and suppliers to departments.
   - Supports products available across multiple departments with department-specific supplier codes.
+  - Automatic calculation of ingredient quantities based on production volume.
 
 - **Staff Management**  
   - Assign and manage department staff and handlers for production runs.
+  - Optimized performance with React hooks (useCallback, useMemo).
+  - Improved state management to prevent unnecessary re-renders.
 
 - **User Experience**  
   - Modern, responsive UI built with Material-UI and React.
   - Department color-coding and context-aware navigation.
   - Modal dialogs for confirmations, previews, and exports.
+  - Event-driven architecture for real-time updates across components.
+  - Improved error handling and API interaction.
 
 ### Technical Stack
 
