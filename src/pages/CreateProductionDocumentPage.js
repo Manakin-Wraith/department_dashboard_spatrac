@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
+import ConfirmProductionModal from '../components/ConfirmProductionModal';
+import { saveAudit } from '../services/api';
+import { bus } from '../utils/eventBus';
 import InfoCard from '../components/InfoCard';
 import {
   Box, Avatar, Grid, Paper, Typography, Button, Tabs, Tab, Divider, Tooltip,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Select,
-  FormControl, InputLabel, Card, CardContent
+  Table, TableContainer, TableHead, TableRow, TableCell, TableBody,
+  Card, CardContent, CardActions, Dialog, DialogTitle, DialogContent, DialogActions,
+  TextField, IconButton, Chip, InputLabel, Select, FormControl, MenuItem
 } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
 import BakeryDiningIcon from '@mui/icons-material/BakeryDining';
@@ -70,6 +73,8 @@ const CreateProductionDocumentPage = () => {
   const [endDate, setEndDate] = useState('');
   const [filteredSchedules, setFilteredSchedules] = useState([]);
   const [documentView, setDocumentView] = useState('list'); // 'list' or 'card'
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [selectedScheduleItem, setSelectedScheduleItem] = useState(null);
 
   useEffect(() => {
     async function loadData() {
@@ -335,6 +340,80 @@ const CreateProductionDocumentPage = () => {
   // Toggle document view (list/card)
   const toggleDocumentView = () => {
     setDocumentView(documentView === 'list' ? 'card' : 'list');
+  };
+
+  // Handle confirm production
+  const handleConfirmProduction = (scheduleItem) => {
+    setSelectedScheduleItem(scheduleItem);
+    setConfirmModalOpen(true);
+  };
+  
+  // Handle confirmation submission
+  const handleConfirmSubmit = async (updatedScheduleItem, auditData) => {
+    try {
+      // Find the schedule that contains this item
+      const scheduleIndex = schedules.findIndex(s => 
+        s.weekStartDate === updatedScheduleItem.date && 
+        s.department === department
+      );
+      
+      if (scheduleIndex === -1) return;
+      
+      // Find the item within the schedule
+      const schedule = schedules[scheduleIndex];
+      const itemIndex = schedule.items.findIndex(item => 
+        item.recipeCode === updatedScheduleItem.recipeCode &&
+        item.startTime === updatedScheduleItem.startTime &&
+        item.endTime === updatedScheduleItem.endTime
+      );
+      
+      if (itemIndex === -1) return;
+      
+      // Update the item with the new status and confirmation data
+      const updatedSchedules = [...schedules];
+      updatedSchedules[scheduleIndex].items[itemIndex] = {
+        ...updatedSchedules[scheduleIndex].items[itemIndex],
+        status: 'Confirmed',
+        actualQty: updatedScheduleItem.actualQty,
+        notes: updatedScheduleItem.notes,
+        qualityScore: updatedScheduleItem.qualityScore,
+        deviations: updatedScheduleItem.deviations,
+        confirmationTimestamp: updatedScheduleItem.confirmationTimestamp
+      };
+      
+      setSchedules(updatedSchedules);
+      
+      // Save to API (commented out for now)
+      // await saveSchedule(updatedSchedules[scheduleIndex]);
+      
+      // Create and save audit record
+      try {
+        // Add department to audit data
+        const auditWithDept = {
+          ...auditData,
+          department: department
+        };
+        
+        // Save to backend API
+        const savedAudit = await saveAudit(department, auditWithDept);
+        console.log('Audit saved to backend:', savedAudit);
+        
+        // Notify the audit page about the new audit via event bus
+        bus.emit('new-audit', savedAudit);
+        
+        // Add to local state for immediate UI update
+        setAudits([...audits, savedAudit]);
+      } catch (auditError) {
+        console.error('Failed to save audit data:', auditError);
+        // Still keep the local state updated even if API fails
+        setAudits([...audits, auditData]);
+      }
+      
+      console.log('Production confirmed:', updatedScheduleItem);
+      console.log('Audit data created:', auditData);
+    } catch (error) {
+      console.error('Failed to confirm production:', error);
+    }
   };
   
   const handleSaveTimeSlot = async (dataFromModal) => {
@@ -652,7 +731,7 @@ const CreateProductionDocumentPage = () => {
           <Box sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6">
-                Production Documents
+                Production Documents ({filteredSchedules.reduce((total, schedule) => total + (schedule.items?.length || 0), 0)} scheduled recipes)
               </Typography>
               <Box>
                 <Button
@@ -670,6 +749,14 @@ const CreateProductionDocumentPage = () => {
                   sx={{ borderColor: accentColor, color: accentColor }}
                 >
                   Export
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  component={Link}
+                  to={`/production/${department}/audit`}
+                >
+                  View Audits
                 </Button>
               </Box>
             </Box>
@@ -723,136 +810,164 @@ const CreateProductionDocumentPage = () => {
               </Typography>
             ) : documentView === 'list' ? (
               <TableContainer component={Paper} sx={{ mb: 3 }}>
-                <Table size="small">
+                <Table>
                   <TableHead>
-                    <TableRow sx={{ backgroundColor: alpha(accentColor, 0.1) }}>
+                    <TableRow>
                       <TableCell>Date</TableCell>
                       <TableCell>Recipe</TableCell>
                       <TableCell>Quantity</TableCell>
-                      <TableCell>Time</TableCell>
                       <TableCell>Handler</TableCell>
-                      <TableCell>Actions</TableCell>
+                      <TableCell>Time</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell align="right">Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {filteredSchedules.map((schedule) => (
+                    {filteredSchedules.flatMap(schedule => 
                       schedule.items.map((item, itemIndex) => {
-                        const recipe = recipes.find(r => r.product_code === item.recipeCode) || {};
+                        const recipe = recipes.find(r => r.product_code === item.recipeCode);
+                        const status = item.status || 'Planned';
                         return (
                           <TableRow key={`${schedule.id}-${itemIndex}`}>
                             <TableCell>{schedule.weekStartDate}</TableCell>
-                            <TableCell>{recipe.description || item.recipeCode}</TableCell>
+                            <TableCell>{recipe?.description || item.recipeCode}</TableCell>
                             <TableCell>{item.plannedQty}</TableCell>
-                            <TableCell>
-                              {item.startTime && item.endTime ? 
-                                `${item.startTime} - ${item.endTime}` : 
-                                'Not specified'}
-                            </TableCell>
                             <TableCell>{item.handlerName || schedule.handlersNames}</TableCell>
+                            <TableCell>{item.startTime} - {item.endTime}</TableCell>
                             <TableCell>
-                              <IconButton 
+                              <Chip 
+                                label={status} 
+                                color={status === 'Confirmed' ? 'success' : 
+                                       status === 'In Progress' ? 'warning' : 'default'} 
                                 size="small" 
-                                onClick={() => handleEditDocument(schedule, item, itemIndex)}
-                                sx={{ color: accentColor }}
-                              >
-                                <EditIcon fontSize="small" />
-                              </IconButton>
-                              <IconButton 
-                                size="small" 
-                                onClick={() => handleDeleteDocument(schedule, item, itemIndex)}
-                                sx={{ color: theme.palette.error.main }}
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
+                              />
+                            </TableCell>
+                            <TableCell align="right">
+                              {status !== 'Confirmed' && (
+                                <>
+                                  <IconButton 
+                                    size="small" 
+                                    onClick={() => handleEditDocument(schedule, item, itemIndex)}
+                                    sx={{ mr: 1 }}
+                                  >
+                                    <EditIcon fontSize="small" />
+                                  </IconButton>
+                                  <IconButton 
+                                    size="small" 
+                                    onClick={() => handleDeleteDocument(schedule, item, itemIndex)}
+                                    sx={{ mr: 1 }}
+                                  >
+                                    <DeleteIcon fontSize="small" />
+                                  </IconButton>
+                                  <Button
+                                    variant="contained"
+                                    color="primary"
+                                    size="small"
+                                    onClick={() => handleConfirmProduction({
+                                      ...item,
+                                      date: schedule.weekStartDate,
+                                      department: department,
+                                      managerName: schedule.managerName
+                                    })}
+                                  >
+                                    Confirm
+                                  </Button>
+                                </>
+                              )}
+                              {status === 'Confirmed' && (
+                                <Typography variant="caption" color="success.main">
+                                  Confirmed on {new Date(item.confirmationTimestamp).toLocaleDateString()}
+                                </Typography>
+                              )}
                             </TableCell>
                           </TableRow>
                         );
                       })
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
             ) : (
               <Grid container spacing={2}>
-                {filteredSchedules.map((schedule) => (
+                {filteredSchedules.flatMap(schedule => 
                   schedule.items.map((item, itemIndex) => {
-                    const recipe = recipes.find(r => r.product_code === item.recipeCode) || {};
+                    const recipe = recipes.find(r => r.product_code === item.recipeCode);
+                    const status = item.status || 'Planned';
                     return (
                       <Grid item xs={12} sm={6} md={4} key={`${schedule.id}-${itemIndex}`}>
-                        <Card sx={{ 
-                          height: '100%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          borderTop: `4px solid ${accentColor}`
+                        <Card sx={{
+                          borderLeft: status === 'Confirmed' ? '4px solid green' : 
+                                            status === 'In Progress' ? '4px solid orange' : '4px solid grey'
                         }}>
-                          <CardContent sx={{ flexGrow: 1 }}>
-                            <Typography variant="h6" gutterBottom>
-                              {recipe.description || item.recipeCode}
-                            </Typography>
-                            <Typography variant="body2" color="textSecondary" gutterBottom>
+                          <CardContent>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                              <Typography variant="h6" gutterBottom>
+                                {recipe?.description || item.recipeCode}
+                              </Typography>
+                              <Chip 
+                                label={status} 
+                                color={status === 'Confirmed' ? 'success' : 
+                                       status === 'In Progress' ? 'warning' : 'default'} 
+                                size="small" 
+                              />
+                            </Box>
+                            <Typography variant="body2" color="text.secondary">
                               Date: {schedule.weekStartDate}
                             </Typography>
-                            <Typography variant="body2" gutterBottom>
+                            <Typography variant="body2" color="text.secondary">
+                              Time: {item.startTime} - {item.endTime}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
                               Quantity: {item.plannedQty}
                             </Typography>
-                            <Typography variant="body2" gutterBottom>
-                              Time: {item.startTime && item.endTime ? 
-                                `${item.startTime} - ${item.endTime}` : 
-                                'Not specified'}
-                            </Typography>
-                            <Typography variant="body2" gutterBottom>
+                            <Typography variant="body2" color="text.secondary">
                               Handler: {item.handlerName || schedule.handlersNames}
                             </Typography>
-                            <Typography variant="body2" gutterBottom>
-                              Manager: {schedule.managerName || 'Not assigned'}
+                            <Typography variant="body2" color="text.secondary">
+                              Manager: {schedule.managerName}
                             </Typography>
-                            
-                            {recipe.ingredients && recipe.ingredients.length > 0 && (
-                              <Box sx={{ mt: 2 }}>
-                                <Typography variant="subtitle2">Ingredients:</Typography>
-                                <ul style={{ paddingLeft: '1.5rem', margin: '0.5rem 0' }}>
-                                  {recipe.ingredients.slice(0, 3).map((ing, idx) => {
-                                    const qty = Number(ing.recipe_use) || 0;
-                                    const planned = Number(item.plannedQty) || 0;
-                                    return (
-                                      <li key={idx}>
-                                        {ing.description} ({qty * planned})
-                                      </li>
-                                    );
-                                  })}
-                                  {recipe.ingredients.length > 3 && (
-                                    <li>...and {recipe.ingredients.length - 3} more</li>
-                                  )}
-                                </ul>
-                              </Box>
+                            {item.status === 'Confirmed' && item.actualQty && (
+                              <Typography variant="body2" color="text.secondary">
+                                Actual Quantity: {item.actualQty}
+                              </Typography>
                             )}
                           </CardContent>
-                          <Box sx={{ 
-                            display: 'flex', 
-                            justifyContent: 'flex-end', 
-                            p: 1,
-                            borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`
-                          }}>
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleEditDocument(schedule, item, itemIndex)}
-                              sx={{ color: accentColor }}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleDeleteDocument(schedule, item, itemIndex)}
-                              sx={{ color: theme.palette.error.main }}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Box>
+                          <CardActions>
+                            {status !== 'Confirmed' && (
+                              <>
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleEditDocument(schedule, item, itemIndex)}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleDeleteDocument(schedule, item, itemIndex)}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                                <Button
+                                  variant="contained"
+                                  color="primary"
+                                  size="small"
+                                  onClick={() => handleConfirmProduction({
+                                    ...item,
+                                    date: schedule.weekStartDate,
+                                    department: department,
+                                    managerName: schedule.managerName
+                                  })}
+                                >
+                                  Confirm
+                                </Button>
+                              </>
+                            )}
+                          </CardActions>
                         </Card>
                       </Grid>
                     );
                   })
-                ))}
+                )}
               </Grid>
             )}
           </Box>
@@ -874,22 +989,42 @@ const CreateProductionDocumentPage = () => {
         onSave={handleSaveTimeSlot}
       />
       
-      {/* Export Schedule Modal */}
-      <ExportScheduleModal
-        open={exportModalOpen}
-        onClose={() => setExportModalOpen(false)}
-        schedules={filteredSchedules}
-        recipes={recipes}
-      />
-      
       {/* Print Document Modal */}
-      <PrintDocumentModal
-        open={printModalOpen}
-        onClose={() => setPrintModalOpen(false)}
-        schedules={filteredSchedules}
-        recipes={recipes}
-      />
+      {printModalOpen && (
+        <PrintDocumentModal
+          open={printModalOpen}
+          onClose={() => setPrintModalOpen(false)}
+          schedules={schedules}
+          recipes={recipes}
+          department={department}
+        />
+      )}
+
+      {/* Export Schedule Modal */}
+      {exportModalOpen && (
+        <ExportScheduleModal
+          open={exportModalOpen}
+          onClose={() => setExportModalOpen(false)}
+          schedules={schedules}
+          recipes={recipes}
+          department={department}
+        />
+      )}
       
+      {/* Confirm Production Modal */}
+      {confirmModalOpen && selectedScheduleItem && (
+        <ConfirmProductionModal
+          open={confirmModalOpen}
+          onClose={() => {
+            setConfirmModalOpen(false);
+            setSelectedScheduleItem(null);
+          }}
+          scheduleItem={selectedScheduleItem}
+          recipes={recipes}
+          onConfirm={handleConfirmSubmit}
+        />
+      )}
+
       {/* Edit Document Modal */}
       <Dialog open={editModalOpen} onClose={() => setEditModalOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ borderBottom: `2px solid ${accentColor}`, color: accentColor }}>

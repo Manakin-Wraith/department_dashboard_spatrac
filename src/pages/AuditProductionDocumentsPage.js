@@ -5,7 +5,7 @@ import PageHeader from '../components/PageHeader';
 import AuditFilterToolbar from '../components/AuditFilterToolbar';
 import AuditTable from '../components/AuditTable';
 import AuditPreviewModal from '../components/AuditPreviewModal';
-import { fetchAudits, fetchSchedules, deleteAudit } from '../services/api';
+import { fetchAudits } from '../services/api';
 import departments from '../data/department_table.json';
 import { Box, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
@@ -25,21 +25,15 @@ const AuditProductionDocumentsPage = () => {
   useEffect(() => {
     async function load() {
       try {
-        // fetch both schedules and audits
-        const [schedules, audits] = await Promise.all([
-          fetchSchedules(department),
-          fetchAudits(department)
-        ]);
-        // build valid UIDs from schedules
-        const validUids = schedules.flatMap(s =>
-          s.items.map((item, idx) => `${s.weekStartDate}-${item.recipeCode}-${idx}`)
-        );
-        // delete stale audits
-        const stale = audits.filter(a => !validUids.includes(a.uid));
-        await Promise.all(stale.map(a => deleteAudit(a.id)));
-        // set only valid audits
-        const filtered = audits.filter(a => validUids.includes(a.uid));
-        setData(filtered);
+        console.log('Loading audits for department:', department);
+        
+        // Fetch audits for the department
+        const audits = await fetchAudits(department);
+        console.log('Fetched audits:', audits);
+        
+        // Set all audits - we're no longer filtering by UIDs from schedules
+        // since confirmed productions automatically create valid audits
+        setData(audits);
       } catch (err) {
         console.error('Failed to load audits', err);
       }
@@ -48,9 +42,20 @@ const AuditProductionDocumentsPage = () => {
   }, [department]);
 
   useEffect(() => {
-    const handleNewAudit = rec => setData(prev => [rec, ...prev]);
+    // Listen for new audit records coming from the confirmation process
+    const handleNewAudit = rec => {
+      console.log('New audit received in AuditProductionDocumentsPage:', rec);
+      setData(prev => [rec, ...prev]);
+    };
+    
+    // Listen to both 'audit' and 'new-audit' events
     bus.on('audit', handleNewAudit);
-    return () => bus.off('audit', handleNewAudit);
+    bus.on('new-audit', handleNewAudit);
+    
+    return () => {
+      bus.off('audit', handleNewAudit);
+      bus.off('new-audit', handleNewAudit);
+    };
   }, []);
 
   const handleOpenPreview = () => setPreviewItem({ uid: 'All Records', items: data });
