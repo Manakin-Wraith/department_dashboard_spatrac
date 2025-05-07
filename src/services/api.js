@@ -74,17 +74,48 @@ export async function fetchSchedules(department) {
 
 export async function saveSchedule(department, schedule) {
   const baseUrl = `${API_BASE}/api/schedules`;
-  const url = schedule.id
-    ? `${baseUrl}/${schedule.id}`
-    : baseUrl;
-  const method = schedule.id ? 'PUT' : 'POST';
-  const res = await fetch(url, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(schedule),
-  });
-  if (!res.ok) throw new Error('Failed to save schedule');
-  return res.json();
+  
+  // Ensure we have a proper ID format for the API
+  let processedSchedule = { ...schedule };
+  
+  // For new schedules, ensure we're using POST
+  if (!processedSchedule.id) {
+    const method = 'POST';
+    const res = await fetch(baseUrl, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(processedSchedule),
+    });
+    if (!res.ok) throw new Error('Failed to save schedule');
+    return res.json();
+  } else {
+    // For existing schedules, use PUT
+    const method = 'PUT';
+    // Use the schedules endpoint without ID for POST requests to let the server assign an ID
+    const url = `${baseUrl}/${processedSchedule.id}`;
+    
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(processedSchedule),
+      });
+      
+      if (!res.ok) {
+        // If we get a 404, the schedule might not exist yet, try POST instead
+        if (res.status === 404) {
+          console.log('Schedule not found with PUT, trying POST instead');
+          return saveSchedule(department, { ...processedSchedule, id: null });
+        }
+        throw new Error(`Failed to save schedule: ${res.status}`);
+      }
+      
+      return res.json();
+    } catch (error) {
+      console.error('Error in saveSchedule:', error);
+      throw error;
+    }
+  }
 }
 
 export async function deleteSchedule(scheduleId) {

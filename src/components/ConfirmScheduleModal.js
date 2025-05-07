@@ -67,10 +67,22 @@ const ConfirmScheduleModal = ({ open, onClose, items, recipes, onConfirm, initia
     }
   }, [deptObj.handlers]);
 
-  const handleQtyChange = (idx, qty) => {
-    const updated = [...localItems];
-    updated[idx].plannedQty = Number(qty);
-    setLocalItems(updated);
+  // Handle quantity change with proper state updates
+  const handleQtyChange = (idx, value) => {
+    // Parse the input value to a number or default to 0 if invalid
+    const numValue = value === '' ? 0 : Number(value);
+    
+    // Create a deep copy of the items array
+    const newItems = JSON.parse(JSON.stringify(localItems));
+    
+    // Update the quantity for the specific item
+    if (newItems[idx]) {
+      newItems[idx].plannedQty = numValue;
+      
+      // Update the state with the new array
+      setLocalItems(newItems);
+      console.log(`Updated quantity for item ${idx} to ${numValue}`);
+    }
   };
 
   const addItem = () => {
@@ -161,9 +173,20 @@ const ConfirmScheduleModal = ({ open, onClose, items, recipes, onConfirm, initia
                       label="Qty"
                       type="number"
                       size="small"
-                      value={item.plannedQty}
+                      value={item.plannedQty === 0 ? '0' : (item.plannedQty || '')}
                       onChange={e => handleQtyChange(idx, e.target.value)}
-                      sx={{ width: 80 }}
+                      onBlur={() => {
+                        // Ensure we have a valid number on blur
+                        if (localItems[idx] && (localItems[idx].plannedQty === '' || isNaN(localItems[idx].plannedQty))) {
+                          handleQtyChange(idx, 0);
+                        }
+                      }}
+                      inputProps={{ 
+                        min: 0, 
+                        step: 1,
+                        style: { textAlign: 'center' }
+                      }}
+                      sx={{ width: 120 }}
                     />
                   </AccordionSummary>
                   <AccordionDetails>

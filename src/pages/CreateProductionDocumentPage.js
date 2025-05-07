@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import ConfirmProductionModal from '../components/ConfirmProductionModal';
-import { saveAudit } from '../services/api';
+import { saveAudit, saveSchedule, deleteSchedule } from '../services/api';
 import { bus } from '../utils/eventBus';
 import InfoCard from '../components/InfoCard';
 import {
@@ -76,84 +76,101 @@ const CreateProductionDocumentPage = () => {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [selectedScheduleItem, setSelectedScheduleItem] = useState(null);
 
+  // Function to load data from API - wrapped in useCallback to prevent recreation on every render
+  const loadData = useCallback(async () => {
+    try {
+      // Add a timestamp to prevent browser caching
+      const timestamp = new Date().getTime();
+      console.log(`Loading data for CreateProductionDocumentPage... (${timestamp})`);
+      
+      // Make sure we have a valid department before fetching
+      if (!department || !deptObj.department) {
+        console.warn('Cannot load data: missing department information');
+        return;
+      }
+      
+      const [sch, aud, recipesData, handlersData] = await Promise.all([
+        fetchSchedules(department),
+        fetchAudits(department),
+        fetchRecipes(deptObj.department),      
+        fetchHandlers(deptObj.department)      
+      ]);
+      
+      // If handlers are empty, try using the handlers array from the department object
+      const finalHandlers = handlersData && handlersData.length > 0 
+        ? handlersData 
+        : (deptObj.handlers ? deptObj.handlers.map(name => ({ name, id: name })) : []);
+      
+      setSchedules(sch || []);
+      setAudits(aud || []);
+      setRecipes(recipesData || []);
+      setHandlers(finalHandlers);
+      setDepartmentRecipesCount(recipesData ? recipesData.length : 0);
+      setDepartmentStaffCount(finalHandlers ? finalHandlers.length : 0);
+      
+      console.log(`Data loaded successfully (${timestamp})`);
+    } catch (error) {
+      console.error('Error loading data for CreateProductionDocumentPage:', error);
+    }
+  }, [department, deptObj]);
+  
+  // This useEffect is only for loading data when department changes
   useEffect(() => {
-    async function loadData() {
+    if (department) {
+      console.log('Department changed, loading data...');
+      loadData();
+    }
+  }, [department, loadData]);
+
+  // Separate useEffect for initializing calendar events when data changes
+  useEffect(() => {
+    const initializeCalendarEvents = () => {
       try {
-        const [sch, aud, recipesData, handlersData] = await Promise.all([
-          fetchSchedules(department),
-          fetchAudits(department),
-          fetchRecipes(deptObj.department),      
-          fetchHandlers(deptObj.department)      
-        ]);
-        
-        // If handlers are empty, try using the handlers array from the department object
-        let finalHandlers = handlersData;
-        if (!handlersData || handlersData.length === 0) {
-          finalHandlers = deptObj.handlers ? deptObj.handlers.map(name => ({ name, id: name })) : [];
-        }
-        
-        setSchedules(sch || []);
-        setAudits(aud || []);
-        setRecipes(recipesData || []);
-        setHandlers(finalHandlers || []);
-        setDepartmentRecipesCount(recipesData ? recipesData.length : 0); 
-        setDepartmentStaffCount(finalHandlers ? finalHandlers.length : 0);
-        
-        // Transform schedules into calendar events
+        // Create calendar events from schedules
         const events = [];
         
-        sch?.forEach(schedule => {
+        schedules.forEach(schedule => {
+          const date = new Date(schedule.weekStartDate);
+          
           if (schedule.items && Array.isArray(schedule.items)) {
-            schedule.items.forEach((item, itemIndex) => {
-              const recipe = recipesData?.find(r => r.product_code === item.recipeCode);
+            schedule.items.forEach((item, idx) => {
+              // Find recipe details
+              const recipe = recipes.find(r => r.product_code === item.recipeCode) || {};
+              const title = recipe.description || item.recipeCode || 'Unknown Recipe';
+              const color = item.status === 'Confirmed' ? '#4caf50' : accentColor;
               
-              // Check if we have startTime and endTime in the item
-              if (item.startTime && item.endTime) {
-                const [startHours, startMinutes] = item.startTime.split(':').map(Number);
-                const [endHours, endMinutes] = item.endTime.split(':').map(Number);
-                
-                const startDate = new Date(schedule.weekStartDate);
-                startDate.setHours(startHours, startMinutes, 0);
-                
-                const endDate = new Date(schedule.weekStartDate);
-                endDate.setHours(endHours, endMinutes, 0);
-                
-                events.push({
-                  id: `${schedule.id}-${itemIndex}`,
-                  title: `${recipe?.description || item.recipeCode} (${item.plannedQty})`,
-                  start: startDate,
-                  end: endDate,
-                  backgroundColor: accentColor,
-                  borderColor: accentColor,
-                  textColor: theme.palette.getContrastText(accentColor),
-                  extendedProps: {
-                    scheduleId: schedule.id,
-                    itemIndex: itemIndex,
-                    recipeCode: item.recipeCode,
-                    plannedQty: item.plannedQty,
-                    handlerName: item.handlerName || schedule.handlersNames
-                  }
-                });
-              }
+              // Create event object for FullCalendar
+              events.push({
+                id: `${schedule.id}-${idx}`,
+                title,
+                start: date,
+                backgroundColor: color,
+                borderColor: theme.palette.grey[300],
+                extendedProps: {
+                  scheduleId: schedule.id,
+                  itemIndex: idx,
+                  status: item.status,
+                  plannedQty: item.plannedQty,
+                  recipeCode: item.recipeCode,
+                  description: title
+                }
+              });
             });
           }
         });
         
         setCalendarEvents(events);
       } catch (error) {
-        console.error("Failed to load department overview data:", error);
-        setSchedules([]);
-        setAudits([]);
-        setRecipes([]);
-        setHandlers([]);
-        setDepartmentRecipesCount(0);
-        setDepartmentStaffCount(0);
+        console.error("Failed to initialize calendar events:", error);
+        setCalendarEvents([]);
       }
+    };
+    
+    // Initialize calendar events when schedules, recipes, or theme changes
+    if (schedules.length > 0 && recipes.length > 0) {
+      initializeCalendarEvents();
     }
-    if (department) { 
-      loadData();
-    }
-  }, [department, deptObj, accentColor, theme.palette]);
+  }, [schedules, recipes, accentColor, theme.palette]);
   
   const departmentIconContent = (() => {
     return IconComponent ? <IconComponent sx={{ fontSize: '2.5rem', mr: 1.5 }} /> : <Avatar sx={{ bgcolor: 'transparent', color: 'inherit', width: 40, height: 40, mr: 1.5, fontSize: '1.5rem' }}>{departmentDisplayName.charAt(0)}</Avatar>;
@@ -369,44 +386,90 @@ const CreateProductionDocumentPage = () => {
       
       if (itemIndex === -1) return;
       
-      // Update the item with the new status and confirmation data
-      const updatedSchedules = [...schedules];
-      updatedSchedules[scheduleIndex].items[itemIndex] = {
-        ...updatedSchedules[scheduleIndex].items[itemIndex],
+      // Store the schedule ID for reference
+      const scheduleId = schedule.id;
+      
+      // Create enhanced audit data with reference to original schedule
+      const enhancedAuditData = {
+        ...auditData,
+        department: department,
         status: 'Confirmed',
+        originalScheduleId: scheduleId,
+        // Add the confirmed item details
         actualQty: updatedScheduleItem.actualQty,
         notes: updatedScheduleItem.notes,
         qualityScore: updatedScheduleItem.qualityScore,
         deviations: updatedScheduleItem.deviations,
-        confirmationTimestamp: updatedScheduleItem.confirmationTimestamp
+        confirmationTimestamp: new Date().toISOString()
       };
       
-      setSchedules(updatedSchedules);
-      
-      // Save to API (commented out for now)
-      // await saveSchedule(updatedSchedules[scheduleIndex]);
-      
-      // Create and save audit record
+      // Save the audit record first to ensure we have a record before removing the schedule
       try {
-        // Add department to audit data
-        const auditWithDept = {
-          ...auditData,
-          department: department
-        };
-        
-        // Save to backend API
-        const savedAudit = await saveAudit(department, auditWithDept);
-        console.log('Audit saved to backend:', savedAudit);
-        
-        // Notify the audit page about the new audit via event bus
-        bus.emit('new-audit', savedAudit);
+        // Save audit to the database
+        const savedAudit = await saveAudit(department, enhancedAuditData);
+        console.log('Audit saved to database:', savedAudit);
         
         // Add to local state for immediate UI update
-        setAudits([...audits, savedAudit]);
+        setAudits(prevAudits => [...prevAudits, savedAudit]);
+        
+        // Now that we have successfully saved the audit, we can remove the item from the schedule
+        // If this is the only item in the schedule, delete the entire schedule
+        if (schedule.items.length === 1) {
+          try {
+            // Delete the schedule from the database
+            await deleteSchedule(scheduleId);
+            console.log('Schedule deleted from database:', scheduleId);
+            
+            // Update local state by removing the schedule
+            setSchedules(prevSchedules => prevSchedules.filter(s => s.id !== scheduleId));
+            
+            // Emit events for other components to react to the schedule deletion
+            bus.emit('schedule-deleted', scheduleId);
+            bus.emit('data-updated', { type: 'schedule-deleted', id: scheduleId });
+          } catch (deleteError) {
+            console.error('Failed to delete schedule from database:', deleteError);
+            // Continue with the process even if delete fails
+          }
+        } else {
+          // If there are multiple items, just remove the confirmed item
+          const updatedItems = schedule.items.filter((_, idx) => idx !== itemIndex);
+          const updatedSchedule = { ...schedule, items: updatedItems };
+          
+          try {
+            // Save the updated schedule with the item removed
+            const savedSchedule = await saveSchedule(department, updatedSchedule);
+            console.log('Schedule updated in database:', savedSchedule);
+            
+            // Update local state immediately for responsive UI
+            setSchedules(prevSchedules => 
+              prevSchedules.map(s => s.id === scheduleId ? savedSchedule : s)
+            );
+            
+            // Emit events for other components to react to the schedule update
+            bus.emit('schedule-updated', savedSchedule);
+            bus.emit('data-updated', { type: 'schedule-updated', data: savedSchedule });
+          } catch (updateError) {
+            console.error('Failed to update schedule in database:', updateError);
+            // Continue with the process even if update fails
+          }
+        }
+        
+        // Reload data to ensure we have the latest from the server
+        try {
+          await loadData();
+          console.log('Data reloaded after confirmation');
+        } catch (reloadError) {
+          console.error('Error reloading data after confirmation:', reloadError);
+          // Continue with the process even if reload fails
+        }
+        
+        // Notify other components about the new audit
+        bus.emit('new-audit', savedAudit);
+        bus.emit('data-updated', { type: 'new-audit', data: savedAudit });
       } catch (auditError) {
         console.error('Failed to save audit data:', auditError);
         // Still keep the local state updated even if API fails
-        setAudits([...audits, auditData]);
+        setAudits([...audits, enhancedAuditData]);
       }
       
       console.log('Production confirmed:', updatedScheduleItem);
@@ -416,43 +479,49 @@ const CreateProductionDocumentPage = () => {
     }
   };
   
-  const handleSaveTimeSlot = async (dataFromModal) => {
-    console.log('Saving data from TimeSlotScheduleModal:', dataFromModal);
-    // This is a placeholder. We need to adapt this data to the current db.json structure.
-    // For now, let's assume dataFromModal contains { recipeCode, plannedQty, handlerName, startTime, endTime, date, managerName, id (FullCalendar event id or similar) }
 
-    const { date, recipeCode, plannedQty, handlerName: itemHandler, startTime, endTime, managerName } = dataFromModal;
+const handleSaveTimeSlot = async (dataFromModal) => {
+  console.log('Saving data from TimeSlotScheduleModal:', dataFromModal);
+  // Extract data from modal
+  const { date, recipeCode, plannedQty, handlerName: itemHandler, startTime, endTime, managerName } = dataFromModal;
 
-    // Find or create the schedule for the day
-    let daySchedule = schedules.find(s => s.weekStartDate === date && s.department === department);
+  // Create or update the day's schedule
+  let daySchedule;
+  let isNewScheduleDay = false;
+  
+  // Find if we already have a schedule for this day
+  daySchedule = schedules.find(s => {
+    const scheduleDate = new Date(s.weekStartDate);
+    return scheduleDate.toDateString() === new Date(date).toDateString();
+  });
+  
+  if (!daySchedule) {
+    isNewScheduleDay = true;
+    // Create a simple numeric ID for new schedules instead of a string with prefix
+    const scheduleId = Date.now();
+    daySchedule = {
+      id: scheduleId,
+      department,
+      weekStartDate: date,
+      items: [],
+      managerName: managerName || (deptObj.department_manager && Array.isArray(deptObj.department_manager) ? deptObj.department_manager[0] : ''),
+      handlersNames: itemHandler || (handlers[0]?.name) || '',
+      status: 'Planned',
+      unique_ScheduledID: `${department}-${date}-${scheduleId}`
+    };
+  }
 
-    let isNewScheduleDay = false;
-
-    if (!daySchedule) {
-      isNewScheduleDay = true;
-      daySchedule = {
-        id: `sched_${Date.now()}`,
-        department,
-        weekStartDate: date,
-        items: [],
-        managerName: managerName || (deptObj.department_manager && Array.isArray(deptObj.department_manager) ? deptObj.department_manager[0] : ''),
-        handlersNames: itemHandler || (handlers[0]?.name) || '',
-        status: 'Planned',
-        unique_ScheduledID: `${department}-${date}-${Date.now()}`
-      };
-    }
-
-    let newItemsForDaySchedule;
-    if (currentEventInfo && currentEventInfo.extendedProps.scheduleId) {
-      // Editing an existing item within a day's schedule
-      const existingItemIndex = currentEventInfo.extendedProps.itemIndex;
-      newItemsForDaySchedule = [...daySchedule.items];
-      
-      if (existingItemIndex !== undefined && newItemsForDaySchedule[existingItemIndex]) {
-        newItemsForDaySchedule[existingItemIndex] = {
-          ...newItemsForDaySchedule[existingItemIndex],
-          recipeCode,
-          plannedQty,
+  let newItemsForDaySchedule;
+  if (currentEventInfo && currentEventInfo.extendedProps.scheduleId) {
+    // Editing an existing item within a day's schedule
+    const existingItemIndex = currentEventInfo.extendedProps.itemIndex;
+    newItemsForDaySchedule = [...daySchedule.items];
+    
+    if (existingItemIndex !== undefined && newItemsForDaySchedule[existingItemIndex]) {
+      newItemsForDaySchedule[existingItemIndex] = {
+        ...newItemsForDaySchedule[existingItemIndex],
+        recipeCode,
+        plannedQty,
           handlerName: itemHandler,
           startTime,
           endTime
@@ -480,14 +549,19 @@ const CreateProductionDocumentPage = () => {
 
     try {
       // Save to API
-      // const savedSchedule = await saveSchedule(department, updatedSchedule);
+      const savedSchedule = await saveSchedule(department, updatedSchedule);
+      console.log('Schedule saved to database:', savedSchedule);
       
-      // For now, just update the local state
+      // Update local state with the saved schedule from the database
       if (isNewScheduleDay) {
-        setSchedules([...schedules, updatedSchedule]);
+        setSchedules(prevSchedules => [...prevSchedules, savedSchedule]);
       } else {
-        setSchedules(schedules.map(s => s.id === daySchedule.id ? updatedSchedule : s));
+        setSchedules(prevSchedules => prevSchedules.map(s => s.id === daySchedule.id ? savedSchedule : s));
       }
+      
+      // Emit events for other components to react
+      bus.emit('schedule-updated', savedSchedule);
+      bus.emit('data-updated', { type: 'schedule', data: savedSchedule });
       
       // Update calendar events
       const recipe = recipes.find(r => r.product_code === recipeCode);

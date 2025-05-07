@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { deleteHandler, fetchSchedules, fetchRecipes, fetchAudits } from '../services/api';
 import { bus } from '../utils/eventBus';
@@ -6,7 +6,7 @@ import {
   Box, Typography, TextField, TableContainer, Table, 
   TableHead, TableRow, TableCell, TableBody, Paper, Chip, 
   IconButton, Card, CardContent, Avatar, Tabs, Tab, Divider,
-  Rating, List, ListItem, ListItemText, ListItemIcon
+  Rating, List, ListItem, ListItemText, ListItemIcon, Grid
 } from '@mui/material';
 // ArrowBackIcon import removed as the back button was removed
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -21,7 +21,12 @@ import departments from '../data/department_table.json';
 const StaffManagementPage = () => {
   const { department } = useParams();
   const theme = useTheme();
-  const deptObj = departments.find(d => d.department_code === department) || {};
+  
+  // Wrap deptObj initialization in useMemo to prevent recreation on every render
+  const deptObj = useMemo(() => {
+    return departments.find(d => d.department_code === department) || {};
+  }, [department]);
+  
   const pageBg = alpha(deptObj.color || '#000', 1.0);
   const pageTextColor = theme.palette.text.primary;
   const accentColor = deptObj.color || theme.palette.primary.main;
@@ -36,8 +41,11 @@ const StaffManagementPage = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [departmentManager, setDepartmentManager] = useState('');
 
-  useEffect(() => {
-    async function load() {
+  // Function to load data from API - wrapped in useCallback to prevent recreation on every render
+  const loadData = useCallback(async () => {
+    try {
+      console.log('Loading data for StaffManagementPage...');
+      // Fetch data from API
       const [sch, recs, auditRecords] = await Promise.all([
         fetchSchedules(department),
         fetchRecipes(department),
@@ -68,29 +76,75 @@ const StaffManagementPage = () => {
       
       // Flatten and filter recipes for this department
       const flatRecs = Array.isArray(recs[0]) ? recs.flat() : recs;
-      const deptRecipes = flatRecs.filter(r => r.department === deptObj.department);
+      // Use department code (1155) instead of department name (HMR) for filtering
+      const deptRecipes = flatRecs.filter(r => r.department === department);
       setRecipes(deptRecipes);
+      // Create a map of recipe codes to descriptions for display
       const map = deptRecipes.reduce((acc, r) => { acc[r.product_code] = r.description; return acc; }, {});
       setRecipeMap(map);
+      
+      console.log('Data loaded successfully for StaffManagementPage');
+    } catch (error) {
+      console.error('Error loading data for StaffManagementPage:', error);
     }
-    load();
-  }, [department, deptObj.handlers, deptObj.department, deptObj.department_manager]);
+  }, [department, deptObj, setHandlers, setSchedules, setAudits, setRecipes, setRecipeMap, setDepartmentManager]);
+  
+  // Initial data loading
+  useEffect(() => {
+    loadData();
+  }, [department, deptObj.handlers, deptObj.department, deptObj.department_manager, loadData]);
 
   useEffect(() => {
-    const onDel = id => setSchedules(prev => prev.filter(s => s.id !== id));
-    bus.on('scheduleDeleted', onDel);
+    // Listen for schedule deletions
+    const onScheduleDeleted = id => {
+      console.log('Schedule deleted event received:', id);
+      setSchedules(prev => prev.filter(s => s.id !== id));
+    };
+    bus.on('schedule-deleted', onScheduleDeleted);
     
     // Listen for new audit records
     const onNewAudit = (audit) => {
+      console.log('New audit event received:', audit);
       setAudits(prev => [audit, ...prev]);
+      
+      // Reload all data to ensure we have the latest
+      loadData();
     };
     bus.on('new-audit', onNewAudit);
     
-    return () => {
-      bus.off('scheduleDeleted', onDel);
-      bus.off('new-audit', onNewAudit);
+    // Listen for schedule updates
+    const onScheduleUpdate = (updatedSchedule) => {
+      console.log('Schedule updated event received:', updatedSchedule);
+      // Update the schedules list when a schedule is updated elsewhere
+      if (updatedSchedule.department === department) {
+        setSchedules(prev => {
+          const exists = prev.some(s => s.id === updatedSchedule.id);
+          if (exists) {
+            return prev.map(s => s.id === updatedSchedule.id ? updatedSchedule : s);
+          } else {
+            return [...prev, updatedSchedule];
+          }
+        });
+      }
     };
-  }, []);
+    bus.on('schedule-updated', onScheduleUpdate);
+    
+    // Listen for general data updates
+    const onDataUpdated = (data) => {
+      console.log('Data updated event received:', data);
+      // Reload all data to ensure we have the latest
+      loadData();
+    };
+    bus.on('data-updated', onDataUpdated);
+    
+    return () => {
+      bus.off('schedule-deleted', onScheduleDeleted);
+      bus.off('new-audit', onNewAudit);
+      bus.off('schedule-updated', onScheduleUpdate);
+      bus.off('data-updated', onDataUpdated);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [department, loadData]);
 
   // Handle selecting a staff member for detailed view
   const handleSelectStaff = (handler) => {
@@ -115,17 +169,37 @@ const StaffManagementPage = () => {
     }
   };
 
-  // Get assignments for a handler
-  const getAssignments = (handlerName) =>
-    schedules
+  // Get current assignments for a handler (only planned, not confirmed)
+  const getAssignments = (handlerName) => {
+    // Filter schedules where this staff member is assigned
+    // In Option 2, schedules only contain planned items (not confirmed)
+    return schedules
       .filter(s => s.handlersNames === handlerName)
-      .map(s => ({ date: s.weekStartDate, recipes: s.items }));
+      .map(s => ({
+        id: s.id,
+        date: s.weekStartDate,
+        recipes: s.items,
+        status: 'Planned' // All items in schedules collection are now 'Planned'
+      }));
+  };
       
   // Get production history (confirmed recipes) for a handler
+  // In Option 2, all confirmed items are in the audits collection
   const getProductionHistory = (handlerName) =>
     audits
       .filter(a => a.food_handler_responsible === handlerName)
-      .sort((a, b) => new Date(b.confirmation_timestamp || b.date) - new Date(a.confirmation_timestamp || a.date));
+      .map(audit => ({
+        id: audit.id,
+        date: audit.date,
+        recipeCode: audit.product_name?.[0] || '',
+        description: audit.productDescription || '',
+        plannedQty: audit.planned_qty,
+        actualQty: audit.actual_qty,
+        qualityScore: audit.quality_score,
+        confirmationTimestamp: audit.confirmation_timestamp,
+        status: 'Confirmed'
+      }))
+      .sort((a, b) => new Date(b.confirmationTimestamp || b.date) - new Date(a.confirmationTimestamp || a.date));
 
   // Filter handlers based on search
   const filteredHandlers = handlers.filter(h => h.name.toLowerCase().includes(filter.toLowerCase()));
@@ -284,24 +358,44 @@ const StaffManagementPage = () => {
                     <Typography variant="h6" gutterBottom>Current Assignments</Typography>
                     {getAssignments(selectedStaff.name).length > 0 ? (
                       <List>
-                        {getAssignments(selectedStaff.name).map(({ date, recipes }) => (
-                          <ListItem key={date} divider>
+                        {getAssignments(selectedStaff.name).map((assignment) => (
+                          <ListItem key={assignment.id || assignment.date} divider>
                             <ListItemIcon>
                               <AssignmentIcon />
                             </ListItemIcon>
                             <ListItemText
-                              primary={`Date: ${date}`}
+                              primary={
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <Typography variant="subtitle1">Week Starting: {assignment.date}</Typography>
+                                  <Chip 
+                                    label={assignment.status} 
+                                    color={assignment.status === 'Confirmed' ? 'success' : 'primary'}
+                                    size="small" 
+                                  />
+                                </Box>
+                              }
                               secondary={
-                                <>
-                                  {recipes.map((recipe, idx) => (
-                                    <Chip
-                                      key={idx}
-                                      label={`${recipe.plannedQty}x ${recipeMap[recipe.recipeCode] || recipe.recipeCode}`}
-                                      size="small"
-                                      sx={{ mr: 0.5, mt: 0.5 }}
-                                    />
-                                  ))}
-                                </>
+                                <Box sx={{ mt: 1 }}>
+                                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                                    Scheduled Recipes:
+                                  </Typography>
+                                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {assignment.recipes.map((recipe, idx) => {
+                                      // Get recipe description from the map or use the code as fallback
+                                      const recipeDesc = recipeMap[recipe.recipeCode] || `Recipe ${recipe.recipeCode}`;
+                                      return (
+                                        <Chip
+                                          key={idx}
+                                          label={`${recipe.plannedQty}x ${recipeDesc}`}
+                                          size="small"
+                                          sx={{ mr: 0.5, mt: 0.5 }}
+                                          color="primary"
+                                          variant="outlined"
+                                        />
+                                      );
+                                    })}
+                                  </Box>
+                                </Box>
                               }
                             />
                           </ListItem>
@@ -322,28 +416,54 @@ const StaffManagementPage = () => {
                     <Typography variant="h6" gutterBottom>Production History</Typography>
                     {getProductionHistory(selectedStaff.name).length > 0 ? (
                       <List>
-                        {getProductionHistory(selectedStaff.name).map((audit) => (
-                          <ListItem key={audit.uid} divider>
+                        {getProductionHistory(selectedStaff.name).map((production) => (
+                          <ListItem key={production.id} divider>
                             <ListItemIcon>
                               <HistoryIcon />
                             </ListItemIcon>
                             <ListItemText
-                              primary={`${audit.product_name[0] || 'Unknown Recipe'}`}
+                              primary={
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <Typography variant="subtitle1">{production.description || production.recipeCode}</Typography>
+                                  <Chip 
+                                    label="Confirmed" 
+                                    color="success"
+                                    size="small" 
+                                  />
+                                </Box>
+                              }
                               secondary={
-                                <>
-                                  <Typography variant="body2">
-                                    Date: {audit.date || 'Unknown'}
-                                  </Typography>
-                                  <Typography variant="body2">
-                                    Quantity: {audit.actual_qty || audit.planned_qty || 'Unknown'}
-                                  </Typography>
-                                  {audit.quality_score && (
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                                      <Typography variant="body2" sx={{ mr: 1 }}>Quality:</Typography>
-                                      <Rating value={Number(audit.quality_score)} size="small" readOnly />
+                                <Box sx={{ mt: 1 }}>
+                                  <Grid container spacing={2}>
+                                    <Grid item xs={6}>
+                                      <Typography variant="body2" color="text.secondary">
+                                        Date: {production.date || 'Unknown'}
+                                      </Typography>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                      <Typography variant="body2" color="text.secondary">
+                                        Confirmed: {production.confirmationTimestamp ? new Date(production.confirmationTimestamp).toLocaleDateString() : 'Unknown'}
+                                      </Typography>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                      <Typography variant="body2" color="text.secondary">
+                                        Planned Qty: {production.plannedQty || 'Unknown'}
+                                      </Typography>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                      <Typography variant="body2" color="text.secondary">
+                                        Actual Qty: {production.actualQty || 'Unknown'}
+                                      </Typography>
+                                    </Grid>
+                                  </Grid>
+                                  
+                                  {production.qualityScore && (
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                                      <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>Quality Score:</Typography>
+                                      <Rating value={Number(production.qualityScore)} size="small" readOnly precision={0.5} />
                                     </Box>
                                   )}
-                                </>
+                                </Box>
                               }
                             />
                           </ListItem>

@@ -118,17 +118,66 @@ const WeeklySchedulePage = () => {
 
   const handleSave = async (newItems, newManager, newHandler, dateToSave, scheduleIdToUpdate) => {
     try {
+      // Ensure all items have a status (default to 'Planned' if not set)
+      const itemsWithStatus = newItems.map(item => ({
+        ...item,
+        status: item.status || 'Planned'
+      }));
+      
+      let saved;
+      
       if (selectedId) {
         // update existing schedule via PUT
-        const schedule = { id: selectedId, department, weekStartDate: dateToSave, managerName: newManager, handlersNames: newHandler, items: newItems };
-        const saved = await saveSchedule(department, schedule);
-        setSchedules(schedules.map(s => s.id === selectedId ? saved : s));
+        const schedule = { 
+          id: selectedId, 
+          department, 
+          weekStartDate: dateToSave, 
+          managerName: newManager, 
+          handlersNames: newHandler, 
+          items: itemsWithStatus 
+        };
+        
+        // Save to database
+        saved = await saveSchedule(department, schedule);
+        console.log('Updated schedule in database:', saved);
+        
+        // Update local state immediately for responsive UI
+        setSchedules(prevSchedules => {
+          return prevSchedules.map(s => s.id === selectedId ? saved : s);
+        });
       } else {
         // create new schedule via POST
-        const schedule = { department, weekStartDate: dateToSave, managerName: newManager, handlersNames: newHandler, items: newItems };
-        const saved = await saveSchedule(department, schedule);
-        setSchedules(prev => [...prev, saved]);
+        const schedule = { 
+          department, 
+          weekStartDate: dateToSave, 
+          managerName: newManager, 
+          handlersNames: newHandler, 
+          items: itemsWithStatus 
+        };
+        
+        // Save to database
+        saved = await saveSchedule(department, schedule);
+        console.log('Created new schedule in database:', saved);
+        
+        // Update local state immediately for responsive UI
+        setSchedules(prevSchedules => [...prevSchedules, saved]);
       }
+      
+      // Reload data to ensure we have the latest from the server
+      // This ensures that our local state matches what's in the database
+      try {
+        await loadData();
+        console.log('Data reloaded after save');
+      } catch (reloadError) {
+        console.error('Error reloading data after save:', reloadError);
+        // Continue with the process even if reload fails
+      }
+      
+      // Emit event for other components to react
+      bus.emit('schedule-updated', saved);
+      
+      // Also emit a general data-updated event for any component that needs to refresh
+      bus.emit('data-updated', { type: 'schedule', data: saved });
       // persist audits for each scheduled recipe
       const auditPromises = newItems.map((item, idx) => {
         const recipe = recipes.find(r => r.product_code === item.recipeCode) || {};
