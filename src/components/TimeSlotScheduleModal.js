@@ -58,18 +58,43 @@ const TimeSlotScheduleModal = ({
         setStartTime(new Date(eventInfo.start)); 
         setEndTime(eventInfo.end ? new Date(eventInfo.end) : null); 
         console.log('Editing existing event:', eventInfo);
-      } else if (slotInfo && slotInfo.date) { // New event from slot click
+      } else if (slotInfo && slotInfo.date) { // New event from slot click or drag selection
         const initialStartDate = new Date(slotInfo.date);
-        setStartTime(initialStartDate);
         
-        const defaultEndDate = new Date(initialStartDate);
-        defaultEndDate.setHours(defaultEndDate.getHours() + 1); // Default end time 1 hour later
-        setEndTime(defaultEndDate);
+        // Check if startTime and endTime are provided in slotInfo (from drag selection)
+        if (slotInfo.startTime && slotInfo.endTime) {
+          // Parse the HH:MM time strings and set them on the date
+          const [startHours, startMinutes] = slotInfo.startTime.split(':').map(Number);
+          const [endHours, endMinutes] = slotInfo.endTime.split(':').map(Number);
+          
+          // Create Date objects with the correct times
+          const startDateTime = new Date(initialStartDate);
+          startDateTime.setHours(startHours, startMinutes, 0);
+          setStartTime(startDateTime);
+          
+          const endDateTime = new Date(initialStartDate);
+          endDateTime.setHours(endHours, endMinutes, 0);
+          setEndTime(endDateTime);
+          
+          console.log('Scheduling new event for dragged time slot:', {
+            date: slotInfo.date,
+            startTime: slotInfo.startTime,
+            endTime: slotInfo.endTime
+          });
+        } else {
+          // No time range provided, use default behavior
+          setStartTime(initialStartDate);
+          
+          const defaultEndDate = new Date(initialStartDate);
+          defaultEndDate.setHours(defaultEndDate.getHours() + 1); // Default end time 1 hour later
+          setEndTime(defaultEndDate);
+          
+          console.log('Scheduling new event for clicked slot:', slotInfo);
+        }
         
         setSelectedRecipe('');
         setQuantity(1);
         setSelectedHandler('');
-        console.log('Scheduling new event for slot:', slotInfo);
       } else {
         // Reset if no valid info
         setSelectedRecipe('');
@@ -88,6 +113,11 @@ const TimeSlotScheduleModal = ({
       return;
     }
 
+    // Get department manager name from department object
+    const managerName = department && department.department_manager ? 
+      (Array.isArray(department.department_manager) ? department.department_manager[0] : department.department_manager) : 
+      '';
+    
     const scheduleData = {
       recipeCode: selectedRecipe,
       plannedQty: quantity,
@@ -96,6 +126,8 @@ const TimeSlotScheduleModal = ({
       endTime: formatToSaveTime(endTime),     // Format Date to HH:MM string for saving
       // Add date from slotInfo or eventInfo
       date: eventInfo?.start ? new Date(eventInfo.start).toISOString().substring(0,10) : (slotInfo?.date ? new Date(slotInfo.date).toISOString().substring(0,10) : ''),
+      // Include the department manager name
+      managerName: managerName,
       // Other relevant data like department, id (if editing)
       id: eventInfo ? eventInfo.id : null // Or a more specific event instance ID
     };
