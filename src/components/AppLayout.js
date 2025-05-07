@@ -6,7 +6,6 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import ListAltIcon from '@mui/icons-material/ListAlt'; // For Recipes List
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'; // For Weekly Schedule
 import PeopleIcon from '@mui/icons-material/People'; // For Staff Management
-import BusinessIcon from '@mui/icons-material/Business'; // For Department Overview
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn'; // For Audit
 
 import departmentsData from '../data/department_table.json'; // Import department data
@@ -35,18 +34,13 @@ const AppLayout = ({ children, pageTitle }) => {
       currentNavItems.push({ type: 'divider' }); // Divider after Dashboard when in department context
       currentNavItems.push({
         text: `${departmentObj.department} Overview`,
-        icon: <BusinessIcon />,
+        icon: <CalendarTodayIcon />,
         path: `/production/${departmentCode}/overview`
       });
       currentNavItems.push({
         text: 'Recipes',
         icon: <ListAltIcon />,
         path: `/production/${departmentCode}/recipes`
-      });
-      currentNavItems.push({
-        text: 'Schedule',
-        icon: <CalendarTodayIcon />,
-        path: `/production/${departmentCode}/schedule`
       });
       currentNavItems.push({
         text: 'Audit',

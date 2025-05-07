@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import InfoCard from '../components/InfoCard';
 import {
   Box, Avatar, Grid, Paper, Typography, Button, Tabs, Tab, Divider, Tooltip,
@@ -472,23 +472,6 @@ const CreateProductionDocumentPage = () => {
           <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
             {departmentDisplayName} Overview
           </Typography>
-        </Box>
-        <Box>
-          <Button 
-            component={Link} 
-            to={`/schedule/${department}`}
-            variant="contained" 
-            color="inherit" 
-            sx={{ 
-              color: accentColor, 
-              bgcolor: theme.palette.getContrastText(accentColor),
-              '&:hover': {
-                bgcolor: alpha(theme.palette.getContrastText(accentColor), 0.9)
-              }
-            }}
-          >
-            View Full Schedule
-          </Button>
         </Box>
       </Paper>
 
