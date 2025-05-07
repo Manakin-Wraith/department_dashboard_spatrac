@@ -43,7 +43,12 @@ const ConfirmScheduleModal = ({ open, onClose, items, recipes, onConfirm, initia
   }, [items, recipes, productSupplierMap]);
 
   useEffect(() => {
-    if (initialDate) setScheduledDate(initialDate);
+    if (initialDate) {
+      // initialDate might be a full ISO string (e.g., "2023-10-27T10:00:00") 
+      // or just a date string (e.g., "2023-10-27").
+      // The TextField type="date" expects "YYYY-MM-DD".
+      setScheduledDate(initialDate.substring(0, 10));
+    }
   }, [initialDate]);
 
   useEffect(() => {

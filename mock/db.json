@@ -1,723 +1,723 @@
-  {
-    "recipes": [
-      {
-        "id": "26710",
-        "department": "BAKERY",
-        "product_code": "26710",
-        "description": "WHITE BREAD",
-        "title": "WHITE BREAD",
-        "cost_excl_per_each_kg": "6.89",
-        "yield": "6.89",
-        "ingredients": [
-          {
-            "prod_code": "15736",
-            "description": "W/CAPE MILL  MIX WHT BRD",
-            "pack_size": "9.5KG",
-            "weight": "47.500",
-            "cost": "12.29",
-            "recipe_use": "47.500",
-            "total_cost": "584.00"
-          },
-          {
-            "prod_code": "28779",
-            "description": "YEAST WET",
-            "pack_size": "P/KG",
-            "weight": "1.000",
-            "cost": "34.25",
-            "recipe_use": "1.000",
-            "total_cost": "34.25"
-          },
-          {
-            "prod_code": "29030",
-            "description": "SPAR WATER",
-            "pack_size": "P/KG",
-            "weight": "24.700",
-            "cost": "3.20",
-            "recipe_use": "24.700",
-            "total_cost": "79.04"
-          },
-          {
-            "prod_code": "28495",
-            "description": "SPAR WHITE BREAD BAG",
-            "pack_size": "600GR",
-            "weight": "",
-            "cost": "0.50",
-            "recipe_use": "122.000",
-            "total_cost": "60.98"
-          }
-        ]
-      },
-      {
-        "id": "26711",
-        "department": "BAKERY",
-        "product_code": "26711",
-        "description": "BROWN BREAD",
-        "title": "BROWN BREAD",
-        "cost_excl_per_each_kg": "6.35",
-        "yield": "6.35",
-        "ingredients": [
-          {
-            "prod_code": "15737",
-            "description": "W/CAPE MILL MIX BRWN BRD",
-            "pack_size": "9.5KG",
-            "weight": "47.500",
-            "cost": "11.22",
-            "recipe_use": "47.500",
-            "total_cost": "532.95"
-          },
-          {
-            "prod_code": "28779",
-            "description": "YEAST WET",
-            "pack_size": "P/KG",
-            "weight": "1.000",
-            "cost": "34.25",
-            "recipe_use": "1.000",
-            "total_cost": "34.25"
-          },
-          {
-            "prod_code": "29030",
-            "description": "SPAR WATER",
-            "pack_size": "P/KG",
-            "weight": "26.000",
-            "cost": "3.20",
-            "recipe_use": "26.000",
-            "total_cost": "83.20"
-          },
-          {
-            "prod_code": "28495",
-            "description": "SPAR WHITE BREAD BAG",
-            "pack_size": "600GR",
-            "weight": "",
-            "cost": "0.50",
-            "recipe_use": "122.000",
-            "total_cost": "60.98"
-          }
-        ]
-      },
-      {
-        "id": "27320",
-        "department": "BAKERY",
-        "product_code": "27320",
-        "description": "RAISIN LOAF",
-        "title": "RAISIN LOAF",
-        "cost_excl_per_each_kg": "8.44",
-        "yield": "8.44",
-        "ingredients": [
-          {
-            "prod_code": "28667",
-            "description": "WC MILLING SOFT ROLL MIX",
-            "pack_size": "12.5K",
-            "weight": "12.500",
-            "cost": "13.49",
-            "recipe_use": "12.500",
-            "total_cost": "168.68"
-          },
-          {
-            "prod_code": "2520",
-            "description": "SMARTBAKER MIX",
-            "pack_size": "12.5K",
-            "weight": "3.500",
-            "cost": "322.41",
-            "recipe_use": "0.280",
-            "total_cost": "90.27"
-          },
-          {
-            "prod_code": "28779",
-            "description": "YEAST WET",
-            "pack_size": "P/KG",
-            "weight": "0.500",
-            "cost": "34.25",
-            "recipe_use": "0.500",
-            "total_cost": "17.13"
-          },
-          {
-            "prod_code": "29030",
-            "description": "SPAR WATER",
-            "pack_size": "P/KG",
-            "weight": "6.000",
-            "cost": "3.20",
-            "recipe_use": "6.000",
-            "total_cost": "19.20"
-          },
-          {
-            "prod_code": "27691",
-            "description": "POLYPROP 250X400X30",
-            "pack_size": "EA",
-            "weight": "",
-            "cost": "1.87",
-            "recipe_use": "45.000",
-            "total_cost": "84.33"
-          }
-        ]
-      },
-      {
-        "id": "26910",
-        "department": "BAKERY",
-        "product_code": "26910",
-        "description": "TEA BUNS",
-        "cost_excl_per_each_kg": "5.81",
-        "ingredients": [
-          {
-            "prod_code": "28667",
-            "description": "WC MILLING SOFT ROLL MIX",
-            "pack_size": "12.5K",
-            "weight": "12.500",
-            "cost": "13.49",
-            "recipe_use": "12.500",
-            "total_cost": "168.68"
-          },
-          {
-            "prod_code": "2520",
-            "description": "SMARTBAKER MIX",
-            "pack_size": "12.5K",
-            "weight": "3.500",
-            "cost": "322.41",
-            "recipe_use": "0.280",
-            "total_cost": "90.27"
-          },
-          {
-            "prod_code": "28779",
-            "description": "YEAST WET",
-            "pack_size": "P/KG",
-            "weight": "0.500",
-            "cost": "34.25",
-            "recipe_use": "0.500",
-            "total_cost": "17.13"
-          },
-          {
-            "prod_code": "29030",
-            "description": "SPAR WATER",
-            "pack_size": "P/KG",
-            "weight": "6.000",
-            "cost": "3.20",
-            "recipe_use": "6.000",
-            "total_cost": "19.20"
-          },
-          {
-            "prod_code": "27691",
-            "description": "POLYPROP 250X400X30",
-            "pack_size": "EA",
-            "weight": "",
-            "cost": "1.87",
-            "recipe_use": "75.000",
-            "total_cost": "140.55"
-          }
-        ]
-      },
-      {
-        "id": "27322",
-        "department": "BAKERY",
-        "product_code": "27322",
-        "description": "MOSBOLLETJIES",
-        "cost_excl_per_each_kg": "11.05",
-        "ingredients": [
-          {
-            "prod_code": "28667",
-            "description": "WC MILLING SOFT ROLL MIX",
-            "pack_size": "12.5K",
-            "weight": "12.500",
-            "cost": "13.49",
-            "recipe_use": "12.500",
-            "total_cost": "168.68"
-          },
-          {
-            "prod_code": "27514",
-            "description": "ANISEED WHOLE",
-            "pack_size": "P/KG",
-            "weight": "1.000",
-            "cost": "162.10",
-            "recipe_use": "1.000",
-            "total_cost": "162.10"
-          },
-          {
-            "prod_code": "28779",
-            "description": "YEAST WET",
-            "pack_size": "P/KG",
-            "weight": "0.500",
-            "cost": "34.25",
-            "recipe_use": "0.500",
-            "total_cost": "17.13"
-          },
-          {
-            "prod_code": "29030",
-            "description": "SPAR WATER",
-            "pack_size": "P/KG",
-            "weight": "6.000",
-            "cost": "3.20",
-            "recipe_use": "6.000",
-            "total_cost": "19.20"
-          },
-          {
-            "prod_code": "27691",
-            "description": "POLYPROP 250X400X30",
-            "pack_size": "EA",
-            "weight": "",
-            "cost": "1.87",
-            "recipe_use": "40.000",
-            "total_cost": "74.96"
-          }
-        ]
-      },
-      {
-        "id": "27323",
-        "department": "BAKERY",
-        "product_code": "27323",
-        "description": "SCHOOL BUN",
-        "cost_excl_per_each_kg": "7.06",
-        "ingredients": [
-          {
-            "prod_code": "28667",
-            "description": "WC MILLING SOFT ROLL MIX",
-            "pack_size": "12.5K",
-            "weight": "12.500",
-            "cost": "13.49",
-            "recipe_use": "12.500",
-            "total_cost": "168.68"
-          },
-          {
-            "prod_code": "28779",
-            "description": "YEAST WET",
-            "pack_size": "P/KG",
-            "weight": "0.500",
-            "cost": "34.25",
-            "recipe_use": "0.500",
-            "total_cost": "17.13"
-          },
-          {
-            "prod_code": "29030",
-            "description": "SPAR WATER",
-            "pack_size": "P/KG",
-            "weight": "6.000",
-            "cost": "3.20",
-            "recipe_use": "6.000",
-            "total_cost": "19.20"
-          },
-          {
-            "prod_code": "27691",
-            "description": "POLYPROP 250X400X30",
-            "pack_size": "EA",
-            "weight": "",
-            "cost": "1.87",
-            "recipe_use": "52.000",
-            "total_cost": "97.45"
-          },
-          {
-            "prod_code": "26539",
-            "description": "4051 PER BOX ONLY HOTCROSS",
-            "pack_size": "EA",
-            "weight": "",
-            "cost": "0.95",
-            "recipe_use": "52.000",
-            "total_cost": "49.14"
-          },
-          {
-            "prod_code": "27494",
-            "description": "SYRUP BAKERY CHIPKINS",
-            "pack_size": "P/KG",
-            "weight": "",
-            "cost": "30.84",
-            "recipe_use": "0.500",
-            "total_cost": "15.42"
-          }
-        ]
-      },
-      {
-        "id": "26713",
-        "department": "BAKERY",
-        "product_code": "26713",
-        "description": "SOFT ROUND ROLL",
-        "cost_excl_per_each_kg": "0.95",
-        "ingredients": [
-          {
-            "prod_code": "28667",
-            "description": "WC MILLING SOFT ROLL MIX",
-            "pack_size": "12.5K",
-            "weight": "12.500",
-            "cost": "13.49",
-            "recipe_use": "12.500",
-            "total_cost": "168.68"
-          },
-          {
-            "prod_code": "28779",
-            "description": "YEAST WET",
-            "pack_size": "P/KG",
-            "weight": "0.500",
-            "cost": "34.25",
-            "recipe_use": "0.500",
-            "total_cost": "17.13"
-          },
-          {
-            "prod_code": "29030",
-            "description": "SPAR WATER",
-            "pack_size": "P/KG",
-            "weight": "6.000",
-            "cost": "3.20",
-            "recipe_use": "6.000",
-            "total_cost": "19.20"
-          },
-          {
-            "prod_code": "27751",
-            "description": "GREASE PROOF 2",
-            "pack_size": "EA",
-            "weight": "",
-            "cost": "0.19",
-            "recipe_use": "271.000",
-            "total_cost": "51.11"
-          }
-        ]
-      },
-      {
-        "id": "26734",
-        "department": "BAKERY",
-        "product_code": "26734",
-        "description": "SOFT HOTDOG  ROLLS",
-        "cost_excl_per_each_kg": "0.95",
-        "ingredients": [
-          {
-            "prod_code": "28667",
-            "description": "WC MILLING SOFT ROLL MIX",
-            "pack_size": "12.5K",
-            "weight": "12.500",
-            "cost": "13.49",
-            "recipe_use": "12.500",
-            "total_cost": "168.68"
-          },
-          {
-            "prod_code": "28779",
-            "description": "YEAST WET",
-            "pack_size": "P/KG",
-            "weight": "0.500",
-            "cost": "34.25",
-            "recipe_use": "0.500",
-            "total_cost": "17.13"
-          },
-          {
-            "prod_code": "29030",
-            "description": "SPAR WATER",
-            "pack_size": "P/KG",
-            "weight": "6.000",
-            "cost": "3.20",
-            "recipe_use": "6.000",
-            "total_cost": "19.20"
-          },
-          {
-            "prod_code": "27751",
-            "description": "GREASE PROOF 2",
-            "pack_size": "EA",
-            "weight": "",
-            "cost": "0.19",
-            "recipe_use": "271.000",
-            "total_cost": "51.11"
-          }
-        ]
-      },
-      {
-        "id": "26665",
-        "department": "BUTCHERY",
-        "product_code": "26665",
-        "description": "BABALAS BRAAI WORS",
-        "cost_excl_per_each_kg": "22.88",
-        "ingredients": [
-          {
-            "prod_code": "28743",
-            "description": "FROZEN MDM",
-            "pack_size": "P/KG",
-            "weight": "25.000",
-            "cost": "15.50",
-            "recipe_use": "25.000",
-            "total_cost": "387.50"
-          },
-          {
-            "prod_code": "28760",
-            "description": "BEEF KIDNEY FAT",
-            "pack_size": "P/KG",
-            "weight": "25.000",
-            "cost": "13.99",
-            "recipe_use": "25.000",
-            "total_cost": "349.75"
-          },
-          {
-            "prod_code": "29030",
-            "description": "SPAR WATER",
-            "pack_size": "P/KG",
-            "weight": "30.000",
-            "cost": "3.20",
-            "recipe_use": "30.000",
-            "total_cost": "96.00"
-          },
-          {
-            "prod_code": "30590",
-            "description": "PRS PARTY BRAAIWORS",
-            "pack_size": "P/KG",
-            "weight": "15.000",
-            "cost": "59.99",
-            "recipe_use": "15.000",
-            "total_cost": "899.85"
-          },
-          {
-            "prod_code": "31923",
-            "description": "HOG CASINGS 28/32 LONGS",
-            "pack_size": "P/KG",
-            "weight": "",
-            "cost": "239.99",
-            "recipe_use": "1.357",
-            "total_cost": "325.70"
-          }
-        ]
-      },
-      {
-        "id": "26751",
-        "department": "BAKERY",
-        "product_code": "26751",
-        "description": "ZUKI'S SCONE",
-        "cost_excl_per_each_kg": "4.01",
-        "ingredients": [
-          {
-            "prod_code": "15732",
-            "description": "WC MILLING CAKE FLOUR",
-            "pack_size": "12.5K",
-            "weight": "8.000",
-            "cost": "11.40",
-            "recipe_use": "8.000",
-            "total_cost": "91.17"
-          },
-          {
-            "prod_code": "28222",
-            "description": "MILK FULL CREAM",
-            "pack_size": "20L",
-            "weight": "1.400",
-            "cost": "13.80",
-            "recipe_use": "1.400",
-            "total_cost": "19.32"
-          },
-          {
-            "prod_code": "29322",
-            "description": "OIL VEGETABLE CHIPKINS",
-            "pack_size": "20LT",
-            "weight": "1.400",
-            "cost": "43.50",
-            "recipe_use": "1.400",
-            "total_cost": "60.90"
-          },
-          {
-            "prod_code": "27492",
-            "description": "SUGAR WHITE HULETS",
-            "pack_size": "P/KG",
-            "weight": "1.400",
-            "cost": "23.44",
-            "recipe_use": "1.400",
-            "total_cost": "32.82"
-          },
-          {
-            "prod_code": "26370",
-            "description": "GOLDEN YOLK LOOSE BAKERY EGGS",
-            "pack_size": "30'S",
-            "weight": "1.400",
-            "cost": "59.00",
-            "recipe_use": "0.933",
-            "total_cost": "55.07"
-          },
-          {
-            "prod_code": "28313",
-            "description": "HERCULES BAKING POWDER",
-            "pack_size": "P/KG",
-            "weight": "0.400",
-            "cost": "53.05",
-            "recipe_use": "0.400",
-            "total_cost": "21.22"
-          }
-        ]
-      },
-      {
-        "id": "26753",
-        "department": "BAKERY",
-        "product_code": "26753",
-        "description": "ROCK BUNS",
-        "cost_excl_per_each_kg": "6.06",
-        "ingredients": [
-          {
-            "prod_code": "2520",
-            "description": "SMARTBAKER MIX",
-            "pack_size": "12.5K",
-            "weight": "0.160",
-            "cost": "322.41",
-            "recipe_use": "0.160",
-            "total_cost": "51.59"
-          },
-          {
-            "prod_code": "15732",
-            "description": "WC MILLING CAKE FLOUR",
-            "pack_size": "12.5K",
-            "weight": "8.000",
-            "cost": "11.40",
-            "recipe_use": "8.000",
-            "total_cost": "91.17"
-          },
-          {
-            "prod_code": "28222",
-            "description": "MILK FULL CREAM",
-            "pack_size": "20L",
-            "weight": "1.400",
-            "cost": "13.80",
-            "recipe_use": "1.400",
-            "total_cost": "19.32"
-          },
-          {
-            "prod_code": "29322",
-            "description": "OIL VEGETABLE CHIPKINS",
-            "pack_size": "20LT",
-            "weight": "1.400",
-            "cost": "43.50",
-            "recipe_use": "1.400",
-            "total_cost": "60.90"
-          },
-          {
-            "prod_code": "27492",
-            "description": "SUGAR WHITE HULETS",
-            "pack_size": "P/KG",
-            "weight": "1.400",
-            "cost": "23.44",
-            "recipe_use": "1.400",
-            "total_cost": "32.82"
-          },
-          {
-            "prod_code": "26370",
-            "description": "GOLDEN YOLK LOOSE BAKERY EGGS",
-            "pack_size": "30'S",
-            "weight": "0.933",
-            "cost": "59.00",
-            "recipe_use": "0.933",
-            "total_cost": "55.07"
-          },
-          {
-            "prod_code": "28313",
-            "description": "HERCULES BAKING POWDER",
-            "pack_size": "P/KG",
-            "weight": "0.400",
-            "cost": "53.05",
-            "recipe_use": "0.400",
-            "total_cost": "21.22"
-          }
-        ]
-      },
-      {
-        "id": "26739",
-        "department": "BAKERY",
-        "product_code": "26739",
-        "description": "PORTUGUESE  BREAD",
-        "cost_excl_per_each_kg": "5.09",
-        "ingredients": [
-          {
-            "prod_code": "28483",
-            "description": "WC MILLING CRISPY MIX",
-            "pack_size": "12.5K",
-            "weight": "13.500",
-            "cost": "12.66",
-            "recipe_use": "13.500",
-            "total_cost": "170.88"
-          },
-          {
-            "prod_code": "28779",
-            "description": "YEAST WET",
-            "pack_size": "P/KG",
-            "weight": "0.500",
-            "cost": "34.25",
-            "recipe_use": "0.500",
-            "total_cost": "17.13"
-          },
-          {
-            "prod_code": "29030",
-            "description": "SPAR WATER",
-            "pack_size": "P/KG",
-            "weight": "6.500",
-            "cost": "3.20",
-            "recipe_use": "6.500",
-            "total_cost": "20.80"
-          }
-        ]
-      },
-      {
-        "id": "26908",
-        "department": "BAKERY",
-        "product_code": "26908",
-        "description": "MILK TART",
-        "cost_excl_per_each_kg": "21.18",
-        "ingredients": [
-          {
-            "prod_code": "27492",
-            "description": "SUGAR WHITE HULETS",
-            "pack_size": "P/KG",
-            "weight": "1.000",
-            "cost": "23.44",
-            "recipe_use": "1.000",
-            "total_cost": "23.44"
-          },
-          {
-            "prod_code": "27498",
-            "description": "MARG YELLOW WOODEN SPOON",
-            "pack_size": "P/KG",
-            "weight": "1.000",
-            "cost": "36.36",
-            "recipe_use": "1.000",
-            "total_cost": "36.36"
-          },
-          {
-            "prod_code": "28293",
-            "description": "BAVARIAN SUPREME",
-            "pack_size": "P/KG",
-            "weight": "0.600",
-            "cost": "77.42",
-            "recipe_use": "0.600",
-            "total_cost": "46.45"
-          },
-          {
-            "prod_code": "28222",
-            "description": "MILK FULL CREAM",
-            "pack_size": "20L",
-            "weight": "10.000",
-            "cost": "13.80",
-            "recipe_use": "10.000",
-            "total_cost": "138.00"
-          },
-          {
-            "prod_code": "28888",
-            "description": "CINNAMON GROUND",
-            "pack_size": "P/KG",
-            "weight": "0.010",
-            "cost": "96.60",
-            "recipe_use": "0.100",
-            "total_cost": "9.66"
-          },
-          {
-            "prod_code": "29737",
-            "description": "TART BASE SWEET",
-            "pack_size": "EA",
-            "weight": "",
-            "cost": "14.24",
-            "recipe_use": "40.000",
-            "total_cost": "569.78"
-          },
-          {
-            "prod_code": "26370",
-            "description": "GOLDEN YOLK LOOSE BAKERY EGGS",
-            "pack_size": "30'S",
-            "weight": "0.600",
-            "cost": "59.00",
-            "recipe_use": "0.400",
-            "total_cost": "23.60"
-          }
-        ]
-      },
-      {
-        "id": "28383",
-        "department": "BAKERY",
-        "product_code": "28383",
-        "description": "BREAD DOUGH",
-        "cost_excl_per_each_kg": "5.81",
-        "ingredients": [
-          {
-            "prod_code": "15736",
-            "description": "W/CAPEMILL  MIX WHT BRD",
+{
+  "recipes": [
+    {
+      "id": "26710",
+      "department": "BAKERY",
+      "product_code": "26710",
+      "description": "WHITE BREAD",
+      "title": "WHITE BREAD",
+      "cost_excl_per_each_kg": "6.89",
+      "yield": "6.89",
+      "ingredients": [
+        {
+          "prod_code": "15736",
+          "description": "W/CAPE MILL  MIX WHT BRD",
+          "pack_size": "9.5KG",
+          "weight": "47.500",
+          "cost": "12.29",
+          "recipe_use": "47.500",
+          "total_cost": "584.00"
+        },
+        {
+          "prod_code": "28779",
+          "description": "YEAST WET",
+          "pack_size": "P/KG",
+          "weight": "1.000",
+          "cost": "34.25",
+          "recipe_use": "1.000",
+          "total_cost": "34.25"
+        },
+        {
+          "prod_code": "29030",
+          "description": "SPAR WATER",
+          "pack_size": "P/KG",
+          "weight": "24.700",
+          "cost": "3.20",
+          "recipe_use": "24.700",
+          "total_cost": "79.04"
+        },
+        {
+          "prod_code": "28495",
+          "description": "SPAR WHITE BREAD BAG",
+          "pack_size": "600GR",
+          "weight": "",
+          "cost": "0.50",
+          "recipe_use": "122.000",
+          "total_cost": "60.98"
+        }
+      ]
+    },
+    {
+      "id": "26711",
+      "department": "BAKERY",
+      "product_code": "26711",
+      "description": "BROWN BREAD",
+      "title": "BROWN BREAD",
+      "cost_excl_per_each_kg": "6.35",
+      "yield": "6.35",
+      "ingredients": [
+        {
+          "prod_code": "15737",
+          "description": "W/CAPE MILL MIX BRWN BRD",
+          "pack_size": "9.5KG",
+          "weight": "47.500",
+          "cost": "11.22",
+          "recipe_use": "47.500",
+          "total_cost": "532.95"
+        },
+        {
+          "prod_code": "28779",
+          "description": "YEAST WET",
+          "pack_size": "P/KG",
+          "weight": "1.000",
+          "cost": "34.25",
+          "recipe_use": "1.000",
+          "total_cost": "34.25"
+        },
+        {
+          "prod_code": "29030",
+          "description": "SPAR WATER",
+          "pack_size": "P/KG",
+          "weight": "26.000",
+          "cost": "3.20",
+          "recipe_use": "26.000",
+          "total_cost": "83.20"
+        },
+        {
+          "prod_code": "28495",
+          "description": "SPAR WHITE BREAD BAG",
+          "pack_size": "600GR",
+          "weight": "",
+          "cost": "0.50",
+          "recipe_use": "122.000",
+          "total_cost": "60.98"
+        }
+      ]
+    },
+    {
+      "id": "27320",
+      "department": "BAKERY",
+      "product_code": "27320",
+      "description": "RAISIN LOAF",
+      "title": "RAISIN LOAF",
+      "cost_excl_per_each_kg": "8.44",
+      "yield": "8.44",
+      "ingredients": [
+        {
+          "prod_code": "28667",
+          "description": "WC MILLING SOFT ROLL MIX",
+          "pack_size": "12.5K",
+          "weight": "12.500",
+          "cost": "13.49",
+          "recipe_use": "12.500",
+          "total_cost": "168.68"
+        },
+        {
+          "prod_code": "2520",
+          "description": "SMARTBAKER MIX",
+          "pack_size": "12.5K",
+          "weight": "3.500",
+          "cost": "322.41",
+          "recipe_use": "0.280",
+          "total_cost": "90.27"
+        },
+        {
+          "prod_code": "28779",
+          "description": "YEAST WET",
+          "pack_size": "P/KG",
+          "weight": "0.500",
+          "cost": "34.25",
+          "recipe_use": "0.500",
+          "total_cost": "17.13"
+        },
+        {
+          "prod_code": "29030",
+          "description": "SPAR WATER",
+          "pack_size": "P/KG",
+          "weight": "6.000",
+          "cost": "3.20",
+          "recipe_use": "6.000",
+          "total_cost": "19.20"
+        },
+        {
+          "prod_code": "27691",
+          "description": "POLYPROP 250X400X30",
+          "pack_size": "EA",
+          "weight": "",
+          "cost": "1.87",
+          "recipe_use": "45.000",
+          "total_cost": "84.33"
+        }
+      ]
+    },
+    {
+      "id": "26910",
+      "department": "BAKERY",
+      "product_code": "26910",
+      "description": "TEA BUNS",
+      "cost_excl_per_each_kg": "5.81",
+      "ingredients": [
+        {
+          "prod_code": "28667",
+          "description": "WC MILLING SOFT ROLL MIX",
+          "pack_size": "12.5K",
+          "weight": "12.500",
+          "cost": "13.49",
+          "recipe_use": "12.500",
+          "total_cost": "168.68"
+        },
+        {
+          "prod_code": "2520",
+          "description": "SMARTBAKER MIX",
+          "pack_size": "12.5K",
+          "weight": "3.500",
+          "cost": "322.41",
+          "recipe_use": "0.280",
+          "total_cost": "90.27"
+        },
+        {
+          "prod_code": "28779",
+          "description": "YEAST WET",
+          "pack_size": "P/KG",
+          "weight": "0.500",
+          "cost": "34.25",
+          "recipe_use": "0.500",
+          "total_cost": "17.13"
+        },
+        {
+          "prod_code": "29030",
+          "description": "SPAR WATER",
+          "pack_size": "P/KG",
+          "weight": "6.000",
+          "cost": "3.20",
+          "recipe_use": "6.000",
+          "total_cost": "19.20"
+        },
+        {
+          "prod_code": "27691",
+          "description": "POLYPROP 250X400X30",
+          "pack_size": "EA",
+          "weight": "",
+          "cost": "1.87",
+          "recipe_use": "75.000",
+          "total_cost": "140.55"
+        }
+      ]
+    },
+    {
+      "id": "27322",
+      "department": "BAKERY",
+      "product_code": "27322",
+      "description": "MOSBOLLETJIES",
+      "cost_excl_per_each_kg": "11.05",
+      "ingredients": [
+        {
+          "prod_code": "28667",
+          "description": "WC MILLING SOFT ROLL MIX",
+          "pack_size": "12.5K",
+          "weight": "12.500",
+          "cost": "13.49",
+          "recipe_use": "12.500",
+          "total_cost": "168.68"
+        },
+        {
+          "prod_code": "27514",
+          "description": "ANISEED WHOLE",
+          "pack_size": "P/KG",
+          "weight": "1.000",
+          "cost": "162.10",
+          "recipe_use": "1.000",
+          "total_cost": "162.10"
+        },
+        {
+          "prod_code": "28779",
+          "description": "YEAST WET",
+          "pack_size": "P/KG",
+          "weight": "0.500",
+          "cost": "34.25",
+          "recipe_use": "0.500",
+          "total_cost": "17.13"
+        },
+        {
+          "prod_code": "29030",
+          "description": "SPAR WATER",
+          "pack_size": "P/KG",
+          "weight": "6.000",
+          "cost": "3.20",
+          "recipe_use": "6.000",
+          "total_cost": "19.20"
+        },
+        {
+          "prod_code": "27691",
+          "description": "POLYPROP 250X400X30",
+          "pack_size": "EA",
+          "weight": "",
+          "cost": "1.87",
+          "recipe_use": "40.000",
+          "total_cost": "74.96"
+        }
+      ]
+    },
+    {
+      "id": "27323",
+      "department": "BAKERY",
+      "product_code": "27323",
+      "description": "SCHOOL BUN",
+      "cost_excl_per_each_kg": "7.06",
+      "ingredients": [
+        {
+          "prod_code": "28667",
+          "description": "WC MILLING SOFT ROLL MIX",
+          "pack_size": "12.5K",
+          "weight": "12.500",
+          "cost": "13.49",
+          "recipe_use": "12.500",
+          "total_cost": "168.68"
+        },
+        {
+          "prod_code": "28779",
+          "description": "YEAST WET",
+          "pack_size": "P/KG",
+          "weight": "0.500",
+          "cost": "34.25",
+          "recipe_use": "0.500",
+          "total_cost": "17.13"
+        },
+        {
+          "prod_code": "29030",
+          "description": "SPAR WATER",
+          "pack_size": "P/KG",
+          "weight": "6.000",
+          "cost": "3.20",
+          "recipe_use": "6.000",
+          "total_cost": "19.20"
+        },
+        {
+          "prod_code": "27691",
+          "description": "POLYPROP 250X400X30",
+          "pack_size": "EA",
+          "weight": "",
+          "cost": "1.87",
+          "recipe_use": "52.000",
+          "total_cost": "97.45"
+        },
+        {
+          "prod_code": "26539",
+          "description": "4051 PER BOX ONLY HOTCROSS",
+          "pack_size": "EA",
+          "weight": "",
+          "cost": "0.95",
+          "recipe_use": "52.000",
+          "total_cost": "49.14"
+        },
+        {
+          "prod_code": "27494",
+          "description": "SYRUP BAKERY CHIPKINS",
+          "pack_size": "P/KG",
+          "weight": "",
+          "cost": "30.84",
+          "recipe_use": "0.500",
+          "total_cost": "15.42"
+        }
+      ]
+    },
+    {
+      "id": "26713",
+      "department": "BAKERY",
+      "product_code": "26713",
+      "description": "SOFT ROUND ROLL",
+      "cost_excl_per_each_kg": "0.95",
+      "ingredients": [
+        {
+          "prod_code": "28667",
+          "description": "WC MILLING SOFT ROLL MIX",
+          "pack_size": "12.5K",
+          "weight": "12.500",
+          "cost": "13.49",
+          "recipe_use": "12.500",
+          "total_cost": "168.68"
+        },
+        {
+          "prod_code": "28779",
+          "description": "YEAST WET",
+          "pack_size": "P/KG",
+          "weight": "0.500",
+          "cost": "34.25",
+          "recipe_use": "0.500",
+          "total_cost": "17.13"
+        },
+        {
+          "prod_code": "29030",
+          "description": "SPAR WATER",
+          "pack_size": "P/KG",
+          "weight": "6.000",
+          "cost": "3.20",
+          "recipe_use": "6.000",
+          "total_cost": "19.20"
+        },
+        {
+          "prod_code": "27751",
+          "description": "GREASE PROOF 2",
+          "pack_size": "EA",
+          "weight": "",
+          "cost": "0.19",
+          "recipe_use": "271.000",
+          "total_cost": "51.11"
+        }
+      ]
+    },
+    {
+      "id": "26734",
+      "department": "BAKERY",
+      "product_code": "26734",
+      "description": "SOFT HOTDOG  ROLLS",
+      "cost_excl_per_each_kg": "0.95",
+      "ingredients": [
+        {
+          "prod_code": "28667",
+          "description": "WC MILLING SOFT ROLL MIX",
+          "pack_size": "12.5K",
+          "weight": "12.500",
+          "cost": "13.49",
+          "recipe_use": "12.500",
+          "total_cost": "168.68"
+        },
+        {
+          "prod_code": "28779",
+          "description": "YEAST WET",
+          "pack_size": "P/KG",
+          "weight": "0.500",
+          "cost": "34.25",
+          "recipe_use": "0.500",
+          "total_cost": "17.13"
+        },
+        {
+          "prod_code": "29030",
+          "description": "SPAR WATER",
+          "pack_size": "P/KG",
+          "weight": "6.000",
+          "cost": "3.20",
+          "recipe_use": "6.000",
+          "total_cost": "19.20"
+        },
+        {
+          "prod_code": "27751",
+          "description": "GREASE PROOF 2",
+          "pack_size": "EA",
+          "weight": "",
+          "cost": "0.19",
+          "recipe_use": "271.000",
+          "total_cost": "51.11"
+        }
+      ]
+    },
+    {
+      "id": "26665",
+      "department": "BUTCHERY",
+      "product_code": "26665",
+      "description": "BABALAS BRAAI WORS",
+      "cost_excl_per_each_kg": "22.88",
+      "ingredients": [
+        {
+          "prod_code": "28743",
+          "description": "FROZEN MDM",
+          "pack_size": "P/KG",
+          "weight": "25.000",
+          "cost": "15.50",
+          "recipe_use": "25.000",
+          "total_cost": "387.50"
+        },
+        {
+          "prod_code": "28760",
+          "description": "BEEF KIDNEY FAT",
+          "pack_size": "P/KG",
+          "weight": "25.000",
+          "cost": "13.99",
+          "recipe_use": "25.000",
+          "total_cost": "349.75"
+        },
+        {
+          "prod_code": "29030",
+          "description": "SPAR WATER",
+          "pack_size": "P/KG",
+          "weight": "30.000",
+          "cost": "3.20",
+          "recipe_use": "30.000",
+          "total_cost": "96.00"
+        },
+        {
+          "prod_code": "30590",
+          "description": "PRS PARTY BRAAIWORS",
+          "pack_size": "P/KG",
+          "weight": "15.000",
+          "cost": "59.99",
+          "recipe_use": "15.000",
+          "total_cost": "899.85"
+        },
+        {
+          "prod_code": "31923",
+          "description": "HOG CASINGS 28/32 LONGS",
+          "pack_size": "P/KG",
+          "weight": "",
+          "cost": "239.99",
+          "recipe_use": "1.357",
+          "total_cost": "325.70"
+        }
+      ]
+    },
+    {
+      "id": "26751",
+      "department": "BAKERY",
+      "product_code": "26751",
+      "description": "ZUKI'S SCONE",
+      "cost_excl_per_each_kg": "4.01",
+      "ingredients": [
+        {
+          "prod_code": "15732",
+          "description": "WC MILLING CAKE FLOUR",
+          "pack_size": "12.5K",
+          "weight": "8.000",
+          "cost": "11.40",
+          "recipe_use": "8.000",
+          "total_cost": "91.17"
+        },
+        {
+          "prod_code": "28222",
+          "description": "MILK FULL CREAM",
+          "pack_size": "20L",
+          "weight": "1.400",
+          "cost": "13.80",
+          "recipe_use": "1.400",
+          "total_cost": "19.32"
+        },
+        {
+          "prod_code": "29322",
+          "description": "OIL VEGETABLE CHIPKINS",
+          "pack_size": "20LT",
+          "weight": "1.400",
+          "cost": "43.50",
+          "recipe_use": "1.400",
+          "total_cost": "60.90"
+        },
+        {
+          "prod_code": "27492",
+          "description": "SUGAR WHITE HULETS",
+          "pack_size": "P/KG",
+          "weight": "1.400",
+          "cost": "23.44",
+          "recipe_use": "1.400",
+          "total_cost": "32.82"
+        },
+        {
+          "prod_code": "26370",
+          "description": "GOLDEN YOLK LOOSE BAKERY EGGS",
+          "pack_size": "30'S",
+          "weight": "1.400",
+          "cost": "59.00",
+          "recipe_use": "0.933",
+          "total_cost": "55.07"
+        },
+        {
+          "prod_code": "28313",
+          "description": "HERCULES BAKING POWDER",
+          "pack_size": "P/KG",
+          "weight": "0.400",
+          "cost": "53.05",
+          "recipe_use": "0.400",
+          "total_cost": "21.22"
+        }
+      ]
+    },
+    {
+      "id": "26753",
+      "department": "BAKERY",
+      "product_code": "26753",
+      "description": "ROCK BUNS",
+      "cost_excl_per_each_kg": "6.06",
+      "ingredients": [
+        {
+          "prod_code": "2520",
+          "description": "SMARTBAKER MIX",
+          "pack_size": "12.5K",
+          "weight": "0.160",
+          "cost": "322.41",
+          "recipe_use": "0.160",
+          "total_cost": "51.59"
+        },
+        {
+          "prod_code": "15732",
+          "description": "WC MILLING CAKE FLOUR",
+          "pack_size": "12.5K",
+          "weight": "8.000",
+          "cost": "11.40",
+          "recipe_use": "8.000",
+          "total_cost": "91.17"
+        },
+        {
+          "prod_code": "28222",
+          "description": "MILK FULL CREAM",
+          "pack_size": "20L",
+          "weight": "1.400",
+          "cost": "13.80",
+          "recipe_use": "1.400",
+          "total_cost": "19.32"
+        },
+        {
+          "prod_code": "29322",
+          "description": "OIL VEGETABLE CHIPKINS",
+          "pack_size": "20LT",
+          "weight": "1.400",
+          "cost": "43.50",
+          "recipe_use": "1.400",
+          "total_cost": "60.90"
+        },
+        {
+          "prod_code": "27492",
+          "description": "SUGAR WHITE HULETS",
+          "pack_size": "P/KG",
+          "weight": "1.400",
+          "cost": "23.44",
+          "recipe_use": "1.400",
+          "total_cost": "32.82"
+        },
+        {
+          "prod_code": "26370",
+          "description": "GOLDEN YOLK LOOSE BAKERY EGGS",
+          "pack_size": "30'S",
+          "weight": "0.933",
+          "cost": "59.00",
+          "recipe_use": "0.933",
+          "total_cost": "55.07"
+        },
+        {
+          "prod_code": "28313",
+          "description": "HERCULES BAKING POWDER",
+          "pack_size": "P/KG",
+          "weight": "0.400",
+          "cost": "53.05",
+          "recipe_use": "0.400",
+          "total_cost": "21.22"
+        }
+      ]
+    },
+    {
+      "id": "26739",
+      "department": "BAKERY",
+      "product_code": "26739",
+      "description": "PORTUGUESE  BREAD",
+      "cost_excl_per_each_kg": "5.09",
+      "ingredients": [
+        {
+          "prod_code": "28483",
+          "description": "WC MILLING CRISPY MIX",
+          "pack_size": "12.5K",
+          "weight": "13.500",
+          "cost": "12.66",
+          "recipe_use": "13.500",
+          "total_cost": "170.88"
+        },
+        {
+          "prod_code": "28779",
+          "description": "YEAST WET",
+          "pack_size": "P/KG",
+          "weight": "0.500",
+          "cost": "34.25",
+          "recipe_use": "0.500",
+          "total_cost": "17.13"
+        },
+        {
+          "prod_code": "29030",
+          "description": "SPAR WATER",
+          "pack_size": "P/KG",
+          "weight": "6.500",
+          "cost": "3.20",
+          "recipe_use": "6.500",
+          "total_cost": "20.80"
+        }
+      ]
+    },
+    {
+      "id": "26908",
+      "department": "BAKERY",
+      "product_code": "26908",
+      "description": "MILK TART",
+      "cost_excl_per_each_kg": "21.18",
+      "ingredients": [
+        {
+          "prod_code": "27492",
+          "description": "SUGAR WHITE HULETS",
+          "pack_size": "P/KG",
+          "weight": "1.000",
+          "cost": "23.44",
+          "recipe_use": "1.000",
+          "total_cost": "23.44"
+        },
+        {
+          "prod_code": "27498",
+          "description": "MARG YELLOW WOODEN SPOON",
+          "pack_size": "P/KG",
+          "weight": "1.000",
+          "cost": "36.36",
+          "recipe_use": "1.000",
+          "total_cost": "36.36"
+        },
+        {
+          "prod_code": "28293",
+          "description": "BAVARIAN SUPREME",
+          "pack_size": "P/KG",
+          "weight": "0.600",
+          "cost": "77.42",
+          "recipe_use": "0.600",
+          "total_cost": "46.45"
+        },
+        {
+          "prod_code": "28222",
+          "description": "MILK FULL CREAM",
+          "pack_size": "20L",
+          "weight": "10.000",
+          "cost": "13.80",
+          "recipe_use": "10.000",
+          "total_cost": "138.00"
+        },
+        {
+          "prod_code": "28888",
+          "description": "CINNAMON GROUND",
+          "pack_size": "P/KG",
+          "weight": "0.010",
+          "cost": "96.60",
+          "recipe_use": "0.100",
+          "total_cost": "9.66"
+        },
+        {
+          "prod_code": "29737",
+          "description": "TART BASE SWEET",
+          "pack_size": "EA",
+          "weight": "",
+          "cost": "14.24",
+          "recipe_use": "40.000",
+          "total_cost": "569.78"
+        },
+        {
+          "prod_code": "26370",
+          "description": "GOLDEN YOLK LOOSE BAKERY EGGS",
+          "pack_size": "30'S",
+          "weight": "0.600",
+          "cost": "59.00",
+          "recipe_use": "0.400",
+          "total_cost": "23.60"
+        }
+      ]
+    },
+    {
+      "id": "28383",
+      "department": "BAKERY",
+      "product_code": "28383",
+      "description": "BREAD DOUGH",
+      "cost_excl_per_each_kg": "5.81",
+      "ingredients": [
+        {
+          "prod_code": "15736",
+          "description": "W/CAPEMILL  MIX WHT BRD",
           "pack_size": "9.5KG",
           "weight": "47.500",
           "cost": "12.29",

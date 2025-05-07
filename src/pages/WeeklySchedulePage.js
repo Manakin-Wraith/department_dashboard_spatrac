@@ -1,15 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { fetchSchedules, saveSchedule, fetchRecipes, saveAudit, fetchAudits, deleteAudit, deleteSchedule } from '../services/api';
+import { 
+  fetchSchedules, 
+  saveSchedule, 
+  deleteSchedule, 
+  fetchRecipes, 
+  fetchHandlers, 
+  saveAudit, 
+  fetchAudits, 
+  deleteAudit 
+} from '../services/api';
 import supplierTable from '../data/supplier_table.json';
 import { Box, Button, Card, CardContent, Accordion, AccordionSummary, AccordionDetails, Typography, Snackbar, Alert } from '@mui/material';
 import ConfirmScheduleModal from '../components/ConfirmScheduleModal';
+import TimeSlotScheduleModal from '../components/TimeSlotScheduleModal';
 import ExportScheduleModal from '../components/ExportScheduleModal';
 import { useTheme, alpha } from '@mui/material/styles';
 import PageHeader from '../components/PageHeader';
 import departments from '../data/department_table.json';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import PrintIcon from '@mui/icons-material/Print';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -23,51 +34,98 @@ const WeeklySchedulePage = () => {
   const { department } = useParams();
   const [schedules, setSchedules] = useState([]);
   const [recipes, setRecipes] = useState([]);
+  const [handlers, setHandlers] = useState([]);
   const [selectedId, setSelectedId] = useState('');
   const [items, setItems] = useState([]);
+  const [scheduledDate, setScheduledDate] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [exportOpen, setExportOpen] = useState(false);
-  const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().slice(0,10));
+  const [managerName] = useState('');
+  const [handlerName] = useState('');
+  const [timeSlotModalOpen, setTimeSlotModalOpen] = useState(false);
+  const [currentEventInfo, setCurrentEventInfo] = useState(null);
+  const [currentSlotInfo, setCurrentSlotInfo] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [exportOpen, setExportOpen] = useState(false);
 
   const theme = useTheme();
-  const deptObj = departments.find(d => d.department_code === department) || {};
-  const pageBg = alpha(deptObj.color || '#000', 1.0);
+  
+  // Find department object by department_code (URL parameter) - wrapped in useMemo
+  const deptObj = useMemo(() => {
+    const found = departments.find(d => 
+      d && d.department_code && 
+      department && 
+      d.department_code === department
+    ) || {};
+    
+    console.log('Department lookup:', { 
+      urlParam: department, 
+      foundDepartment: found, 
+      allDepartments: departments 
+    });
+    
+    return found;
+  }, [department]); // departments is imported statically, so it's not needed as a dependency
+  const pageBg = alpha(theme.palette.background.default, 0.6);
   const pageTextColor = theme.palette.text.primary;
   const accentColor = deptObj.color;
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [sch, rec] = await Promise.all([
-          fetchSchedules(department),
-          fetchRecipes(department)
-        ]);
-        setSchedules(sch);
-        // only include recipes for this department
-        const flat = Array.isArray(rec[0]) ? rec.flat() : rec;
-        const deptRecipes = flat.filter(r => r.department === deptObj.department);
-        setRecipes(deptRecipes);
-      } catch (e) {
-        console.error(e);
+  const loadData = useCallback(async () => {
+    try {
+      // We already have deptObj from above
+      console.log('Loading data for department:', { 
+        department_code: department,
+        department_name: deptObj.department
+      });
+      
+      // Use department_code for schedules, department name for recipes and handlers
+      const [sch, rec, handlersData] = await Promise.all([
+        fetchSchedules(department), // Keep using the URL param for schedules
+        fetchRecipes(deptObj.department), // Use department name (BUTCHERY, HMR, etc.)
+        fetchHandlers(deptObj.department) // Use department name for handlers too
+      ]);
+      
+      // If handlers are still empty, try using the handlers array from the department object
+      let finalHandlers = handlersData;
+      if (!handlersData || handlersData.length === 0) {
+        console.log('No handlers returned from API, using handlers from department object');
+        finalHandlers = deptObj.handlers ? deptObj.handlers.map(name => ({ name, id: name })) : [];
       }
+      
+      console.log('Fetched data:', { 
+        department_code: department, 
+        department_name: deptObj.department, 
+        schedules: sch.length, 
+        recipes: rec.length, 
+        handlers: finalHandlers.length,
+        recipesSample: rec.slice(0, 3),
+        handlersSample: finalHandlers.slice(0, 3)
+      });
+      
+      setSchedules(sch);
+      setRecipes(rec);
+      setHandlers(finalHandlers);
+    } catch (e) {
+      console.error('Error loading data:', e);
     }
-    load();
-  }, [department, deptObj.department]);
+  }, [department, deptObj]); // Add deptObj as a dependency
 
+  useEffect(() => {
+    const initLoad = async () => {
+      await loadData();
+    };
+    initLoad();
+  }, [loadData]); // Added loadData to dependency array (department is already a dep of loadData)
 
-
-
-  const handleConfirm = async ({ items: newItems, scheduledDate: date, managerName, handlersNames, ingredientSuppliers }) => {
+  const handleSave = async (newItems, newManager, newHandler, dateToSave, scheduleIdToUpdate) => {
     try {
       if (selectedId) {
         // update existing schedule via PUT
-        const schedule = { id: selectedId, department, weekStartDate: date, managerName, handlersNames, ingredientSuppliers, items: newItems };
+        const schedule = { id: selectedId, department, weekStartDate: dateToSave, managerName: newManager, handlersNames: newHandler, items: newItems };
         const saved = await saveSchedule(department, schedule);
         setSchedules(schedules.map(s => s.id === selectedId ? saved : s));
       } else {
         // create new schedule via POST
-        const schedule = { department, weekStartDate: date, managerName, handlersNames, ingredientSuppliers, items: newItems };
+        const schedule = { department, weekStartDate: dateToSave, managerName: newManager, handlersNames: newHandler, items: newItems };
         const saved = await saveSchedule(department, schedule);
         setSchedules(prev => [...prev, saved]);
       }
@@ -75,26 +133,26 @@ const WeeklySchedulePage = () => {
       const auditPromises = newItems.map((item, idx) => {
         const recipe = recipes.find(r => r.product_code === item.recipeCode) || {};
         // prepare audit record
-        const supplierNames = ingredientSuppliers[idx] || [];
+        const supplierNames = [];
         const addressOfSupplier = supplierNames.map(name => {
           const sup = supplierTable.find(s => s.supplier_name === name);
           return sup?.address || '';
         });
         const countries = supplierNames.map(name => supplierTable.find(s => s.supplier_name === name)?.country_of_origin || '');
         const record = {
-          uid: `${date}-${item.recipeCode}-${idx}`,
+          uid: `${dateToSave}-${item.recipeCode}-${idx}`,
           department,
-          date,
-          department_manager: managerName,
-          food_handler_responsible: handlersNames,
+          date: dateToSave,
+          department_manager: newManager,
+          food_handler_responsible: newHandler,
           planned_qty: item.plannedQty,
           packing_batch_code: [],
           product_name: [recipe.description || item.recipeCode],
           ingredient_list: recipe.ingredients?.map(ing => {
-  const qty = Number(ing.recipe_use) || 0;
-  const planned = Number(item.plannedQty) || 0;
-  return `${ing.description} (${qty * planned})`;
-}) || [],
+            const qty = Number(ing.recipe_use) || 0;
+            const planned = Number(item.plannedQty) || 0;
+            return `${ing.description} (${qty * planned})`;
+          }) || [],
           supplier_name: supplierNames,
           address_of_supplier: addressOfSupplier,
           batch_code: [],
@@ -109,6 +167,67 @@ const WeeklySchedulePage = () => {
     } catch (e) {
       console.error('Failed to save schedule', e);
     }
+  };
+
+  const handleSaveTimeSlot = async (dataFromModal) => {
+    console.log('Saving data from TimeSlotScheduleModal:', dataFromModal);
+    // This is a placeholder. We need to adapt this data to the current db.json structure.
+    // For now, let's assume dataFromModal contains { recipeCode, plannedQty, handlerName, startTime, endTime, date, id (FullCalendar event id or similar) }
+
+    const { date, recipeCode, plannedQty, handlerName: itemHandler } = dataFromModal;
+
+    // Find or create the schedule for the day
+    let daySchedule = schedules.find(s => s.weekStartDate === date && s.department_code === deptObj.department_code);
+
+    let isNewScheduleDay = false;
+
+    if (!daySchedule) {
+      isNewScheduleDay = true;
+      daySchedule = {
+        id: `sched_${Date.now()}`,
+        department_code: deptObj.department_code,
+        weekStartDate: date,
+        items: [],
+        managerName: managerName || (deptObj.department_manager && deptObj.department_manager[0]) || '',
+        handlersNames: itemHandler || handlerName || (handlers[0]?.name) || '',
+        status: 'Planned',
+        unique_ScheduledID: `${deptObj.department_code}-${date}-${Date.now()}`
+      };
+    }
+
+    let newItemsForDaySchedule;
+    if (currentEventInfo && currentEventInfo.extendedProps.scheduleId) {
+      // Editing an existing item within a day's schedule
+      const existingItemIndex = currentEventInfo.extendedProps.itemIndex;
+      newItemsForDaySchedule = daySchedule.items.map((item, index) => {
+        if (index === existingItemIndex) {
+          return { ...item, recipeCode, plannedQty }; // Update recipe and qty. Handler and time are visual for now.
+        }
+        return item;
+      });
+    } else {
+      // Adding a new item to the day's schedule
+      newItemsForDaySchedule = [...daySchedule.items, { recipeCode, plannedQty }];
+    }
+
+    const scheduleToSave = {
+      ...daySchedule,
+      items: newItemsForDaySchedule,
+      // Potentially update daySchedule.handlersNames if makes sense, or acknowledge it's a simplification
+      handlersNames: itemHandler || daySchedule.handlersNames, 
+    };
+
+    try {
+      await saveSchedule(department, scheduleToSave, scheduleToSave.id && !isNewScheduleDay ? scheduleToSave.id : null);
+      console.log('Day schedule saved/updated via TimeSlotModal');
+    } catch (error) {
+      console.error('Error saving schedule from TimeSlotModal:', error);
+    }
+
+    setTimeSlotModalOpen(false);
+    setCurrentEventInfo(null);
+    setCurrentSlotInfo(null);
+    loadData(); // Reload schedules to reflect changes from the 'server'
   };
 
   const handleDeleteItem = async (scheduleId, idxToDelete) => {
@@ -184,33 +303,64 @@ const WeeklySchedulePage = () => {
         <PageHeader title="Weekly Schedule" />
         <Box sx={{ my: 2 }}>
           <FullCalendar
-            plugins={[dayGridPlugin, interactionPlugin]}
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
+            headerToolbar={{
+              left: 'prev,next today',
+              center: 'title',
+              right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            }}
             events={schedules.flatMap(s =>
-              s.items.map(item => {
+              s.items.map((item, index) => {
                 const rec = recipes.find(r => r.product_code === item.recipeCode) || {};
+                const baseDate = s.weekStartDate;
+                let itemStartTime = `${baseDate}T${String(9 + index).padStart(2, '0')}:00:00`;
+                let itemEndTime = `${baseDate}T${String(9 + index + 1).padStart(2, '0')}:00:00`;
+
+                if (item.startTime && item.endTime) {
+                  itemStartTime = `${baseDate}T${item.startTime}`;
+                  itemEndTime = `${baseDate}T${item.endTime}`;
+                }
+
                 return {
                   title: `${rec.description || item.recipeCode} (${item.plannedQty}) – ${s.handlersNames}`,
-                  date: s.weekStartDate
+                  start: itemStartTime,
+                  end: itemEndTime,
+                  allDay: false,
+                  extendedProps: {
+                    scheduleId: s.id,
+                    itemIndex: index,
+                    originalDate: s.weekStartDate,
+                    recipeCode: item.recipeCode,
+                    plannedQty: item.plannedQty,
+                    handlerName: s.handlersNames
+                  }
                 };
               })
             )}
             dateClick={info => {
-              setSelectedId('');
-              setItems([]);
-              setScheduledDate(info.dateStr);
-              setConfirmOpen(true);
-            }}
-            eventClick={info => {
-              const sel = schedules.find(s => s.weekStartDate === info.event.startStr);
-              if (sel) {
-                setSelectedId(sel.id);
-                setItems(sel.items);
-                setScheduledDate(sel.weekStartDate);
+              if (info.view.type === 'dayGridMonth') {
+                setSelectedId('');
+                setItems([]);
+                setScheduledDate(info.dateStr);
                 setConfirmOpen(true);
+                setTimeSlotModalOpen(false);
+              } else {
+                setCurrentSlotInfo(info);
+                setCurrentEventInfo(null);
+                setTimeSlotModalOpen(true);
+                setConfirmOpen(false);
               }
             }}
-            height="auto"
+            eventClick={info => {
+              setCurrentEventInfo(info.event);
+              setCurrentSlotInfo(null);
+              setTimeSlotModalOpen(true);
+              setConfirmOpen(false);
+            }}
+            slotMinTime="05:00:00"
+            slotMaxTime="22:00:00"
+            allDaySlot={false}
           />
         </Box>
         <Box sx={{ my: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -258,17 +408,39 @@ const WeeklySchedulePage = () => {
           </CardContent>
         </Card>
 
-        
-        <ConfirmScheduleModal
-          open={confirmOpen}
-          initialDate={scheduledDate}
-          items={items}
-          recipes={recipes}
-          scheduleId={selectedId}
-          onClose={() => setConfirmOpen(false)}
-          onConfirm={handleConfirm}
-          onDelete={handleDeleteSchedule}
-        />
+        {confirmOpen && (
+          <ConfirmScheduleModal
+            open={confirmOpen}
+            onClose={() => setConfirmOpen(false)}
+            initialDate={scheduledDate}
+            items={items}
+            recipes={recipes}
+            scheduleId={selectedId}
+            onSave={handleSave}
+            onDelete={handleDeleteSchedule}
+          />
+        )}
+
+        {timeSlotModalOpen && (
+          <>
+            {console.log('WeeklySchedulePage: Rendering TimeSlotScheduleModal with:', { recipes, handlers, deptObj })}
+            <TimeSlotScheduleModal
+              open={timeSlotModalOpen}
+              onClose={() => {
+                setTimeSlotModalOpen(false);
+                setCurrentEventInfo(null);
+                setCurrentSlotInfo(null);
+              }}
+              eventInfo={currentEventInfo}
+              slotInfo={currentSlotInfo}
+              recipes={recipes}
+              handlers={handlers}
+              department={deptObj}
+              onSave={handleSaveTimeSlot}
+            />
+          </>
+        )}
+
         <ExportScheduleModal
           open={exportOpen}
           onClose={() => setExportOpen(false)}
