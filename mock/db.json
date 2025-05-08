@@ -3835,6 +3835,210 @@
             "none"
           ],
           "confirmationTimestamp": "2025-05-08T05:22:01.103Z"
+        },
+        {
+          "id": "2025-05-08-33937-1746683608962",
+          "recipeCode": "33937",
+          "plannedQty": 12,
+          "handlerName": "Clive",
+          "startTime": "09:00",
+          "endTime": "11:30",
+          "date": "2025-05-08",
+          "status": "planned",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-08T05:53:28.962Z",
+              "changedBy": "Current User",
+              "changes": [
+                {
+                  "field": "created",
+                  "oldValue": null,
+                  "newValue": "new item"
+                }
+              ]
+            }
+          ],
+          "productDescription": "DHL STORMERS BOEREWORS"
+        },
+        {
+          "id": "2025-05-08-26665-1746683736272",
+          "recipeCode": "26665",
+          "plannedQty": 1,
+          "handlerName": "Sipho",
+          "startTime": "08:30",
+          "endTime": "12:30",
+          "date": "2025-05-08",
+          "status": "planned",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-08T05:55:36.273Z",
+              "changedBy": "Current User",
+              "changes": [
+                {
+                  "field": "created",
+                  "oldValue": null,
+                  "newValue": "new item"
+                }
+              ]
+            }
+          ],
+          "productDescription": "BABALAS BRAAI WORS"
+        },
+        {
+          "id": "2025-05-08-28092-1746683962345",
+          "recipeCode": "28092",
+          "plannedQty": 4,
+          "handlerName": "Sipho",
+          "startTime": "08:00",
+          "endTime": "10:30",
+          "date": "2025-05-08",
+          "status": "planned",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-08T05:59:22.345Z",
+              "changedBy": "Current User",
+              "changes": [
+                {
+                  "field": "created",
+                  "oldValue": null,
+                  "newValue": "new item"
+                }
+              ]
+            }
+          ],
+          "productDescription": "BEEF STEAK BURGER"
+        },
+        {
+          "id": "2025-05-08-26665-1746681528565",
+          "recipeCode": "26665",
+          "plannedQty": 10,
+          "handlerName": "Sipho",
+          "startTime": "09:00",
+          "endTime": "11:00",
+          "date": "2025-05-08",
+          "status": "completed",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-08T06:08:46.350Z",
+              "changedBy": "Current User",
+              "changes": [
+                {
+                  "field": "created",
+                  "oldValue": null,
+                  "newValue": "new item"
+                }
+              ]
+            }
+          ],
+          "productDescription": "BABALAS BRAAI WORS",
+          "actualQty": 9,
+          "qualityScore": 3,
+          "notes": "Lost 1 unit",
+          "ingredientSuppliers": [
+            "",
+            "",
+            ""
+          ],
+          "batchCodes": [
+            "BATCH-28867-1-548016",
+            "BATCH-28867-2-548016",
+            "BATCH-28867-3-548016"
+          ],
+          "sellByDates": [
+            "2025-05-15",
+            "2025-05-15",
+            "2025-05-15"
+          ],
+          "receivingDates": [
+            "2025-05-08",
+            "2025-05-08",
+            "2025-05-08"
+          ],
+          "deviations": [
+            "none"
+          ],
+          "confirmationTimestamp": "2025-05-08T06:08:46.349Z"
+        },
+        {
+          "id": "2025-05-08-26665-1746688293824",
+          "recipeCode": "26665",
+          "plannedQty": 1,
+          "handlerName": "Sipho",
+          "startTime": "09:30",
+          "endTime": "12:00",
+          "date": "2025-05-08",
+          "status": "planned",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-08T07:11:33.825Z",
+              "changedBy": "Current User",
+              "changes": [
+                {
+                  "field": "created",
+                  "oldValue": null,
+                  "newValue": "new item"
+                }
+              ]
+            }
+          ],
+          "productDescription": "BABALAS BRAAI WORS"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "weekStartDate": "2025-05-09",
+      "department": "1152",
+      "managerName": "Clive",
+      "handlersNames": [],
+      "items": [
+        {
+          "id": "2025-05-09-29708-1746684136249",
+          "recipeCode": "29708",
+          "plannedQty": 26,
+          "handlerName": "Sipho",
+          "startTime": "09:00",
+          "endTime": "12:30",
+          "date": "2025-05-09",
+          "status": "planned",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-08T06:02:16.250Z",
+              "changedBy": "Current User",
+              "changes": [
+                {
+                  "field": "created",
+                  "oldValue": null,
+                  "newValue": "new item"
+                }
+              ]
+            }
+          ],
+          "productDescription": "OUKRAAL WORS"
+        },
+        {
+          "id": "2025-05-09-27125-1746689312929",
+          "recipeCode": "27125",
+          "plannedQty": 34,
+          "handlerName": "Sipho",
+          "startTime": "07:30",
+          "endTime": "10:00",
+          "date": "2025-05-09",
+          "status": "planned",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-08T07:28:32.929Z",
+              "changedBy": "Current User",
+              "changes": [
+                {
+                  "field": "created",
+                  "oldValue": null,
+                  "newValue": "new item"
+                }
+              ]
+            }
+          ],
+          "productDescription": "SIPHO'S BUDGET BURGERS"
         }
       ]
     }
@@ -3901,6 +4105,82 @@
       "actualQty": 40,
       "qualityScore": 1,
       "confirmationTimestamp": "2025-05-08T05:22:01.152Z"
+    },
+    {
+      "id": 1746684526404,
+      "uid": "2025-05-08-26665-1746684526404",
+      "department": "1152",
+      "food_handler_responsible": "Sipho",
+      "packing_batch_code": [
+        "test"
+      ],
+      "product_name": [
+        "BABALAS BRAAI WORS"
+      ],
+      "ingredient_list": [
+        "FROZEN MDM (250.000 from base: 25)",
+        "BEEF KIDNEY FAT (250.000 from base: 25)",
+        "SPAR WATER (300.000 from base: 30)",
+        "PRS PARTY BRAAIWORS (150.000 from base: 15)",
+        "HOG CASINGS 28/32 LONGS (13.570 from base: 1.357)"
+      ],
+      "supplier_name": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "address_of_supplier": [
+        "Supplier Address",
+        "Supplier Address",
+        "Supplier Address",
+        "Supplier Address",
+        "Supplier Address"
+      ],
+      "batch_code": [
+        "BATCH-28867-1-548016",
+        "BATCH-28867-2-548016",
+        "BATCH-28867-3-548016",
+        "BATCH-26665-4-526404",
+        "BATCH-26665-5-526404"
+      ],
+      "sell_by_date": [
+        "2025-05-15",
+        "2025-05-15",
+        "2025-05-15",
+        "2025-05-15",
+        "2025-05-15"
+      ],
+      "receiving_date": [
+        "2025-05-08",
+        "2025-05-08",
+        "2025-05-08",
+        "2025-05-08",
+        "2025-05-08"
+      ],
+      "country_of_origin": [
+        "South Africa",
+        "South Africa",
+        "South Africa",
+        "South Africa",
+        "South Africa"
+      ],
+      "planned_qty": 10,
+      "actual_qty": 9,
+      "notes": "Lost 1 unit",
+      "quality_score": 3,
+      "deviations": [
+        "none"
+      ],
+      "confirmation_timestamp": "2025-05-08T06:08:46.404Z",
+      "productDescription": "BABALAS BRAAI WORS",
+      "date": "2025-05-08",
+      "status": "completed",
+      "originalScheduleId": "2025-05-08-26665-1746681528565",
+      "actualQty": 9,
+      "qualityScore": 3,
+      "confirmationTimestamp": "2025-05-08T06:08:46.404Z"
     }
   ],
   "production-documents": [],
