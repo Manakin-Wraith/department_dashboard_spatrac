@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { fetchRecipes, fetchSchedules, fetchAudits } from '../services/api';
 
 /**
@@ -6,6 +6,9 @@ import { fetchRecipes, fetchSchedules, fetchAudits } from '../services/api';
  * @param {string} department - The department code
  * @returns {Object} Production data and related state/functions
  */
+// Cache for recipes by department
+const recipeCache = {};
+
 const useProductionData = (department) => {
   const [recipes, setRecipes] = useState([]);
   const [schedules, setSchedules] = useState([]);
@@ -18,16 +21,45 @@ const useProductionData = (department) => {
   const [error, setError] = useState(null);
   const [filteredSchedules, setFilteredSchedules] = useState([]);
   
-  // Fetch recipes for the department
+  // Track the current department for debugging
+  const currentDepartmentRef = useRef(department);
+  
+  // Fetch recipes for the department with caching
   const loadRecipes = useCallback(async () => {
     if (!department) return;
     
     try {
       setLoading(prev => ({ ...prev, recipes: true }));
-      const data = await fetchRecipes(department);
-      setRecipes(data || []);
+      
+      // Update the current department reference
+      currentDepartmentRef.current = department;
+      console.log(`Loading recipes for department: ${department}`);
+      
+      // Normalize department code for consistent caching
+      const normalizedDepartment = department.toLowerCase();
+      
+      // Check if we have cached data for this department
+      if (recipeCache[normalizedDepartment]) {
+        console.log(`Using cached recipes for department: ${department} (normalized: ${normalizedDepartment})`);
+        setRecipes(recipeCache[normalizedDepartment]);
+      } else {
+        // Fetch from API with explicit department parameter
+        console.log(`Fetching recipes from API for department: ${department}`);
+        const data = await fetchRecipes(department);
+        
+        // Verify the department is still the same (in case it changed during the fetch)
+        if (currentDepartmentRef.current === department) {
+          // The fetchRecipes function already filters by department, so we don't need to filter again
+          // Just log the count for debugging purposes
+          console.log(`Received ${data.length} recipes for department ${department} (normalized: ${normalizedDepartment})`);
+          
+          // Cache the data using normalized department key
+          recipeCache[normalizedDepartment] = data;
+          setRecipes(data);
+        }
+      }
     } catch (err) {
-      console.error('Failed to fetch recipes:', err);
+      console.error(`Failed to fetch recipes for department ${department}:`, err);
       setError('Failed to load recipes. Please try again later.');
     } finally {
       setLoading(prev => ({ ...prev, recipes: false }));
@@ -105,11 +137,25 @@ const useProductionData = (department) => {
   // Load all data on component mount
   useEffect(() => {
     if (department) {
+      console.log(`useProductionData: Loading data for department: ${department}`);
       loadRecipes();
       loadSchedules();
       loadAudits();
+    } else {
+      console.warn('useProductionData: No department provided, cannot load data');
     }
   }, [department, loadRecipes, loadSchedules, loadAudits]);
+  
+  // Debug current state
+  useEffect(() => {
+    console.log(`useProductionData: Current state for department ${department}:`, {
+      recipesCount: recipes.length,
+      schedulesCount: schedules.length,
+      auditsCount: audits.length,
+      loading,
+      error: error || 'No errors'
+    });
+  }, [recipes, schedules, audits, loading, error, department]);
   
   // Reload data function for manual refreshes
   const reloadData = useCallback(() => {

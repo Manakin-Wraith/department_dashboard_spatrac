@@ -12,11 +12,12 @@ import { alpha } from '@mui/material/styles';
  * Production Document Card component for displaying production documents in a card view
  */
 const ProductionDocumentCard = ({
-  schedules,
-  recipes,
+  schedules = [],
+  recipes = [],
   onEdit,
   onDelete,
   onViewHistory,
+  onCreateNew,
   accentColor = '#1976d2'
 }) => {
   /**
@@ -148,6 +149,7 @@ const ProductionDocumentCard = ({
             <Button 
               variant="outlined" 
               sx={{ mt: 2, borderColor: accentColor, color: accentColor }}
+              onClick={onCreateNew}
             >
               Create New Production
             </Button>

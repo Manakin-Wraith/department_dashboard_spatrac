@@ -3715,474 +3715,321 @@
       ]
     }
   ],
-  "schedules": [
+  "schedules": [],
+  "audits": [],
+  "production-documents": [],
+  "department_staff": [
     {
       "id": 1,
-      "weekStartDate": "2025-05-08",
+      "name": "Sipho",
       "department": "1152",
-      "managerName": "Clive",
-      "handlersNames": [],
-      "items": [
-        {
-          "id": "2025-05-08-26665-1746681528565",
-          "recipeCode": "26665",
-          "plannedQty": 10,
-          "handlerName": "Sipho",
-          "startTime": "09:00",
-          "endTime": "11:00",
-          "date": "2025-05-08",
-          "status": "scheduled",
-          "changeHistory": [
-            {
-              "timestamp": "2025-05-08T05:18:48.566Z",
-              "changedBy": "Current User",
-              "changes": [
-                {
-                  "field": "created",
-                  "oldValue": null,
-                  "newValue": "new item"
-                }
-              ]
-            },
-            {
-              "timestamp": "2025-05-08T05:20:50.346Z",
-              "changedBy": "Current User",
-              "changes": [
-                {
-                  "field": "plannedQty",
-                  "oldValue": 15,
-                  "newValue": 10
-                }
-              ]
-            }
-          ],
-          "productDescription": "BABALAS BRAAI WORS",
-          "actualQty": 10,
-          "qualityScore": 1,
-          "notes": "",
-          "ingredientSuppliers": [
-            "",
-            "",
-            ""
-          ],
-          "batchCodes": [
-            "BATCH-28867-1-548016",
-            "BATCH-28867-2-548016",
-            "BATCH-28867-3-548016"
-          ],
-          "sellByDates": [
-            "2025-05-15",
-            "2025-05-15",
-            "2025-05-15"
-          ],
-          "receivingDates": [
-            "2025-05-08",
-            "2025-05-08",
-            "2025-05-08"
-          ],
-          "deviations": [
-            "none"
-          ],
-          "confirmationTimestamp": "2025-05-08T05:20:50.346Z"
-        },
-        {
-          "id": "2025-05-08-28867-1746681567881",
-          "recipeCode": "28867",
-          "plannedQty": 39,
-          "handlerName": "Lukhanyo",
-          "startTime": "11:30",
-          "endTime": "14:30",
-          "date": "2025-05-08",
-          "status": "completed",
-          "changeHistory": [
-            {
-              "timestamp": "2025-05-08T05:19:27.881Z",
-              "changedBy": "Current User",
-              "changes": [
-                {
-                  "field": "created",
-                  "oldValue": null,
-                  "newValue": "new item"
-                }
-              ]
-            }
-          ],
-          "productDescription": "SIX GUN BEEF BURGER",
-          "actualQty": 40,
-          "qualityScore": 1,
-          "notes": "",
-          "ingredientSuppliers": [
-            "",
-            "",
-            ""
-          ],
-          "batchCodes": [
-            "BATCH-28867-1-548016",
-            "BATCH-28867-2-548016",
-            "BATCH-28867-3-548016"
-          ],
-          "sellByDates": [
-            "2025-05-15",
-            "2025-05-15",
-            "2025-05-15"
-          ],
-          "receivingDates": [
-            "2025-05-08",
-            "2025-05-08",
-            "2025-05-08"
-          ],
-          "deviations": [
-            "none"
-          ],
-          "confirmationTimestamp": "2025-05-08T05:22:01.103Z"
-        },
-        {
-          "id": "2025-05-08-33937-1746683608962",
-          "recipeCode": "33937",
-          "plannedQty": 12,
-          "handlerName": "Clive",
-          "startTime": "09:00",
-          "endTime": "11:30",
-          "date": "2025-05-08",
-          "status": "planned",
-          "changeHistory": [
-            {
-              "timestamp": "2025-05-08T05:53:28.962Z",
-              "changedBy": "Current User",
-              "changes": [
-                {
-                  "field": "created",
-                  "oldValue": null,
-                  "newValue": "new item"
-                }
-              ]
-            }
-          ],
-          "productDescription": "DHL STORMERS BOEREWORS"
-        },
-        {
-          "id": "2025-05-08-26665-1746683736272",
-          "recipeCode": "26665",
-          "plannedQty": 1,
-          "handlerName": "Sipho",
-          "startTime": "08:30",
-          "endTime": "12:30",
-          "date": "2025-05-08",
-          "status": "planned",
-          "changeHistory": [
-            {
-              "timestamp": "2025-05-08T05:55:36.273Z",
-              "changedBy": "Current User",
-              "changes": [
-                {
-                  "field": "created",
-                  "oldValue": null,
-                  "newValue": "new item"
-                }
-              ]
-            }
-          ],
-          "productDescription": "BABALAS BRAAI WORS"
-        },
-        {
-          "id": "2025-05-08-28092-1746683962345",
-          "recipeCode": "28092",
-          "plannedQty": 4,
-          "handlerName": "Sipho",
-          "startTime": "08:00",
-          "endTime": "10:30",
-          "date": "2025-05-08",
-          "status": "planned",
-          "changeHistory": [
-            {
-              "timestamp": "2025-05-08T05:59:22.345Z",
-              "changedBy": "Current User",
-              "changes": [
-                {
-                  "field": "created",
-                  "oldValue": null,
-                  "newValue": "new item"
-                }
-              ]
-            }
-          ],
-          "productDescription": "BEEF STEAK BURGER"
-        },
-        {
-          "id": "2025-05-08-26665-1746681528565",
-          "recipeCode": "26665",
-          "plannedQty": 10,
-          "handlerName": "Sipho",
-          "startTime": "09:00",
-          "endTime": "11:00",
-          "date": "2025-05-08",
-          "status": "completed",
-          "changeHistory": [
-            {
-              "timestamp": "2025-05-08T06:08:46.350Z",
-              "changedBy": "Current User",
-              "changes": [
-                {
-                  "field": "created",
-                  "oldValue": null,
-                  "newValue": "new item"
-                }
-              ]
-            }
-          ],
-          "productDescription": "BABALAS BRAAI WORS",
-          "actualQty": 9,
-          "qualityScore": 3,
-          "notes": "Lost 1 unit",
-          "ingredientSuppliers": [
-            "",
-            "",
-            ""
-          ],
-          "batchCodes": [
-            "BATCH-28867-1-548016",
-            "BATCH-28867-2-548016",
-            "BATCH-28867-3-548016"
-          ],
-          "sellByDates": [
-            "2025-05-15",
-            "2025-05-15",
-            "2025-05-15"
-          ],
-          "receivingDates": [
-            "2025-05-08",
-            "2025-05-08",
-            "2025-05-08"
-          ],
-          "deviations": [
-            "none"
-          ],
-          "confirmationTimestamp": "2025-05-08T06:08:46.349Z"
-        },
-        {
-          "id": "2025-05-08-26665-1746688293824",
-          "recipeCode": "26665",
-          "plannedQty": 1,
-          "handlerName": "Sipho",
-          "startTime": "09:30",
-          "endTime": "12:00",
-          "date": "2025-05-08",
-          "status": "planned",
-          "changeHistory": [
-            {
-              "timestamp": "2025-05-08T07:11:33.825Z",
-              "changedBy": "Current User",
-              "changes": [
-                {
-                  "field": "created",
-                  "oldValue": null,
-                  "newValue": "new item"
-                }
-              ]
-            }
-          ],
-          "productDescription": "BABALAS BRAAI WORS"
-        }
-      ]
+      "role": "Handler",
+      "email": "sipho@example.com",
+      "phone": "123-456-7890"
     },
     {
       "id": 2,
-      "weekStartDate": "2025-05-09",
+      "name": "Lukhanyo",
       "department": "1152",
-      "managerName": "Clive",
-      "handlersNames": [],
-      "items": [
-        {
-          "id": "2025-05-09-29708-1746684136249",
-          "recipeCode": "29708",
-          "plannedQty": 26,
-          "handlerName": "Sipho",
-          "startTime": "09:00",
-          "endTime": "12:30",
-          "date": "2025-05-09",
-          "status": "planned",
-          "changeHistory": [
-            {
-              "timestamp": "2025-05-08T06:02:16.250Z",
-              "changedBy": "Current User",
-              "changes": [
-                {
-                  "field": "created",
-                  "oldValue": null,
-                  "newValue": "new item"
-                }
-              ]
-            }
-          ],
-          "productDescription": "OUKRAAL WORS"
-        },
-        {
-          "id": "2025-05-09-27125-1746689312929",
-          "recipeCode": "27125",
-          "plannedQty": 34,
-          "handlerName": "Sipho",
-          "startTime": "07:30",
-          "endTime": "10:00",
-          "date": "2025-05-09",
-          "status": "planned",
-          "changeHistory": [
-            {
-              "timestamp": "2025-05-08T07:28:32.929Z",
-              "changedBy": "Current User",
-              "changes": [
-                {
-                  "field": "created",
-                  "oldValue": null,
-                  "newValue": "new item"
-                }
-              ]
-            }
-          ],
-          "productDescription": "SIPHO'S BUDGET BURGERS"
-        }
-      ]
-    }
-  ],
-  "audits": [
-    {
-      "id": 1746681721152,
-      "uid": "2025-05-08-28867-1746681721152",
-      "department": "1152",
-      "food_handler_responsible": "Lukhanyo",
-      "packing_batch_code": [
-        "test"
-      ],
-      "product_name": [
-        "SIX GUN BEEF BURGER"
-      ],
-      "ingredient_list": [
-        "VAC CROPS 90/10 (468.000 from base: 12)",
-        "SPAR WATER (78.000 from base: 2)",
-        "BURGER SIX GUN GRILL (39.000 from base: 1)"
-      ],
-      "supplier_name": [
-        "",
-        "",
-        ""
-      ],
-      "address_of_supplier": [
-        "Supplier Address",
-        "Supplier Address",
-        "Supplier Address"
-      ],
-      "batch_code": [
-        "BATCH-28867-1-548016",
-        "BATCH-28867-2-548016",
-        "BATCH-28867-3-548016"
-      ],
-      "sell_by_date": [
-        "2025-05-15",
-        "2025-05-15",
-        "2025-05-15"
-      ],
-      "receiving_date": [
-        "2025-05-08",
-        "2025-05-08",
-        "2025-05-08"
-      ],
-      "country_of_origin": [
-        "South Africa",
-        "South Africa",
-        "South Africa"
-      ],
-      "planned_qty": 39,
-      "actual_qty": 40,
-      "notes": "",
-      "quality_score": 1,
-      "deviations": [
-        "none"
-      ],
-      "confirmation_timestamp": "2025-05-08T05:22:01.152Z",
-      "productDescription": "SIX GUN BEEF BURGER",
-      "date": "2025-05-08",
-      "status": "completed",
-      "originalScheduleId": "2025-05-08-28867-1746681567881",
-      "actualQty": 40,
-      "qualityScore": 1,
-      "confirmationTimestamp": "2025-05-08T05:22:01.152Z"
+      "role": "Handler",
+      "email": "lukhanyo@example.com",
+      "phone": "123-456-7891"
     },
     {
-      "id": 1746684526404,
-      "uid": "2025-05-08-26665-1746684526404",
+      "id": 3,
+      "name": "Clive",
       "department": "1152",
-      "food_handler_responsible": "Sipho",
-      "packing_batch_code": [
-        "test"
-      ],
-      "product_name": [
-        "BABALAS BRAAI WORS"
-      ],
-      "ingredient_list": [
-        "FROZEN MDM (250.000 from base: 25)",
-        "BEEF KIDNEY FAT (250.000 from base: 25)",
-        "SPAR WATER (300.000 from base: 30)",
-        "PRS PARTY BRAAIWORS (150.000 from base: 15)",
-        "HOG CASINGS 28/32 LONGS (13.570 from base: 1.357)"
-      ],
-      "supplier_name": [
-        "",
-        "",
-        "",
-        "",
-        ""
-      ],
-      "address_of_supplier": [
-        "Supplier Address",
-        "Supplier Address",
-        "Supplier Address",
-        "Supplier Address",
-        "Supplier Address"
-      ],
-      "batch_code": [
-        "BATCH-28867-1-548016",
-        "BATCH-28867-2-548016",
-        "BATCH-28867-3-548016",
-        "BATCH-26665-4-526404",
-        "BATCH-26665-5-526404"
-      ],
-      "sell_by_date": [
-        "2025-05-15",
-        "2025-05-15",
-        "2025-05-15",
-        "2025-05-15",
-        "2025-05-15"
-      ],
-      "receiving_date": [
-        "2025-05-08",
-        "2025-05-08",
-        "2025-05-08",
-        "2025-05-08",
-        "2025-05-08"
-      ],
-      "country_of_origin": [
-        "South Africa",
-        "South Africa",
-        "South Africa",
-        "South Africa",
-        "South Africa"
-      ],
-      "planned_qty": 10,
-      "actual_qty": 9,
-      "notes": "Lost 1 unit",
-      "quality_score": 3,
-      "deviations": [
-        "none"
-      ],
-      "confirmation_timestamp": "2025-05-08T06:08:46.404Z",
-      "productDescription": "BABALAS BRAAI WORS",
-      "date": "2025-05-08",
-      "status": "completed",
-      "originalScheduleId": "2025-05-08-26665-1746681528565",
-      "actualQty": 9,
-      "qualityScore": 3,
-      "confirmationTimestamp": "2025-05-08T06:08:46.404Z"
+      "role": "Manager",
+      "email": "clive@example.com",
+      "phone": "123-456-7892"
+    },
+    {
+      "id": 4,
+      "name": "Asavela",
+      "department": "1152",
+      "role": "Handler",
+      "email": "asavela@example.com",
+      "phone": "123-456-7893"
+    },
+    {
+      "id": 5,
+      "name": "Sinazo",
+      "department": "1152",
+      "role": "Handler",
+      "email": "sinazo@example.com",
+      "phone": "123-456-7894"
+    },
+    {
+      "id": 6,
+      "name": "Wendy",
+      "department": "1152",
+      "role": "Handler",
+      "email": "wendy@example.com",
+      "phone": "123-456-7895"
+    },
+    {
+      "id": 7,
+      "name": "Sinako",
+      "department": "1152",
+      "role": "Handler",
+      "email": "sinako@example.com",
+      "phone": "123-456-7896"
+    },
+    {
+      "id": 8,
+      "name": "Thato",
+      "department": "1152",
+      "role": "Handler",
+      "email": "thato@example.com",
+      "phone": "123-456-7897"
+    },
+    {
+      "id": 9,
+      "name": "Athi",
+      "department": "1152",
+      "role": "Handler",
+      "email": "athi@example.com",
+      "phone": "123-456-7898"
+    },
+    {
+      "id": 10,
+      "name": "Fatima",
+      "department": "1152",
+      "role": "Handler",
+      "email": "fatima@example.com",
+      "phone": "123-456-7899"
+    },
+    {
+      "id": 11,
+      "name": "Ayabulela",
+      "department": "1152",
+      "role": "Handler",
+      "email": "ayabulela@example.com",
+      "phone": "123-456-7900"
+    },
+    {
+      "id": 12,
+      "name": "Thandaswa",
+      "department": "1152",
+      "role": "Handler",
+      "email": "thandaswa@example.com",
+      "phone": "123-456-7901"
+    },
+    {
+      "id": 13,
+      "name": "Pamela",
+      "department": "1152",
+      "role": "Handler",
+      "email": "pamela@example.com",
+      "phone": "123-456-7902"
+    },
+    {
+      "id": 14,
+      "name": "Nosiviwe",
+      "department": "1152",
+      "role": "Handler",
+      "email": "nosiviwe@example.com",
+      "phone": "123-456-7903"
+    },
+    {
+      "id": 15,
+      "name": "Thandiwe",
+      "department": "1152",
+      "role": "Handler",
+      "email": "thandiwe@example.com",
+      "phone": "123-456-7904"
+    },
+    {
+      "id": 16,
+      "name": "Ntombi",
+      "department": "1155",
+      "role": "Handler",
+      "email": "ntombi@example.com",
+      "phone": "123-456-7905"
+    },
+    {
+      "id": 17,
+      "name": "Zintle",
+      "department": "1155",
+      "role": "Handler",
+      "email": "zintle@example.com",
+      "phone": "123-456-7906"
+    },
+    {
+      "id": 18,
+      "name": "Zuzu",
+      "department": "1155",
+      "role": "Handler",
+      "email": "zuzu@example.com",
+      "phone": "123-456-7907"
+    },
+    {
+      "id": 19,
+      "name": "Nomhle",
+      "department": "1155",
+      "role": "Handler",
+      "email": "nomhle@example.com",
+      "phone": "123-456-7908"
+    },
+    {
+      "id": 20,
+      "name": "Bulana",
+      "department": "1155",
+      "role": "Handler",
+      "email": "bulana@example.com",
+      "phone": "123-456-7909"
+    },
+    {
+      "id": 21,
+      "name": "Nonnie",
+      "department": "1155",
+      "role": "Handler",
+      "email": "nonnie@example.com",
+      "phone": "123-456-7910"
+    },
+    {
+      "id": 22,
+      "name": "Faniswa",
+      "department": "1155",
+      "role": "Handler",
+      "email": "faniswa@example.com",
+      "phone": "123-456-7911"
+    },
+    {
+      "id": 23,
+      "name": "Nolubabalo",
+      "department": "1155",
+      "role": "Handler",
+      "email": "nolubabalo@example.com",
+      "phone": "123-456-7912"
+    },
+    {
+      "id": 24,
+      "name": "Agie",
+      "department": "1155",
+      "role": "Handler",
+      "email": "agie@example.com",
+      "phone": "123-456-7913"
+    },
+    {
+      "id": 25,
+      "name": "Nandipha",
+      "department": "1155",
+      "role": "Handler",
+      "email": "nandipha@example.com",
+      "phone": "123-456-7914"
+    },
+    {
+      "id": 26,
+      "name": "Khanyisa",
+      "department": "1155",
+      "role": "Handler",
+      "email": "khanyisa@example.com",
+      "phone": "123-456-7915"
+    },
+    {
+      "id": 27,
+      "name": "Swazi",
+      "department": "1154",
+      "role": "Handler",
+      "email": "swazi@example.com",
+      "phone": "123-456-7916"
+    },
+    {
+      "id": 28,
+      "name": "Princes",
+      "department": "1154",
+      "role": "Handler",
+      "email": "princes@example.com",
+      "phone": "123-456-7917"
+    },
+    {
+      "id": 29,
+      "name": "Phumla",
+      "department": "1154",
+      "role": "Handler",
+      "email": "phumla@example.com",
+      "phone": "123-456-7918"
+    },
+    {
+      "id": 30,
+      "name": "Max",
+      "department": "1154",
+      "role": "Handler",
+      "email": "max@example.com",
+      "phone": "123-456-7919"
+    },
+    {
+      "id": 31,
+      "name": "Tami",
+      "department": "1154",
+      "role": "Handler",
+      "email": "tami@example.com",
+      "phone": "123-456-7920"
+    },
+    {
+      "id": 32,
+      "name": "Ghawe",
+      "department": "1154",
+      "role": "Handler",
+      "email": "ghawe@example.com",
+      "phone": "123-456-7921"
+    },
+    {
+      "id": 33,
+      "name": "Lutho",
+      "department": "1154",
+      "role": "Handler",
+      "email": "lutho@example.com",
+      "phone": "123-456-7922"
+    },
+    {
+      "id": 34,
+      "name": "Skwash",
+      "department": "1154",
+      "role": "Handler",
+      "email": "skwash@example.com",
+      "phone": "123-456-7923"
+    },
+    {
+      "id": 35,
+      "name": "Phelisa",
+      "department": "1154",
+      "role": "Handler",
+      "email": "phelisa@example.com",
+      "phone": "123-456-7924"
+    },
+    {
+      "id": 36,
+      "name": "Zikhona",
+      "department": "1154",
+      "role": "Handler",
+      "email": "zikhona@example.com",
+      "phone": "123-456-7925"
+    },
+    {
+      "id": 37,
+      "name": "Cebisa",
+      "department": "1154",
+      "role": "Handler",
+      "email": "cebisa@example.com",
+      "phone": "123-456-7926"
+    },
+    {
+      "id": 38,
+      "name": "Monica",
+      "department": "1155",
+      "role": "Manager",
+      "email": "monica@example.com",
+      "phone": "123-456-7927"
+    },
+    {
+      "id": 39,
+      "name": "Monica",
+      "department": "1154",
+      "role": "Manager",
+      "email": "monica@example.com",
+      "phone": "123-456-7928"
     }
-  ],
-  "production-documents": [],
-  "handlers": []
+  ]
 }

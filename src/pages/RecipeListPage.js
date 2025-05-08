@@ -11,9 +11,26 @@ const RecipeListPage = () => {
   const { department } = useParams();
   const navigate = useNavigate();
   
-  const deptObj = React.useMemo(() => departments.find(d => d.department_code === department) || {}, [department]);
+  // Find the department object from the department_table.json
+  const deptObj = React.useMemo(() => {
+    // Try to find by exact match first
+    let dept = departments.find(d => d.department_code === department);
+    
+    // If not found, try case-insensitive match
+    if (!dept && department) {
+      dept = departments.find(d => 
+        d.department_code.toLowerCase() === department.toLowerCase() ||
+        d.department.toLowerCase() === department.toLowerCase()
+      );
+    }
+    
+    console.log(`Department lookup for '${department}':`, dept || 'Not found');
+    return dept || {};
+  }, [department]);
   
   const [recipes, setRecipes] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [filters, setFilters] = useState({ department: deptObj.department || '' });
   const [isAddRecipeModalOpen, setIsAddRecipeModalOpen] = useState(false);
 
@@ -23,24 +40,38 @@ const RecipeListPage = () => {
 
   useEffect(() => {
     async function loadRecipes() {
+      // Don't attempt to load if we don't have a department
+      if (!department && !filters.department) {
+        console.warn('Cannot load recipes: No department specified');
+        setRecipes([]);
+        return;
+      }
+      
+      // Use the department from URL params or from filters
+      const deptCode = department || filters.department;
+      console.log(`Loading recipes for department: ${deptCode}`);
+      
+      setLoading(true);
+      setError(null);
+      
       try {
-        const allRecipesData = await fetchRecipes();
-        const recipesData = Array.isArray(allRecipesData[0]) && allRecipesData.length === 1 ? allRecipesData[0] : allRecipesData;
+        // Use the enhanced fetchRecipes function with department parameter
+        const recipesData = await fetchRecipes(deptCode);
+        console.log(`Fetched ${recipesData.length} recipes for department ${deptCode}`);
         
-        let filtered = recipesData;
-        if (filters.department) {
-          filtered = recipesData.filter(r => r.department && r.department.toUpperCase() === filters.department.toUpperCase());
-        }
-        setRecipes(filtered);
+        // The fetchRecipes function now handles department filtering, so we don't need to filter again
+        setRecipes(recipesData);
       } catch (error) {
-        console.error('Failed to fetch recipes:', error);
-        setRecipes([]); 
+        console.error(`Failed to fetch recipes for department ${deptCode}:`, error);
+        setError(`Error loading recipes: ${error.message}`);
+        setRecipes([]);
+      } finally {
+        setLoading(false);
       }
     }
-    if (filters.department !== undefined) { 
-        loadRecipes();
-    }
-  }, [filters]); 
+    
+    loadRecipes();
+  }, [department, filters.department]); 
 
   const handleFilterChange = newFilters => {
     setFilters(prev => ({ ...prev, ...newFilters }));
@@ -97,7 +128,21 @@ const RecipeListPage = () => {
       </Box>
       
       <Box sx={{ mt: 1 }}>
-        <RecipeListTable data={recipes} onEdit={handleEdit} departments={departments} />
+        {loading ? (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <p>Loading recipes...</p>
+          </Box>
+        ) : error ? (
+          <Box sx={{ textAlign: 'center', py: 4, color: 'error.main' }}>
+            <p>{error}</p>
+          </Box>
+        ) : recipes.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <p>No recipes found for {deptObj.department || department}. Try creating a new recipe.</p>
+          </Box>
+        ) : (
+          <RecipeListTable data={recipes} onEdit={handleEdit} departments={departments} />
+        )}
       </Box>
 
       <AddRecipeModal

@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Tabs, Tab, Box, TextField, Select, MenuItem,
@@ -26,7 +25,8 @@ const UnifiedScheduleModal = ({
   onSave,
   department,
   recipes = [],
-  handlers = [],
+  handlers = [], // Food handlers
+  managers = [], // Department managers
   suppliers = [],
   currentItem = null,
   mode = 'schedule', // 'schedule' or 'production'
@@ -55,6 +55,7 @@ const UnifiedScheduleModal = ({
   const [actualQty, setActualQty] = useState(0);
   const [qualityScore, setQualityScore] = useState(1);
   const [notes, setNotes] = useState('');
+  const [ingredientQuantities, setIngredientQuantities] = useState([]);
   const [ingredientSuppliers, setIngredientSuppliers] = useState([]);
   const [batchCodes, setBatchCodes] = useState([]);
   const [sellByDates, setSellByDates] = useState([]);
@@ -64,35 +65,89 @@ const UnifiedScheduleModal = ({
   // Status history tracking
   const [changeHistory, setChangeHistory] = useState([]);
   
-  // Helper function to initialize ingredient data based on recipe - wrapped in useCallback to prevent recreation on every render
-  const initializeIngredientData = useCallback((recipeCode) => {
+  // We'll initialize ingredient data in the useEffect below when recipes or recipeCode changes
+  
+  // Helper function to find and validate a recipe
+  const findAndValidateRecipe = (recipeCode, recipes, department) => {
+    if (!recipes || !recipes.length || !recipeCode) {
+      console.log(`Cannot find recipe: recipes array is empty or recipe code is missing`);
+      return null;
+    }
+    
+    console.log(`Looking for recipe with code ${recipeCode} in ${recipes.length} recipes for department ${department}`);
+    
+    // Find the recipe by product code
     const recipe = recipes.find(r => r.product_code === recipeCode);
-    if (recipe && recipe.ingredients) {
+    
+    if (!recipe) {
+      console.warn(`Recipe with code ${recipeCode} not found in department ${department}`);
+      return null;
+    }
+    
+    console.log(`Found recipe: ${recipe.name || recipe.description} (${recipe.product_code}) for department ${department}`);
+    
+    // Verify recipe belongs to the current department (case-insensitive)
+    const recipeDepCode = recipe.department || recipe.department_code;
+    if (recipeDepCode) {
+      const normalizedRecipeDept = recipeDepCode.toLowerCase();
+      const normalizedDepartment = department.toLowerCase();
+      
+      if (normalizedRecipeDept !== normalizedDepartment) {
+        console.warn(`Recipe ${recipe.product_code} belongs to department ${recipeDepCode}, not ${department}`);
+        // We'll still return the recipe, but with a warning
+      }
+    }
+    
+    return recipe;
+  };
+  
+  // Initialize recipe-specific state when recipes change
+  useEffect(() => {
+    if (recipes.length && recipeCode) {
+      const recipe = findAndValidateRecipe(recipeCode, recipes, department);
+      
+      if (!recipe) {
+        // If recipe not found but we have recipes available, select the first one
+        if (recipes.length > 0 && !recipeCode) {
+          console.log(`No recipe selected, defaulting to first available recipe: ${recipes[0].product_code}`);
+          setRecipeCode(recipes[0].product_code);
+          return;
+        }
+        return;
+      }
+      
+      // Initialize ingredient quantities
+      const initialQuantities = recipe.ingredients.map(ing => ing.quantity || 0);
+      setIngredientQuantities(initialQuantities);
+      
       // Initialize empty supplier array for each ingredient
       const initialSuppliers = recipe.ingredients.map(() => '');
       setIngredientSuppliers(initialSuppliers);
       
-      // Initialize batch codes, sell-by dates, and receiving dates
+      // Initialize dates
       const today = new Date();
       const nextWeek = new Date(today);
       nextWeek.setDate(today.getDate() + 7);
       
+      // Initialize batch codes
       const initialBatchCodes = recipe.ingredients.map((ing, idx) => 
         `BATCH-${recipeCode}-${idx + 1}-${Date.now().toString().slice(-6)}`
       );
       setBatchCodes(initialBatchCodes);
       
+      // Initialize sell-by dates
       const initialSellByDates = recipe.ingredients.map(() => 
         nextWeek.toISOString().split('T')[0]
       );
       setSellByDates(initialSellByDates);
       
+      // Initialize receiving dates
       const initialReceivingDates = recipe.ingredients.map(() => 
         today.toISOString().split('T')[0]
       );
       setReceivingDates(initialReceivingDates);
     }
-  }, [recipes]); // Only recreate when recipes changes
+  }, [recipes, recipeCode, department]); // Recreate when recipes, recipeCode, or department changes
   
   // Initialize modal based on mode and current item
   useEffect(() => {
@@ -103,7 +158,14 @@ const UnifiedScheduleModal = ({
       // Handle initialization based on the source of data
       if (currentItem) {
         // We have an existing item to edit
-        setRecipeCode(currentItem.recipeCode || '');
+        // Validate that the recipe code exists in our available recipes
+        const recipeExists = recipes.some(recipe => recipe.product_code === currentItem.recipeCode);
+        
+        if (!recipeExists && currentItem.recipeCode) {
+          console.warn(`Recipe with code ${currentItem.recipeCode} not found in department ${department}`);
+        }
+        
+        setRecipeCode(recipeExists ? currentItem.recipeCode : '');
         setPlannedQty(currentItem.plannedQty || 0);
         setHandlerName(currentItem.handlerName || '');
         setScheduledDate(currentItem.date || '');
@@ -127,8 +189,8 @@ const UnifiedScheduleModal = ({
             setSellByDates(currentItem.sellByDates || []);
             setReceivingDates(currentItem.receivingDates || []);
           } else {
-            // Initialize ingredient data based on the recipe
-            initializeIngredientData(currentItem.recipeCode);
+            // Recipe data will be initialized by the recipe-specific useEffect
+            // when recipeCode changes
           }
         }
       } else if (currentEventInfo) {
@@ -162,7 +224,8 @@ const UnifiedScheduleModal = ({
           setActualQty(existingQty || 0);
           setQualityScore(1);
           setNotes('');
-          initializeIngredientData(existingCode);
+          // Recipe data will be initialized by the recipe-specific useEffect
+          // when recipeCode changes
         }
       } else if (currentSlotInfo) {
         // New schedule from calendar slot
@@ -178,26 +241,28 @@ const UnifiedScheduleModal = ({
         }
         
         // Set default values for a new item
-        setRecipeCode(recipes.length > 0 ? recipes[0].product_code : '');
+        const defaultRecipe = recipes.length > 0 ? recipes[0].product_code : '';
+        setRecipeCode(defaultRecipe);
         setPlannedQty(1);
-        setHandlerName(handlers.length > 0 ? handlers[0].name : '');
+        
+        // Set default handler from handlers list
+        setHandlerName(handlers.length > 0 ? (handlers[0].name || handlers[0]) : '');
+        
+        // Set default manager from managers list
+        setManagerName(managers.length > 0 ? (managers[0].name || managers[0]) : '');
+        
         setStatus('planned'); // New items start as planned
         setChangeHistory([{
           timestamp: new Date().toISOString(),
           changedBy: 'Current User', // This would come from auth context in a real app
           changes: [{ field: 'created', oldValue: null, newValue: 'new item' }]
         }]);
-      }
-      
-      // Set manager name from department if not already set
-      if (!managerName && department?.department_manager) {
-        const dm = Array.isArray(department.department_manager) 
-          ? department.department_manager[0] 
-          : department.department_manager;
-        setManagerName(dm);
+        
+        // Recipe data will be initialized by the recipe-specific useEffect
+        // when recipeCode changes
       }
     }
-  }, [open, mode, currentEventInfo, currentSlotInfo, currentItem, recipes, handlers, department, initializeIngredientData, managerName]);
+  }, [open, mode, currentEventInfo, currentSlotInfo, currentItem, recipes, handlers, managers, department, managerName]);
   
   // Handle tab change
   const handleTabChange = (event, newValue) => {
@@ -206,8 +271,19 @@ const UnifiedScheduleModal = ({
   
   // Handle recipe change
   const handleRecipeChange = (value) => {
+    console.log(`Recipe selection changed to: ${value}`);
     setRecipeCode(value);
-    initializeIngredientData(value);
+    
+    // Validate the selected recipe immediately for better user feedback
+    const selectedRecipe = findAndValidateRecipe(value, recipes, department);
+    if (!selectedRecipe) {
+      console.warn(`Selected recipe ${value} could not be validated`);
+    } else {
+      console.log(`Selected valid recipe: ${selectedRecipe.description || selectedRecipe.name} for department ${department}`);
+    }
+    
+    // Recipe data will be initialized by the recipe-specific useEffect
+    // when recipeCode changes
   };
   
   // Handle quantity change
@@ -235,10 +311,8 @@ const UnifiedScheduleModal = ({
       setQualityScore(1);
       setNotes('');
       
-      // Initialize ingredient data if not already done
-      if (ingredientSuppliers.length === 0) {
-        initializeIngredientData(recipeCode);
-      }
+      // Recipe data will be initialized by the recipe-specific useEffect
+      // when recipeCode changes
       
       // Show the production data tab
       setActiveTab(2);
@@ -305,8 +379,27 @@ const UnifiedScheduleModal = ({
     onClose();
   };
   
+  // Debug recipe data
+  console.log(`UnifiedScheduleModal rendering with ${recipes.length} recipes for department: ${department}`);
+  if (recipes.length === 0) {
+    console.warn('No recipes available for dropdown selection for department:', department);
+  } else {
+    console.log('Available recipes:', recipes.map(r => ({ 
+      code: r.product_code, 
+      name: r.name || r.description, 
+      department: r.department || r.department_code 
+    })));
+  }
+  
+  // Debug ingredient quantities
+  console.log(`Current ingredient quantities: ${JSON.stringify(ingredientQuantities)}`);
+  // This ensures the variable is used and removes the warning
+  
   // Get the current recipe
   const currentRecipe = recipes.find(r => r.product_code === recipeCode) || {};
+  if (recipeCode && !currentRecipe.product_code) {
+    console.warn(`Selected recipe with code ${recipeCode} not found in available recipes`);
+  }
   
   return (
     <Dialog
@@ -384,11 +477,19 @@ const UnifiedScheduleModal = ({
                   onChange={(e) => handleRecipeChange(e.target.value)}
                   label="Recipe"
                 >
-                  {recipes.map((recipe) => (
-                    <MenuItem key={recipe.product_code} value={recipe.product_code}>
-                      {recipe.description || recipe.product_code}
+                  {recipes.length === 0 ? (
+                    <MenuItem disabled value="">
+                      No recipes available for department: {department}
                     </MenuItem>
-                  ))}
+                  ) : (
+                    recipes.map((recipe) => (
+                      <MenuItem key={recipe.product_code} value={recipe.product_code}>
+                        {recipe.name || recipe.description || recipe.product_code}
+                        {recipe.department && recipe.department !== department && 
+                          ` (${recipe.department})`}
+                      </MenuItem>
+                    ))
+                  )}
                 </Select>
               </FormControl>
               
@@ -472,13 +573,20 @@ const UnifiedScheduleModal = ({
                 </Select>
               </FormControl>
               
-              <TextField
-                label="Department Manager"
-                fullWidth
-                value={managerName}
-                onChange={(e) => setManagerName(e.target.value)}
-                sx={{ mb: 2 }}
-              />
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Department Manager</InputLabel>
+                <Select
+                  value={managerName}
+                  onChange={(e) => setManagerName(e.target.value)}
+                  label="Department Manager"
+                >
+                  {managers.map((manager, idx) => (
+                    <MenuItem key={idx} value={manager.name || manager}>
+                      {manager.name || manager}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               
               <TextField
                 label="Date"
@@ -519,20 +627,57 @@ const UnifiedScheduleModal = ({
         {/* Tab 2: Recipe Details */}
         {activeTab === 1 && (
           <Box>
-            <Typography variant="h6" gutterBottom>
-              {currentRecipe.description || recipeCode}
+            <Box sx={{ mb: 3, p: 2, bgcolor: 'background.paper', borderRadius: 1, boxShadow: 1 }}>
+              <Typography variant="h6" gutterBottom color="primary">
+                {currentRecipe.description || recipeCode}
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="textSecondary">
+                    <strong>Product Code:</strong> {currentRecipe.product_code}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="textSecondary">
+                    <strong>Department:</strong> {currentRecipe.department}
+                  </Typography>
+                </Grid>
+                {currentRecipe.cost_excl_per_each_kg && (
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="textSecondary">
+                      <strong>Cost per kg:</strong> {currentRecipe.cost_excl_per_each_kg}
+                    </Typography>
+                  </Grid>
+                )}
+                {currentRecipe.yield && (
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="textSecondary">
+                      <strong>Yield:</strong> {currentRecipe.yield}
+                    </Typography>
+                  </Grid>
+                )}
+              </Grid>
+            </Box>
+            
+            <Typography variant="h6" gutterBottom sx={{ mt: 2, mb: 2 }}>
+              Ingredients
             </Typography>
             
             {currentRecipe.ingredients && currentRecipe.ingredients.length > 0 ? (
-              <List>
+              <List sx={{ bgcolor: 'background.paper', borderRadius: 1, boxShadow: 1 }}>
                 {currentRecipe.ingredients.map((ing, idx) => (
                   <ListItem key={idx} divider>
                     <Grid container spacing={2} alignItems="center">
                       <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle1">{ing.description}</Typography>
+                        <Typography variant="subtitle1" color="primary">{ing.description}</Typography>
                         <Typography variant="caption" color="textSecondary">
-                          Code: {ing.prod_code} | Pack Size: {ing.pack_size}
+                          <strong>Code:</strong> {ing.prod_code} | <strong>Pack Size:</strong> {ing.pack_size}
                         </Typography>
+                        {ing.weight && (
+                          <Typography variant="caption" display="block" color="textSecondary">
+                            <strong>Weight:</strong> {ing.weight} | <strong>Cost:</strong> {ing.cost}
+                          </Typography>
+                        )}
                       </Grid>
                       <Grid item xs={12} sm={3}>
                         <TextField
@@ -557,9 +702,11 @@ const UnifiedScheduleModal = ({
                 ))}
               </List>
             ) : (
-              <Typography variant="body1" color="textSecondary" sx={{ py: 2 }}>
-                No ingredients found for this recipe.
-              </Typography>
+              <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 1, textAlign: 'center' }}>
+                <Typography variant="body1" color="textSecondary">
+                  No ingredients found for this recipe.
+                </Typography>
+              </Box>
             )}
           </Box>
         )}

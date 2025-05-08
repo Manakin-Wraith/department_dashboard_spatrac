@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { format } from 'date-fns';
 
 /**
  * Custom hook for calendar event handlers
@@ -9,7 +10,10 @@ const useCalendarEventHandlers = ({
   setUnifiedModalOpen,
   setUnifiedModalMode,
   setUnifiedModalItem,
-  recipes
+  recipes,
+  calendarEvents,
+  setDayViewOpen,
+  setDayEventsData
 }) => {
   /**
    * Handle date click event
@@ -17,7 +21,46 @@ const useCalendarEventHandlers = ({
   const handleDateClick = useCallback((info) => {
     const clickedDate = info.dateStr;
     
-    // Set current slot info
+    // If in month view, show day view dialog for the clicked date
+    if (info.view.type === 'dayGridMonth') {
+      // Filter events for the clicked date
+      const formattedDate = format(new Date(clickedDate), 'yyyy-MM-dd');
+      const eventsForDay = calendarEvents.filter(event => {
+        const eventDate = format(new Date(event.start), 'yyyy-MM-dd');
+        return eventDate === formattedDate;
+      });
+      
+      if (eventsForDay.length > 0) {
+        // Set day events data for the dialog
+        setDayEventsData({
+          date: format(new Date(clickedDate), 'MMMM d, yyyy'),
+          events: eventsForDay
+        });
+        
+        // Open day view dialog
+        setDayViewOpen(true);
+      } else {
+        // No events for this day, show a message or open scheduling modal
+        console.log('No events scheduled for this day');
+        
+        // For empty days, we could either do nothing or allow scheduling
+        // Uncomment the following code to allow scheduling on empty days
+        /*
+        setCurrentSlotInfo({
+          date: clickedDate,
+          startTime: '09:00',
+          endTime: '17:00'
+        });
+        setCurrentEventInfo(null);
+        setUnifiedModalMode('schedule');
+        setUnifiedModalItem(null);
+        setUnifiedModalOpen(true);
+        */
+      }
+      return;
+    }
+    
+    // For other views (timeGrid), allow scheduling
     setCurrentSlotInfo({
       date: clickedDate,
       startTime: info.view.type === 'timeGridDay' || info.view.type === 'timeGridWeek' 
@@ -35,7 +78,8 @@ const useCalendarEventHandlers = ({
     setUnifiedModalMode('schedule');
     setUnifiedModalItem(null);
     setUnifiedModalOpen(true);
-  }, [setCurrentEventInfo, setCurrentSlotInfo, setUnifiedModalOpen, setUnifiedModalMode, setUnifiedModalItem]);
+  }, [setCurrentEventInfo, setCurrentSlotInfo, setUnifiedModalOpen, setUnifiedModalMode, setUnifiedModalItem, calendarEvents, setDayViewOpen, setDayEventsData]);
+
   
   /**
    * Handle event click event

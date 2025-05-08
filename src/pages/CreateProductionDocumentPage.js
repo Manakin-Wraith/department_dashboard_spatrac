@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  Box, Avatar, Grid, Paper, Typography, Button,
-  Card, CardContent, Chip, Divider
+  Box, Avatar, Grid, Paper, Typography, Button
 } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
 import BakeryDiningIcon from '@mui/icons-material/BakeryDining';
@@ -15,6 +14,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import useProductionData from '../hooks/useProductionData';
 import useScheduleManagement from '../hooks/useScheduleManagement';
 import useNotifications from '../hooks/useNotifications';
+import { useDepartmentStaff } from '../hooks/useDepartmentStaff';
 import useCalendarEventHandlers from '../components/production/calendar/CalendarEventHandlers';
 
 // Import components
@@ -22,13 +22,13 @@ import ProductionCalendar from '../components/production/calendar/ProductionCale
 import ProductionDocumentList from '../components/production/documents/ProductionDocumentList';
 import ProductionDocumentCard from '../components/production/documents/ProductionDocumentCard';
 import DocumentFilters from '../components/production/documents/DocumentFilters';
-import UnifiedScheduleModal from '../components/production/modals/UnifiedScheduleModal';
+import UnifiedScheduleModal from '../components/UnifiedScheduleModal';
+import DayViewDialog from '../components/production/modals/DayViewDialog';
 import NotificationSystem from '../components/production/common/NotificationSystem';
 import PrintDocumentModal from '../components/PrintDocumentModal';
 import ChangeHistoryDialog from '../components/ChangeHistoryDialog';
 
-// Import API services
-import { fetchHandlers } from '../services/api';
+// Import utilities
 import { bus } from '../utils/eventBus';
 
 /**
@@ -70,6 +70,7 @@ const getDepartmentInfo = (code) => {
  */
 const CreateProductionDocumentPage = () => {
   const { department } = useParams();
+  // eslint-disable-next-line no-unused-vars
   const theme = useTheme();
   const calendarRef = useRef(null);
   
@@ -77,8 +78,28 @@ const CreateProductionDocumentPage = () => {
   const deptObj = getDepartmentInfo(department);
   const accentColor = deptObj.color;
   
-  // State for staff data
-  const [staff, setStaff] = useState([]);
+  // Debug department information
+  console.log(`CreateProductionDocumentPage initialized with department: ${department}`);
+  console.log('Department object:', deptObj);
+  
+  // Track department code format for debugging
+  useEffect(() => {
+    if (department) {
+      console.log(`Department code format analysis:`);
+      console.log(`- Raw department code: ${department}`);
+      console.log(`- Department code type: ${typeof department}`);
+      console.log(`- Is numeric: ${/^\d+$/.test(department)}`);
+      console.log(`- Uppercase: ${department.toUpperCase()}`);
+      console.log(`- Lowercase: ${department.toLowerCase()}`);
+    }
+  }, [department]);
+  
+  // Use the custom hook for department staff data
+  const { 
+    foodHandlers, 
+    departmentManagers, 
+    loading: staffLoading 
+  } = useDepartmentStaff(department, deptObj);
   
   // State for document view
   const [documentView, setDocumentView] = useState('list'); // 'list', 'card', or 'calendar'
@@ -90,9 +111,16 @@ const CreateProductionDocumentPage = () => {
   
   // State for modals
   const [printModalOpen, setPrintModalOpen] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [selectedHistoryItem, setSelectedHistoryItem] = useState(null);
+  
+  // State for day view dialog
+  const [dayViewOpen, setDayViewOpen] = useState(false);
+  const [dayEventsData, setDayEventsData] = useState(null);
+  // eslint-disable-next-line no-unused-vars
+  const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
   
   // State for unified modal
   const [unifiedModalOpen, setUnifiedModalOpen] = useState(false);
@@ -112,20 +140,43 @@ const CreateProductionDocumentPage = () => {
     reloadData
   } = useProductionData(department);
   
+  // Monitor recipe loading status
+  useEffect(() => {
+    if (loading.recipes) {
+      console.log(`Loading recipes for department: ${department}...`);
+    } else {
+      console.log(`Recipe loading complete for department: ${department}. Found ${recipes.length} recipes.`);
+      if (recipes.length === 0) {
+        console.warn(`No recipes found for department: ${department}. This may cause issues with production document creation.`);
+      } else {
+        console.log('Recipe sample:', recipes.slice(0, 3).map(r => ({ 
+          code: r.product_code, 
+          name: r.name || r.description, 
+          department: r.department || r.department_code 
+        })));
+      }
+    }
+  }, [loading.recipes, recipes, department]);
+  
   const {
+    // eslint-disable-next-line no-unused-vars
     selectedSchedule,
     setSelectedSchedule,
+    // eslint-disable-next-line no-unused-vars
     selectedItem,
     setSelectedItem,
     currentEventInfo,
     setCurrentEventInfo,
+    // eslint-disable-next-line no-unused-vars
     currentSlotInfo,
     setCurrentSlotInfo,
     calendarEvents,
     setCalendarEvents,
     handleSaveTimeSlot,
+    // eslint-disable-next-line no-unused-vars
     createAuditData,
     updateCalendarEvents,
+    // eslint-disable-next-line no-unused-vars
     getStatusColor
   } = useScheduleManagement({
     schedules,
@@ -136,6 +187,7 @@ const CreateProductionDocumentPage = () => {
   
   const {
     notification,
+    // eslint-disable-next-line no-unused-vars
     showNotification,
     closeNotification,
     showSuccess,
@@ -154,25 +206,18 @@ const CreateProductionDocumentPage = () => {
     setUnifiedModalOpen,
     setUnifiedModalMode,
     setUnifiedModalItem,
-    recipes
+    recipes,
+    calendarEvents,
+    setDayViewOpen,
+    setDayEventsData
   });
   
-  // Load staff data
+  // Staff loading indicator
   useEffect(() => {
-    const loadStaff = async () => {
-      try {
-        const data = await fetchHandlers(department);
-        setStaff(data || []);
-      } catch (err) {
-        console.error('Failed to fetch staff:', err);
-        showError('Failed to load staff data. Please try again later.');
-      }
-    };
-    
-    if (department) {
-      loadStaff();
+    if (staffLoading) {
+      console.log('Loading department staff data...');
     }
-  }, [department, showError]);
+  }, [staffLoading]);
   
   // Update calendar events when schedules change
   useEffect(() => {
@@ -232,6 +277,30 @@ const CreateProductionDocumentPage = () => {
     setExportModalOpen(true);
   };
   
+  /**
+   * Handle create new production document
+   */
+  const handleCreateNewProduction = () => {
+    // Set current date as default
+    const today = new Date();
+    const formattedDate = today.toISOString().split('T')[0];
+    
+    // Set default time slot (9 AM to 5 PM)
+    setCurrentSlotInfo({
+      date: formattedDate,
+      startTime: '09:00',
+      endTime: '17:00'
+    });
+    
+    // Clear current event info and modal item
+    setCurrentEventInfo(null);
+    setUnifiedModalItem(null);
+    
+    // Set mode to schedule and open the modal
+    setUnifiedModalMode('schedule');
+    setUnifiedModalOpen(true);
+  };
+
   /**
    * Handle edit document
    */
@@ -457,6 +526,7 @@ const CreateProductionDocumentPage = () => {
             onEdit={handleEditDocument}
             onDelete={handleDeleteDocument}
             onViewHistory={handleViewHistory}
+            onCreateNew={handleCreateNewProduction}
             accentColor={accentColor}
           />
         );
@@ -469,6 +539,8 @@ const CreateProductionDocumentPage = () => {
             onEdit={handleEditDocument}
             onDelete={handleDeleteDocument}
             onViewHistory={handleViewHistory}
+            onCreateNew={handleCreateNewProduction}
+            accentColor={accentColor}
           />
         );
     }
@@ -507,10 +579,14 @@ const CreateProductionDocumentPage = () => {
         onClose={() => setUnifiedModalOpen(false)}
         onSave={handleUnifiedSave}
         mode={unifiedModalMode}
-        item={unifiedModalItem}
+        currentItem={unifiedModalItem}
         recipes={recipes}
-        handlers={staff}
-        department={department}
+        handlers={foodHandlers}
+        managers={departmentManagers}
+        department={{ code: department, color: accentColor }}
+        currentEventInfo={currentEventInfo}
+        currentSlotInfo={currentSlotInfo}
+        suppliers={[]}
       />
       
       {/* Print Document Modal */}
@@ -536,8 +612,26 @@ const CreateProductionDocumentPage = () => {
         notification={notification}
         onClose={closeNotification}
       />
+      
+      {/* Day View Dialog */}
+      <DayViewDialog
+        open={dayViewOpen}
+        onClose={() => {
+          setDayViewOpen(false);
+          setDayEventsData(null);
+        }}
+        dayEventsData={dayEventsData}
+        accentColor={accentColor}
+        onEventClick={(item) => {
+          setSelectedHistoryItem(item);
+          setDayViewOpen(false);
+          setViewDetailsOpen(true);
+        }}
+        schedules={schedules}
+      />
     </Box>
   );
 };
 
 export default CreateProductionDocumentPage;
+

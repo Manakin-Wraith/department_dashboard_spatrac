@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Table, TableContainer, TableHead, TableRow, TableCell, TableBody,
-  Paper, Chip, IconButton, Tooltip
+  Paper, Chip, IconButton, Tooltip, Button, Box
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -15,7 +15,9 @@ const ProductionDocumentList = ({
   recipes,
   onEdit,
   onDelete,
-  onViewHistory
+  onViewHistory,
+  onCreateNew,
+  accentColor = '#1976d2'
 }) => {
   /**
    * Get status chip based on status
@@ -53,13 +55,22 @@ const ProductionDocumentList = ({
 
   return (
     <TableContainer component={Paper} sx={{ mt: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <Button 
+          variant="contained" 
+          sx={{ bgcolor: accentColor, '&:hover': { bgcolor: accentColor } }}
+          onClick={onCreateNew}
+        >
+          Create New Production
+        </Button>
+      </Box>
       <Table size="small">
         <TableHead>
           <TableRow>
             <TableCell>Date</TableCell>
             <TableCell>Recipe</TableCell>
-            <TableCell>Quantity</TableCell>
             <TableCell>Handler</TableCell>
+            <TableCell>Quantity</TableCell>
             <TableCell>Time</TableCell>
             <TableCell>Status</TableCell>
             <TableCell align="right">Actions</TableCell>
