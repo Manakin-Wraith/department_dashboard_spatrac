@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import ConfirmProductionModal from '../components/ConfirmProductionModal';
-import { saveAudit, saveSchedule, deleteSchedule } from '../services/api';
+import { saveAudit, saveSchedule } from '../services/api';
 import { bus } from '../utils/eventBus';
 import InfoCard from '../components/InfoCard';
+import ChangeHistoryDialog from '../components/ChangeHistoryDialog';
+import UnifiedScheduleModal from '../components/UnifiedScheduleModal';
 import {
   Box, Avatar, Grid, Paper, Typography, Button, Tabs, Tab, Divider, Tooltip,
   Table, TableContainer, TableHead, TableRow, TableCell, TableBody,
@@ -29,7 +30,6 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { fetchSchedules, fetchAudits, fetchRecipes, fetchHandlers } from '../services/api'; 
 import departments from '../data/department_table.json';
-import TimeSlotScheduleModal from '../components/TimeSlotScheduleModal';
 import ExportScheduleModal from '../components/ExportScheduleModal';
 import PrintDocumentModal from '../components/PrintDocumentModal';
 
@@ -57,10 +57,9 @@ const CreateProductionDocumentPage = () => {
   const [departmentRecipesCount, setDepartmentRecipesCount] = useState(0); 
   const [departmentStaffCount, setDepartmentStaffCount] = useState(0);
   const [activeTab, setActiveTab] = useState(0);
-  const [calendarEvents, setCalendarEvents] = useState([]);
-  const [timeSlotModalOpen, setTimeSlotModalOpen] = useState(false);
-  const [currentSlotInfo, setCurrentSlotInfo] = useState(null);
+  const [calendarEvents, setCalendarEvents] = useState([]); // States for Schedule tab
   const [currentEventInfo, setCurrentEventInfo] = useState(null);
+  const [currentSlotInfo, setCurrentSlotInfo] = useState(null);
   
   // States for Production Documents tab
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -73,8 +72,13 @@ const CreateProductionDocumentPage = () => {
   const [endDate, setEndDate] = useState('');
   const [filteredSchedules, setFilteredSchedules] = useState([]);
   const [documentView, setDocumentView] = useState('list'); // 'list' or 'card'
-  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
-  const [selectedScheduleItem, setSelectedScheduleItem] = useState(null);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState(null);
+  
+  // Unified modal state
+  const [unifiedModalOpen, setUnifiedModalOpen] = useState(false);
+  const [unifiedModalMode, setUnifiedModalMode] = useState('schedule'); // 'schedule' or 'production'
+  const [unifiedModalItem, setUnifiedModalItem] = useState(null);
 
   // Function to load data from API - wrapped in useCallback to prevent recreation on every render
   const loadData = useCallback(async () => {
@@ -196,29 +200,44 @@ const CreateProductionDocumentPage = () => {
     setCurrentSlotInfo({
       date: info.dateStr
     });
-    setTimeSlotModalOpen(true);
+    setUnifiedModalMode('schedule');
+    setUnifiedModalItem(null); // We'll use currentSlotInfo instead
+    setUnifiedModalOpen(true);
   };
   
   const handleEventClick = (info) => {
-    setCurrentEventInfo(info.event);
-    setTimeSlotModalOpen(true);
+    // Get the event details
+    const eventInfo = info.event;
+    setCurrentEventInfo(eventInfo);
+    
+    // Open the unified modal for editing schedule
+    setUnifiedModalMode('schedule');
+    setUnifiedModalItem(null); // We'll use currentEventInfo instead
+    setUnifiedModalOpen(true);
+  };
+  
+  const handleViewHistory = (event, scheduleId, itemIndex) => {
+    // Prevent the event from bubbling up to the calendar event click handler
+    event.stopPropagation();
+    
+    // Find the schedule and item
+    const schedule = schedules.find(s => s.id === scheduleId);
+    if (schedule && schedule.items && schedule.items[itemIndex]) {
+      const item = schedule.items[itemIndex];
+      setSelectedHistoryItem(item);
+      setHistoryDialogOpen(true);
+      console.log('Viewing change history for item:', item);
+    } else {
+      console.error('Could not find schedule item for history view');
+    }
   };
   
   // Handle time slot selection (drag over time slots)
   const handleSelectTimeSlot = (selectInfo) => {
-    // Format the date and time information for the modal
-    const startDate = selectInfo.start;
-    const endDate = selectInfo.end;
-    
-    // Create a slot info object with the selected date range
-    const slotInfo = {
-      date: startDate.toISOString().substring(0, 10),
-      startTime: startDate.toTimeString().substring(0, 5),
-      endTime: endDate.toTimeString().substring(0, 5)
-    };
-    
-    setCurrentSlotInfo(slotInfo);
-    setTimeSlotModalOpen(true);
+    setCurrentSlotInfo(selectInfo);
+    setUnifiedModalMode('schedule');
+    setUnifiedModalItem(null); // We'll use currentSlotInfo instead
+    setUnifiedModalOpen(true);
   };
   
   // Filter schedules based on date range
@@ -359,192 +378,173 @@ const CreateProductionDocumentPage = () => {
     setDocumentView(documentView === 'list' ? 'card' : 'list');
   };
 
-  // Handle confirm production
-  const handleConfirmProduction = (scheduleItem) => {
-    setSelectedScheduleItem(scheduleItem);
-    setConfirmModalOpen(true);
-  };
-  
-  // Handle confirmation submission
-  const handleConfirmSubmit = async (updatedScheduleItem, auditData) => {
-    try {
-      // Find the schedule that contains this item
-      const scheduleIndex = schedules.findIndex(s => 
-        s.weekStartDate === updatedScheduleItem.date && 
-        s.department === department
-      );
-      
-      if (scheduleIndex === -1) return;
-      
-      // Find the item within the schedule
-      const schedule = schedules[scheduleIndex];
-      const itemIndex = schedule.items.findIndex(item => 
-        item.recipeCode === updatedScheduleItem.recipeCode &&
-        item.startTime === updatedScheduleItem.startTime &&
-        item.endTime === updatedScheduleItem.endTime
-      );
-      
-      if (itemIndex === -1) return;
-      
-      // Store the schedule ID for reference
-      const scheduleId = schedule.id;
-      
-      // Create enhanced audit data with reference to original schedule
-      const enhancedAuditData = {
-        ...auditData,
-        department: department,
-        status: 'Confirmed',
-        originalScheduleId: scheduleId,
-        // Add the confirmed item details
-        actualQty: updatedScheduleItem.actualQty,
-        notes: updatedScheduleItem.notes,
-        qualityScore: updatedScheduleItem.qualityScore,
-        deviations: updatedScheduleItem.deviations,
-        confirmationTimestamp: new Date().toISOString()
+  // Function to handle confirming a production from a schedule
+  const handleConfirmSchedule = (schedule, itemIndex) => {
+    if (schedule && schedule.items && schedule.items[itemIndex]) {
+      const item = schedule.items[itemIndex];
+      const scheduleItem = {
+        ...item,
+        scheduleId: schedule.id,
+        itemIndex,
+        date: schedule.weekStartDate,
+        managerName: schedule.managerName,
+        handlersNames: schedule.handlersNames,
+        originalScheduleId: schedule.id
       };
       
-      // Save the audit record first to ensure we have a record before removing the schedule
-      try {
-        // Save audit to the database
-        const savedAudit = await saveAudit(department, enhancedAuditData);
-        console.log('Audit saved to database:', savedAudit);
-        
-        // Add to local state for immediate UI update
-        setAudits(prevAudits => [...prevAudits, savedAudit]);
-        
-        // Now that we have successfully saved the audit, we can remove the item from the schedule
-        // If this is the only item in the schedule, delete the entire schedule
-        if (schedule.items.length === 1) {
-          try {
-            // Delete the schedule from the database
-            await deleteSchedule(scheduleId);
-            console.log('Schedule deleted from database:', scheduleId);
-            
-            // Update local state by removing the schedule
-            setSchedules(prevSchedules => prevSchedules.filter(s => s.id !== scheduleId));
-            
-            // Emit events for other components to react to the schedule deletion
-            bus.emit('schedule-deleted', scheduleId);
-            bus.emit('data-updated', { type: 'schedule-deleted', id: scheduleId });
-          } catch (deleteError) {
-            console.error('Failed to delete schedule from database:', deleteError);
-            // Continue with the process even if delete fails
-          }
-        } else {
-          // If there are multiple items, just remove the confirmed item
-          const updatedItems = schedule.items.filter((_, idx) => idx !== itemIndex);
-          const updatedSchedule = { ...schedule, items: updatedItems };
-          
-          try {
-            // Save the updated schedule with the item removed
-            const savedSchedule = await saveSchedule(department, updatedSchedule);
-            console.log('Schedule updated in database:', savedSchedule);
-            
-            // Update local state immediately for responsive UI
-            setSchedules(prevSchedules => 
-              prevSchedules.map(s => s.id === scheduleId ? savedSchedule : s)
-            );
-            
-            // Emit events for other components to react to the schedule update
-            bus.emit('schedule-updated', savedSchedule);
-            bus.emit('data-updated', { type: 'schedule-updated', data: savedSchedule });
-          } catch (updateError) {
-            console.error('Failed to update schedule in database:', updateError);
-            // Continue with the process even if update fails
-          }
-        }
-        
-        // Reload data to ensure we have the latest from the server
-        try {
-          await loadData();
-          console.log('Data reloaded after confirmation');
-        } catch (reloadError) {
-          console.error('Error reloading data after confirmation:', reloadError);
-          // Continue with the process even if reload fails
-        }
-        
-        // Notify other components about the new audit
-        bus.emit('new-audit', savedAudit);
-        bus.emit('data-updated', { type: 'new-audit', data: savedAudit });
-      } catch (auditError) {
-        console.error('Failed to save audit data:', auditError);
-        // Still keep the local state updated even if API fails
-        setAudits([...audits, enhancedAuditData]);
-      }
-      
-      console.log('Production confirmed:', updatedScheduleItem);
-      console.log('Audit data created:', auditData);
-    } catch (error) {
-      console.error('Failed to confirm production:', error);
+      // Open the unified modal in production mode
+      setUnifiedModalMode('production');
+      setUnifiedModalItem(scheduleItem);
+      setUnifiedModalOpen(true);
     }
   };
-  
 
-const handleSaveTimeSlot = async (dataFromModal) => {
-  console.log('Saving data from TimeSlotScheduleModal:', dataFromModal);
-  // Extract data from modal
-  const { date, recipeCode, plannedQty, handlerName: itemHandler, startTime, endTime, managerName } = dataFromModal;
-
-  // Create or update the day's schedule
-  let daySchedule;
-  let isNewScheduleDay = false;
+  // Note: handleConfirmProduction has been removed as it's no longer needed with the status-based workflow
+  // All functionality is now handled by handleSaveTimeSlot based on the item's status
   
-  // Find if we already have a schedule for this day
-  daySchedule = schedules.find(s => {
-    const scheduleDate = new Date(s.weekStartDate);
-    return scheduleDate.toDateString() === new Date(date).toDateString();
-  });
-  
-  if (!daySchedule) {
-    isNewScheduleDay = true;
-    // Create a simple numeric ID for new schedules instead of a string with prefix
-    const scheduleId = Date.now();
-    daySchedule = {
-      id: scheduleId,
-      department,
-      weekStartDate: date,
-      items: [],
-      managerName: managerName || (deptObj.department_manager && Array.isArray(deptObj.department_manager) ? deptObj.department_manager[0] : ''),
-      handlersNames: itemHandler || (handlers[0]?.name) || '',
-      status: 'Planned',
-      unique_ScheduledID: `${department}-${date}-${scheduleId}`
-    };
-  }
-
-  let newItemsForDaySchedule;
-  if (currentEventInfo && currentEventInfo.extendedProps.scheduleId) {
-    // Editing an existing item within a day's schedule
-    const existingItemIndex = currentEventInfo.extendedProps.itemIndex;
-    newItemsForDaySchedule = [...daySchedule.items];
+  // Function to save time slot for scheduling recipes with simplified status-based workflow
+  const handleSaveTimeSlot = async (dataFromModal) => {
+    console.log('Saving data with simplified status-based workflow:', dataFromModal);
+    // Extract data from modal with support for status-based workflow
+    const { 
+      id, date, recipeCode, plannedQty, handlerName: itemHandler, startTime, endTime, managerName,
+      status, changeHistory, productDescription,
+      // Production-specific fields
+      actualQty, qualityScore, notes, ingredientSuppliers, batchCodes,
+      sellByDates, receivingDates, deviations, confirmationTimestamp
+    } = dataFromModal;
     
-    if (existingItemIndex !== undefined && newItemsForDaySchedule[existingItemIndex]) {
-      newItemsForDaySchedule[existingItemIndex] = {
-        ...newItemsForDaySchedule[existingItemIndex],
-        recipeCode,
-        plannedQty,
-          handlerName: itemHandler,
-          startTime,
-          endTime
-        };
-      }
-    } else {
-      // Adding a new item to the day's schedule
-      newItemsForDaySchedule = [
-        ...daySchedule.items,
-        {
-          recipeCode,
-          plannedQty,
-          handlerName: itemHandler,
-          startTime,
-          endTime
-        }
-      ];
-    }
+    // We'll get the recipe when needed in the audit creation section
 
+    // Create or update the day's schedule
+    let daySchedule;
+    let isNewScheduleDay = false;
+    
+    // Find if we already have a schedule for this day
+    daySchedule = schedules.find(s => {
+      const scheduleDate = new Date(s.weekStartDate);
+      return scheduleDate.toDateString() === new Date(date).toDateString();
+    });
+  
+    if (!daySchedule) {
+      isNewScheduleDay = true;
+      // Create a simple numeric ID for new schedules instead of a string with prefix
+      const scheduleId = Date.now();
+      daySchedule = {
+        id: scheduleId,
+        weekStartDate: date,
+        department: department,
+        managerName: managerName || '',
+        handlersNames: [],
+        items: []
+      };
+    }
+    
+    // Check if we're editing an existing item or adding a new one
+    let existingItemIndex = -1;
+    
+    if (currentEventInfo) {
+      // Find the index of the existing item in the schedule
+      const eventId = currentEventInfo.id;
+      existingItemIndex = daySchedule.items.findIndex(item => item.id === eventId);
+    } else if (id) {
+      // If we have an ID but no currentEventInfo, try to find by ID
+      existingItemIndex = daySchedule.items.findIndex(item => item.id === id);
+    }
+    
+    // Prepare the new item data with status-based approach
+    const newItem = {
+      id: id || currentEventInfo?.id || `${date}-${recipeCode}-${Date.now()}`,
+      recipeCode,
+      plannedQty: Number(plannedQty),
+      handlerName: itemHandler,
+      startTime,
+      endTime,
+      date,
+      status: status || 'planned', // Default to planned if not specified
+      changeHistory: changeHistory || [],
+      productDescription: productDescription || ''
+    };
+    
+    // Add production-specific fields if in a production status
+    if (status === 'scheduled' || status === 'in-progress' || status === 'completed') {
+      newItem.actualQty = Number(actualQty || plannedQty);
+      newItem.qualityScore = Number(qualityScore || 1);
+      newItem.notes = notes || '';
+      newItem.ingredientSuppliers = ingredientSuppliers || [];
+      newItem.batchCodes = batchCodes || [];
+      newItem.sellByDates = sellByDates || [];
+      newItem.receivingDates = receivingDates || [];
+      newItem.deviations = deviations || ['none'];
+      newItem.confirmationTimestamp = confirmationTimestamp || new Date().toISOString();
+    }
+    
+    // If editing an existing item, track changes
+    if (existingItemIndex !== -1) {
+      const existingItem = daySchedule.items[existingItemIndex];
+      
+      // Track changes to important fields
+      const changes = [];
+      
+      // Check for changes in plannedQty
+      if (existingItem.plannedQty !== Number(plannedQty)) {
+        changes.push({ field: 'plannedQty', oldValue: existingItem.plannedQty, newValue: Number(plannedQty) });
+      }
+      
+      // Check for changes in handlerName
+      if (existingItem.handlerName !== itemHandler) {
+        changes.push({ field: 'handlerName', oldValue: existingItem.handlerName, newValue: itemHandler });
+      }
+      
+      // Check for changes in startTime
+      if (existingItem.startTime !== startTime) {
+        changes.push({ field: 'startTime', oldValue: existingItem.startTime, newValue: startTime });
+      }
+      
+      // Check for changes in endTime
+      if (existingItem.endTime !== endTime) {
+        changes.push({ field: 'endTime', oldValue: existingItem.endTime, newValue: endTime });
+      }
+      
+      // If there are changes, add to history
+      if (changes.length > 0) {
+        // Initialize changeHistory if it doesn't exist
+        if (!existingItem.changeHistory) {
+          existingItem.changeHistory = [];
+        }
+        
+        // Add the change record
+        const changeRecord = {
+          timestamp: new Date().toISOString(),
+          changedBy: 'Current User', // This would come from auth context in a real app
+          changes
+        };
+        
+        // Add the change record to history
+        newItem.changeHistory = [...existingItem.changeHistory, changeRecord];
+      } else {
+        // No changes, keep existing history
+        newItem.changeHistory = existingItem.changeHistory || [];
+      }
+      
+      // Update the item in the schedule
+      daySchedule.items[existingItemIndex] = newItem;
+    } else {
+      // For new items, initialize change history
+      newItem.changeHistory = [{
+        timestamp: new Date().toISOString(),
+        changedBy: 'Current User', // This would come from auth context in a real app
+        changes: [{ field: 'created', oldValue: null, newValue: 'new item' }]
+      }];
+      
+      // Add the new item to the schedule
+      daySchedule.items.push(newItem);
+    }
+    
     // Update the schedule with new items
     const updatedSchedule = {
       ...daySchedule,
-      items: newItemsForDaySchedule
+      items: daySchedule.items
     };
 
     try {
@@ -574,20 +574,28 @@ const handleSaveTimeSlot = async (dataFromModal) => {
       const endDate = new Date(date);
       endDate.setHours(endHours, endMinutes, 0);
       
+      // Set the event color based on simplified status flow
+      let eventColor = accentColor;
+      if (newItem.status === 'planned') eventColor = theme.palette.info.main;
+      else if (newItem.status === 'scheduled') eventColor = theme.palette.warning.main;
+      else if (newItem.status === 'completed') eventColor = theme.palette.success.main;
+      else if (newItem.status === 'cancelled') eventColor = theme.palette.error.main;
+      
       const newEvent = {
-        id: currentEventInfo ? currentEventInfo.id : `${updatedSchedule.id}-${newItemsForDaySchedule.length - 1}`,
-        title: `${recipe?.description || recipeCode} (${plannedQty})`,
+        id: newItem.id,
+        title: `${newItem.productDescription || recipe?.description || recipeCode} (${plannedQty})`,
         start: startDate,
         end: endDate,
-        backgroundColor: accentColor,
-        borderColor: accentColor,
-        textColor: theme.palette.getContrastText(accentColor),
+        backgroundColor: eventColor,
+        borderColor: eventColor,
+        textColor: theme.palette.getContrastText(eventColor),
         extendedProps: {
           scheduleId: updatedSchedule.id,
-          itemIndex: currentEventInfo ? currentEventInfo.extendedProps.itemIndex : newItemsForDaySchedule.length - 1,
+          itemIndex: existingItemIndex !== -1 ? existingItemIndex : updatedSchedule.items.length - 1,
           recipeCode,
           plannedQty,
-          handlerName: itemHandler
+          handlerName: itemHandler,
+          status: newItem.status
         }
       };
       
@@ -597,12 +605,243 @@ const handleSaveTimeSlot = async (dataFromModal) => {
         setCalendarEvents([...calendarEvents, newEvent]);
       }
       
-      // Close the modal
-      setTimeSlotModalOpen(false);
+      // Simplified audit creation - only create audit when status is 'completed'
+      if (newItem.status === 'completed') {
+        // Check if we need to create an audit record
+        const existingAudit = audits.find(a => a.originalScheduleId === newItem.id);
+        
+        if (!existingAudit) {
+          // Get the recipe and create a new audit record based on the production data
+          const recipe = recipes.find(r => r.product_code === recipeCode);
+          const auditData = createAuditFromProductionData(newItem, recipe);
+          
+          try {
+            // Save to API
+            const savedAudit = await saveAudit(department, auditData);
+            console.log('Audit saved from completed production:', savedAudit);
+            
+            // Update local state
+            setAudits([...audits, auditData]);
+            
+            // Notify other components
+            bus.emit('new-audit', auditData);
+            bus.emit('data-updated', { type: 'new-audit', data: auditData });
+            
+            // Show success message
+            console.log('Production completed and audit record created successfully');
+          } catch (auditError) {
+            console.error('Failed to save audit data:', auditError);
+          }
+        }
+      }
+      
+      // Close the modal and reset state
+      setUnifiedModalOpen(false);
       setCurrentEventInfo(null);
       setCurrentSlotInfo(null);
+      setUnifiedModalItem(null);
     } catch (error) {
       console.error('Failed to save schedule:', error);
+    }
+  };
+
+  const renderEventContent = (eventInfo) => {
+    const { event } = eventInfo;
+    const { scheduleId, itemIndex, status } = event.extendedProps;
+    
+    // Define status icons
+    const getStatusIcon = () => {
+      switch(status) {
+        case 'planned':
+          return '📋'; // Clipboard icon
+        case 'scheduled':
+          return '🕒'; // Clock icon
+        case 'completed':
+          return '✅'; // Checkmark icon
+        case 'cancelled':
+          return '❌'; // X icon
+        default:
+          return '📋';
+      }
+    };
+    
+    // Define status badge style
+    const getStatusBadgeStyle = () => {
+      let bgColor;
+      switch(status) {
+        case 'planned':
+          bgColor = theme.palette.info.light;
+          break;
+        case 'scheduled':
+          bgColor = theme.palette.warning.light;
+          break;
+        case 'completed':
+          bgColor = theme.palette.success.light;
+          break;
+        case 'cancelled':
+          bgColor = theme.palette.error.light;
+          break;
+        default:
+          bgColor = theme.palette.grey[500];
+      }
+      
+      return {
+        backgroundColor: bgColor,
+        color: theme.palette.getContrastText(bgColor),
+        padding: '2px 6px',
+        borderRadius: '4px',
+        fontSize: '0.7rem',
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        marginLeft: '4px',
+        display: 'inline-block'
+      };
+    };
+    
+    return (
+      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '2px' }}>
+          <b>{eventInfo.timeText}</b>
+          <span style={getStatusBadgeStyle()}>{status}</span>
+        </div>
+        <div style={{ whiteSpace: 'nowrap', paddingRight: '24px', display: 'flex', alignItems: 'center' }}>
+          <span style={{ marginRight: '4px' }}>{getStatusIcon()}</span>
+          {event.title}
+        </div>
+        <div 
+          style={{ 
+            position: 'absolute', 
+            right: 2, 
+            top: 2, 
+            cursor: 'pointer',
+            fontSize: '0.75rem',
+            padding: '2px',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(255,255,255,0.7)',
+            color: theme.palette.primary.main,
+            width: '18px',
+            height: '18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 'bold'
+          }}
+          onClick={(e) => handleViewHistory(e, scheduleId, itemIndex)}
+          title="View change history"
+        >
+          H
+        </div>
+      </div>
+    );
+  };
+
+  // Helper function to create audit data from production item
+  const createAuditFromProductionData = (productionItem, recipe) => {
+    const {
+      recipeCode, plannedQty, actualQty, handlerName, date, status,
+      qualityScore, notes, ingredientSuppliers, batchCodes,
+      sellByDates, receivingDates, deviations, productDescription, managerName
+    } = productionItem;
+    
+    // Prepare ingredient-related arrays
+    const ingredientList = [];
+    const supplierNames = [];
+    const addressOfSupplier = [];
+    const countryOfOrigin = [];
+    const finalBatchCodes = [];
+    const finalSellByDates = [];
+    const finalReceivingDates = [];
+    
+    // Process ingredients if available
+    if (recipe && recipe.ingredients && Array.isArray(recipe.ingredients)) {
+      recipe.ingredients.forEach((ing, idx) => {
+        // Calculate the quantity for this production run
+        const baseQty = Number(ing.recipe_use) || 0;
+        const totalQty = (baseQty * Number(plannedQty || 0)).toFixed(3);
+        
+        // Add ingredient to the list
+        ingredientList.push(`${ing.description} (${totalQty} from base: ${baseQty})`);
+        
+        // Get supplier info
+        const supplierName = ingredientSuppliers && ingredientSuppliers[idx] ? ingredientSuppliers[idx] : '';
+        supplierNames.push(supplierName);
+        
+        // Add placeholder data for other fields
+        addressOfSupplier.push('Supplier Address');
+        countryOfOrigin.push('South Africa');
+        
+        // Use batch codes if available, or generate new ones
+        const batchCode = batchCodes && batchCodes[idx] ? 
+          batchCodes[idx] : 
+          `BATCH-${recipeCode}-${idx + 1}-${Date.now().toString().slice(-6)}`;
+        finalBatchCodes.push(batchCode);
+        
+        // Use sell-by dates if available, or generate new ones
+        const sellByDate = sellByDates && sellByDates[idx] ? 
+          sellByDates[idx] : 
+          (() => {
+            const date = new Date();
+            date.setDate(date.getDate() + 7);
+            return date.toISOString().split('T')[0];
+          })();
+        finalSellByDates.push(sellByDate);
+        
+        // Use receiving dates if available, or use today
+        const receivingDate = receivingDates && receivingDates[idx] ? 
+          receivingDates[idx] : 
+          new Date().toISOString().split('T')[0];
+        finalReceivingDates.push(receivingDate);
+      });
+    }
+    
+    // Create the audit data object
+    const auditData = {
+      id: Date.now(),
+      uid: `${date}-${recipeCode}-${Date.now()}`,
+      department: department,
+      department_manager: managerName,
+      food_handler_responsible: handlerName,
+      packing_batch_code: ['test'], // Placeholder
+      product_name: [recipe?.description || 'Unknown'],
+      ingredient_list: ingredientList,
+      supplier_name: supplierNames,
+      address_of_supplier: addressOfSupplier,
+      batch_code: finalBatchCodes,
+      sell_by_date: finalSellByDates,
+      receiving_date: finalReceivingDates,
+      country_of_origin: countryOfOrigin,
+      planned_qty: Number(plannedQty) || 0,
+      actual_qty: Number(actualQty) || Number(plannedQty) || 0,
+      notes: notes || '',
+      quality_score: Number(qualityScore) || 1,
+      deviations: deviations || ['none'],
+      confirmation_timestamp: new Date().toISOString(),
+      productDescription: productDescription || recipe?.description || recipeCode,
+      date: date,
+      status: status,
+      originalScheduleId: productionItem.id,
+      actualQty: Number(actualQty) || Number(plannedQty) || 0,
+      qualityScore: Number(qualityScore) || 1,
+      confirmationTimestamp: new Date().toISOString()
+    };
+    
+    return auditData;
+  };
+
+  const handleUnifiedSave = (data) => {
+    // With the simplified status-based workflow, we use handleSaveTimeSlot for all operations
+    // The function will handle the appropriate actions based on the current status
+    handleSaveTimeSlot(data);
+    
+    // Show appropriate message based on status
+    if (data.status === 'planned') {
+      console.log('Recipe planned successfully');
+    } else if (data.status === 'scheduled') {
+      console.log('Production scheduled successfully');
+    } else if (data.status === 'completed') {
+      console.log('Production completed successfully');
+    } else if (data.status === 'cancelled') {
+      console.log('Recipe cancelled');
     }
   };
 
@@ -750,7 +989,9 @@ const handleSaveTimeSlot = async (dataFromModal) => {
                     setCurrentSlotInfo({
                       date: today.toISOString().substring(0, 10)
                     });
-                    setTimeSlotModalOpen(true);
+                    setUnifiedModalMode('schedule');
+                    setUnifiedModalItem(null); // We'll use currentSlotInfo instead
+                    setUnifiedModalOpen(true);
                   }}
                   sx={{ 
                     bgcolor: accentColor,
@@ -796,6 +1037,7 @@ const handleSaveTimeSlot = async (dataFromModal) => {
                   minute: '2-digit',
                   hour12: false
                 }}
+                eventContent={renderEventContent}
               />
             </Box>
           </Box>
@@ -937,12 +1179,7 @@ const handleSaveTimeSlot = async (dataFromModal) => {
                                     variant="contained"
                                     color="primary"
                                     size="small"
-                                    onClick={() => handleConfirmProduction({
-                                      ...item,
-                                      date: schedule.weekStartDate,
-                                      department: department,
-                                      managerName: schedule.managerName
-                                    })}
+                                    onClick={() => handleConfirmSchedule(schedule, itemIndex)}
                                   >
                                     Confirm
                                   </Button>
@@ -1025,12 +1262,7 @@ const handleSaveTimeSlot = async (dataFromModal) => {
                                   variant="contained"
                                   color="primary"
                                   size="small"
-                                  onClick={() => handleConfirmProduction({
-                                    ...item,
-                                    date: schedule.weekStartDate,
-                                    department: department,
-                                    managerName: schedule.managerName
-                                  })}
+                                  onClick={() => handleConfirmSchedule(schedule, itemIndex)}
                                 >
                                   Confirm
                                 </Button>
@@ -1048,19 +1280,23 @@ const handleSaveTimeSlot = async (dataFromModal) => {
         )}
       </Paper>
       
-      <TimeSlotScheduleModal
-        open={timeSlotModalOpen}
+      <UnifiedScheduleModal
+        open={unifiedModalOpen}
         onClose={() => {
-          setTimeSlotModalOpen(false);
+          setUnifiedModalOpen(false);
           setCurrentEventInfo(null);
           setCurrentSlotInfo(null);
+          setUnifiedModalItem(null);
         }}
-        eventInfo={currentEventInfo}
-        slotInfo={currentSlotInfo}
+        onSave={handleUnifiedSave}
+        department={deptObj}
         recipes={recipes}
         handlers={handlers}
-        department={deptObj}
-        onSave={handleSaveTimeSlot}
+        suppliers={[]}
+        currentItem={unifiedModalItem}
+        mode={unifiedModalMode}
+        currentEventInfo={currentEventInfo}
+        currentSlotInfo={currentSlotInfo}
       />
       
       {/* Print Document Modal */}
@@ -1068,12 +1304,20 @@ const handleSaveTimeSlot = async (dataFromModal) => {
         <PrintDocumentModal
           open={printModalOpen}
           onClose={() => setPrintModalOpen(false)}
-          schedules={schedules}
-          recipes={recipes}
-          department={department}
+          schedules={filteredSchedules}
+          department={deptObj}
         />
       )}
-
+      <ChangeHistoryDialog
+        open={historyDialogOpen}
+        onClose={() => {
+          setHistoryDialogOpen(false);
+          setSelectedHistoryItem(null);
+        }}
+        item={selectedHistoryItem}
+        accentColor={accentColor}
+      />
+      
       {/* Export Schedule Modal */}
       {exportModalOpen && (
         <ExportScheduleModal
@@ -1085,21 +1329,7 @@ const handleSaveTimeSlot = async (dataFromModal) => {
         />
       )}
       
-      {/* Confirm Production Modal */}
-      {confirmModalOpen && selectedScheduleItem && (
-        <ConfirmProductionModal
-          open={confirmModalOpen}
-          onClose={() => {
-            setConfirmModalOpen(false);
-            setSelectedScheduleItem(null);
-          }}
-          scheduleItem={selectedScheduleItem}
-          recipes={recipes}
-          onConfirm={handleConfirmSubmit}
-        />
-      )}
-
-      {/* Edit Document Modal */}
+      {/* Confirm Production Modal has been replaced by UnifiedScheduleModal */}
       <Dialog open={editModalOpen} onClose={() => setEditModalOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ borderBottom: `2px solid ${accentColor}`, color: accentColor }}>
           Edit Production Document

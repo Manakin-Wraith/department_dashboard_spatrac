@@ -3715,8 +3715,194 @@
       ]
     }
   ],
-  "schedules": [],
-  "audits": [],
+  "schedules": [
+    {
+      "id": 1,
+      "weekStartDate": "2025-05-08",
+      "department": "1152",
+      "managerName": "Clive",
+      "handlersNames": [],
+      "items": [
+        {
+          "id": "2025-05-08-26665-1746681528565",
+          "recipeCode": "26665",
+          "plannedQty": 10,
+          "handlerName": "Sipho",
+          "startTime": "09:00",
+          "endTime": "11:00",
+          "date": "2025-05-08",
+          "status": "scheduled",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-08T05:18:48.566Z",
+              "changedBy": "Current User",
+              "changes": [
+                {
+                  "field": "created",
+                  "oldValue": null,
+                  "newValue": "new item"
+                }
+              ]
+            },
+            {
+              "timestamp": "2025-05-08T05:20:50.346Z",
+              "changedBy": "Current User",
+              "changes": [
+                {
+                  "field": "plannedQty",
+                  "oldValue": 15,
+                  "newValue": 10
+                }
+              ]
+            }
+          ],
+          "productDescription": "BABALAS BRAAI WORS",
+          "actualQty": 10,
+          "qualityScore": 1,
+          "notes": "",
+          "ingredientSuppliers": [
+            "",
+            "",
+            ""
+          ],
+          "batchCodes": [
+            "BATCH-28867-1-548016",
+            "BATCH-28867-2-548016",
+            "BATCH-28867-3-548016"
+          ],
+          "sellByDates": [
+            "2025-05-15",
+            "2025-05-15",
+            "2025-05-15"
+          ],
+          "receivingDates": [
+            "2025-05-08",
+            "2025-05-08",
+            "2025-05-08"
+          ],
+          "deviations": [
+            "none"
+          ],
+          "confirmationTimestamp": "2025-05-08T05:20:50.346Z"
+        },
+        {
+          "id": "2025-05-08-28867-1746681567881",
+          "recipeCode": "28867",
+          "plannedQty": 39,
+          "handlerName": "Lukhanyo",
+          "startTime": "11:30",
+          "endTime": "14:30",
+          "date": "2025-05-08",
+          "status": "completed",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-08T05:19:27.881Z",
+              "changedBy": "Current User",
+              "changes": [
+                {
+                  "field": "created",
+                  "oldValue": null,
+                  "newValue": "new item"
+                }
+              ]
+            }
+          ],
+          "productDescription": "SIX GUN BEEF BURGER",
+          "actualQty": 40,
+          "qualityScore": 1,
+          "notes": "",
+          "ingredientSuppliers": [
+            "",
+            "",
+            ""
+          ],
+          "batchCodes": [
+            "BATCH-28867-1-548016",
+            "BATCH-28867-2-548016",
+            "BATCH-28867-3-548016"
+          ],
+          "sellByDates": [
+            "2025-05-15",
+            "2025-05-15",
+            "2025-05-15"
+          ],
+          "receivingDates": [
+            "2025-05-08",
+            "2025-05-08",
+            "2025-05-08"
+          ],
+          "deviations": [
+            "none"
+          ],
+          "confirmationTimestamp": "2025-05-08T05:22:01.103Z"
+        }
+      ]
+    }
+  ],
+  "audits": [
+    {
+      "id": 1746681721152,
+      "uid": "2025-05-08-28867-1746681721152",
+      "department": "1152",
+      "food_handler_responsible": "Lukhanyo",
+      "packing_batch_code": [
+        "test"
+      ],
+      "product_name": [
+        "SIX GUN BEEF BURGER"
+      ],
+      "ingredient_list": [
+        "VAC CROPS 90/10 (468.000 from base: 12)",
+        "SPAR WATER (78.000 from base: 2)",
+        "BURGER SIX GUN GRILL (39.000 from base: 1)"
+      ],
+      "supplier_name": [
+        "",
+        "",
+        ""
+      ],
+      "address_of_supplier": [
+        "Supplier Address",
+        "Supplier Address",
+        "Supplier Address"
+      ],
+      "batch_code": [
+        "BATCH-28867-1-548016",
+        "BATCH-28867-2-548016",
+        "BATCH-28867-3-548016"
+      ],
+      "sell_by_date": [
+        "2025-05-15",
+        "2025-05-15",
+        "2025-05-15"
+      ],
+      "receiving_date": [
+        "2025-05-08",
+        "2025-05-08",
+        "2025-05-08"
+      ],
+      "country_of_origin": [
+        "South Africa",
+        "South Africa",
+        "South Africa"
+      ],
+      "planned_qty": 39,
+      "actual_qty": 40,
+      "notes": "",
+      "quality_score": 1,
+      "deviations": [
+        "none"
+      ],
+      "confirmation_timestamp": "2025-05-08T05:22:01.152Z",
+      "productDescription": "SIX GUN BEEF BURGER",
+      "date": "2025-05-08",
+      "status": "completed",
+      "originalScheduleId": "2025-05-08-28867-1746681567881",
+      "actualQty": 40,
+      "qualityScore": 1,
+      "confirmationTimestamp": "2025-05-08T05:22:01.152Z"
+    }
+  ],
   "production-documents": [],
   "handlers": []
 }
