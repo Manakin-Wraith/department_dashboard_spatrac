@@ -102,8 +102,21 @@ const RecipeListTable = ({ data = [], onEdit, departments = [] }) => {
                         </Typography>
                         {ingredientCount > 0 ? (
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                            <Box sx={{ display: 'grid', gridTemplateColumns: '3fr 1fr 1fr 1fr', gap: 2, mb: 1 }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Ingredient</Typography>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Quantity</Typography>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Unit Cost</Typography>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Total Cost</Typography>
+                            </Box>
                             {r.ingredients.map((ing, idx) => (
-                              <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <Box key={idx} sx={{ 
+                                display: 'grid', 
+                                gridTemplateColumns: '3fr 1fr 1fr 1fr', 
+                                gap: 2,
+                                alignItems: 'center',
+                                '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' },
+                                py: 0.5
+                              }}>
                                 <Typography variant="body2" component="span">
                                   {ing.description || 'Unnamed Ingredient'}
                                 </Typography>
@@ -112,8 +125,29 @@ const RecipeListTable = ({ data = [], onEdit, departments = [] }) => {
                                   size="small"
                                   variant="outlined"
                                 />
+                                <Typography variant="body2" component="span" sx={{ color: 'text.secondary' }}>
+                                  {ing.cost ? `R${parseFloat(ing.cost).toFixed(2)}` : '-'}
+                                </Typography>
+                                <Typography variant="body2" component="span" sx={{ fontWeight: 'medium', color: 'primary.main' }}>
+                                  {ing.total_cost ? `R${parseFloat(ing.total_cost).toFixed(2)}` : '-'}
+                                </Typography>
                               </Box>
                             ))}
+                            <Box sx={{ 
+                              display: 'grid', 
+                              gridTemplateColumns: '3fr 1fr 1fr 1fr', 
+                              gap: 2,
+                              mt: 1,
+                              pt: 1,
+                              borderTop: '1px solid rgba(224, 224, 224, 1)'
+                            }}>
+                              <Typography variant="subtitle2" sx={{ gridColumn: '1 / 4', textAlign: 'right', fontWeight: 'bold' }}>
+                                Total Recipe Cost:
+                              </Typography>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                                {r.ingredients.reduce((sum, ing) => sum + (parseFloat(ing.total_cost || 0)), 0).toFixed(2) || '-'}
+                              </Typography>
+                            </Box>
                           </Box>
                         ) : (
                           <Typography variant="body2" color="text.secondary">
