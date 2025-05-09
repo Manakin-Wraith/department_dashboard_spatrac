@@ -44,14 +44,30 @@ const RecipeListTable = ({ data = [], onEdit, onSave, onDelete, departments = []
   
   const theme = useTheme();
 
+  // Track if recipe has been modified to determine if save prompt is needed
+  const [hasChanges, setHasChanges] = useState(false);
+  
   const handleExpandClick = (productCode) => {
-    setExpandedRow(expandedRow === productCode ? null : productCode);
+    // If in edit mode, ask for confirmation before collapsing
+    if (editMode === productCode && hasChanges) {
+      if (window.confirm('You have unsaved changes. Are you sure you want to collapse this recipe?')) {
+        handleCancelEdit();
+        setExpandedRow(null);
+      }
+    } else {
+      setExpandedRow(expandedRow === productCode ? null : productCode);
+    }
   };
 
   const handleEditClick = (recipe) => {
-    // If already in edit mode for this recipe, save changes
+    // If already in edit mode for this recipe, save changes if there are any
     if (editMode === recipe.product_code) {
-      handleSaveChanges();
+      if (hasChanges && onSave) {
+        handleSaveChanges();
+      } else {
+        // If no changes, just exit edit mode
+        handleCancelEdit();
+      }
       return;
     }
     
@@ -59,15 +75,24 @@ const RecipeListTable = ({ data = [], onEdit, onSave, onDelete, departments = []
     setEditedRecipe(JSON.parse(JSON.stringify(recipe)));
     setEditMode(recipe.product_code);
     setExpandedRow(recipe.product_code); // Expand the row when editing
+    setHasChanges(false); // Reset changes flag when starting to edit
   };
 
   const handleCancelEdit = () => {
-    setEditMode(null);
-    setEditedRecipe(null);
+    if (hasChanges) {
+      if (window.confirm('You have unsaved changes. Are you sure you want to cancel?')) {
+        setEditMode(null);
+        setEditedRecipe(null);
+        setHasChanges(false);
+      }
+    } else {
+      setEditMode(null);
+      setEditedRecipe(null);
+    }
   };
 
   const handleSaveChanges = () => {
-    if (editedRecipe) {
+    if (editedRecipe && onSave) {
       // Calculate derived values before saving
       const totalBatchWeight = editedRecipe.ingredients.reduce(
         (sum, ing) => sum + parseFloat(ing.recipe_use || 0), 0
@@ -88,9 +113,17 @@ const RecipeListTable = ({ data = [], onEdit, onSave, onDelete, departments = []
         cost_excl_per_each_kg: costPerUnit.toFixed(2)
       };
       
-      onSave(updatedRecipe);
-      setEditMode(null);
-      setEditedRecipe(null);
+      try {
+        onSave(updatedRecipe);
+        setEditMode(null);
+        setEditedRecipe(null);
+        setHasChanges(false);
+      } catch (error) {
+        console.error('Error saving recipe:', error);
+        // Could show an error message to the user here
+      }
+    } else if (!onSave) {
+      console.warn('No onSave handler provided to RecipeListTable');
     }
   };
 
@@ -137,6 +170,9 @@ const RecipeListTable = ({ data = [], onEdit, onSave, onDelete, departments = []
         ...editedRecipe,
         [field]: value
       });
+      
+      // Mark that changes have been made
+      setHasChanges(true);
     }
   };
 
@@ -148,11 +184,21 @@ const RecipeListTable = ({ data = [], onEdit, onSave, onDelete, departments = []
         [field]: value
       };
       
+      // If changing description and product code is empty, auto-generate it
+      if (field === 'description' && !getIngredientProductCode(updatedIngredients[index])) {
+        const generatedCode = generateProductCode(value);
+        updatedIngredients[index] = setIngredientProductCode(updatedIngredients[index], generatedCode);
+      }
+      
+      // If changing product code, update both fields
+      if (field === 'ingr_prod_code' || field === 'prod_code') {
+        updatedIngredients[index] = setIngredientProductCode(updatedIngredients[index], value);
+      }
+      
       // If changing quantity or unit cost, recalculate total cost
       if (field === 'recipe_use' || field === 'cost') {
         const qty = field === 'recipe_use' ? value : updatedIngredients[index].recipe_use;
         const cost = field === 'cost' ? value : updatedIngredients[index].cost;
-        
         if (qty && cost) {
           updatedIngredients[index].total_cost = (parseFloat(qty) * parseFloat(cost)).toFixed(2);
         }
@@ -162,6 +208,9 @@ const RecipeListTable = ({ data = [], onEdit, onSave, onDelete, departments = []
         ...editedRecipe,
         ingredients: updatedIngredients
       });
+      
+      // Mark that changes have been made
+      setHasChanges(true);
     }
   };
 
@@ -169,15 +218,58 @@ const RecipeListTable = ({ data = [], onEdit, onSave, onDelete, departments = []
     setAddIngredientDialogOpen(true);
   };
 
+  // Generate a product code based on ingredient description
+  const generateProductCode = (description) => {
+    if (!description) return '';
+    
+    // Convert to uppercase and remove special characters
+    const cleanDesc = description.toUpperCase().replace(/[^A-Z0-9\s]/g, '');
+    
+    // Split into words and take first 3 characters of each word (or less if word is shorter)
+    const words = cleanDesc.split(/\s+/).filter(word => word.length > 0);
+    
+    if (words.length === 0) return '';
+    
+    if (words.length === 1) {
+      // If single word, take up to 6 characters
+      return words[0].substring(0, 6);
+    } else {
+      // Take first 2-3 characters from each word and combine
+      return words.map(word => word.substring(0, Math.min(3, word.length)))
+        .join('').substring(0, 8); // Limit to 8 characters total
+    }
+  };
+  
+  // Helper function to get product code from ingredient (handles both prod_code and ingr_prod_code)
+  const getIngredientProductCode = (ingredient) => {
+    return ingredient.prod_code || ingredient.ingr_prod_code || '';
+  };
+  
+  // Helper function to set product code on ingredient (maintains both prod_code and ingr_prod_code)
+  const setIngredientProductCode = (ingredient, code) => {
+    return {
+      ...ingredient,
+      prod_code: code,
+      ingr_prod_code: code
+    };
+  };
+  
   const handleAddIngredientSave = () => {
     if (editedRecipe && newIngredient.description) {
       // Calculate total cost
       const totalCost = parseFloat(newIngredient.recipe_use || 0) * parseFloat(newIngredient.cost || 0);
       
-      const ingredientToAdd = {
+      // Auto-generate product code if not provided
+      const productCode = getIngredientProductCode(newIngredient) || generateProductCode(newIngredient.description);
+      
+      // Create the ingredient with both prod_code and ingr_prod_code set
+      let ingredientToAdd = {
         ...newIngredient,
         total_cost: isNaN(totalCost) ? '0.00' : totalCost.toFixed(2)
       };
+      
+      // Set the product code on both fields
+      ingredientToAdd = setIngredientProductCode(ingredientToAdd, productCode);
       
       setEditedRecipe({
         ...editedRecipe,
@@ -371,15 +463,39 @@ const RecipeListTable = ({ data = [], onEdit, onSave, onDelete, departments = []
                     {displayRecipe.cost_excl_per_each_kg ? `R${parseFloat(displayRecipe.cost_excl_per_each_kg).toFixed(2)}` : '-'}
                   </TableCell>
                   <TableCell sx={{ textAlign: 'center' }}>
-                    <Button 
-                      size="small" 
-                      variant="outlined" 
-                      color={isEditing ? "success" : "primary"} 
-                      onClick={() => handleEditClick(r)} 
-                      sx={{ mr: 1 }}
-                    >
-                      {isEditing ? "Save" : "Edit"}
-                    </Button>
+                    {isEditing ? (
+                      <>
+                        <Button 
+                          size="small" 
+                          variant="outlined" 
+                          color={hasChanges ? "success" : "primary"}
+                          onClick={() => handleSaveChanges()} 
+                          disabled={!hasChanges}
+                          sx={{ mr: 1 }}
+                        >
+                          Save
+                        </Button>
+                        <Button 
+                          size="small" 
+                          variant="outlined" 
+                          color="warning"
+                          onClick={handleCancelEdit} 
+                          sx={{ mr: 1 }}
+                        >
+                          Cancel
+                        </Button>
+                      </>
+                    ) : (
+                      <Button 
+                        size="small" 
+                        variant="outlined" 
+                        color="primary" 
+                        onClick={() => handleEditClick(r)} 
+                        sx={{ mr: 1 }}
+                      >
+                        Edit
+                      </Button>
+                    )}
                     <IconButton 
                       size="small" 
                       color="error" 
@@ -579,11 +695,11 @@ const RecipeListTable = ({ data = [], onEdit, onSave, onDelete, departments = []
                                         <TextField
                                           fullWidth
                                           size="small"
-                                          value={ing.ingr_prod_code || ''}
-                                          onChange={(e) => handleIngredientFieldChange(idx, 'ingr_prod_code', e.target.value)}
+                                          value={getIngredientProductCode(ing)}
+                                          onChange={(e) => handleIngredientFieldChange(idx, 'prod_code', e.target.value)}
                                         />
                                       ) : (
-                                        ing.ingr_prod_code || '-'
+                                        getIngredientProductCode(ing) || '-'
                                       )}
                                     </TableCell>
                                     <TableCell>
@@ -738,12 +854,23 @@ const RecipeListTable = ({ data = [], onEdit, onSave, onDelete, departments = []
         <DialogTitle>Add New Ingredient</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Ingredient Description"
                 value={newIngredient.description}
-                onChange={(e) => setNewIngredient({...newIngredient, description: e.target.value})}
+                onChange={(e) => {
+                  const description = e.target.value;
+                  // Auto-generate product code when description changes and product code is empty
+                  const productCode = getIngredientProductCode(newIngredient) || generateProductCode(description);
+                  let updatedIngredient = {
+                    ...newIngredient, 
+                    description: description
+                  };
+                  // Set the product code on both fields
+                  updatedIngredient = setIngredientProductCode(updatedIngredient, productCode);
+                  setNewIngredient(updatedIngredient);
+                }}
                 required
               />
             </Grid>
@@ -751,8 +878,13 @@ const RecipeListTable = ({ data = [], onEdit, onSave, onDelete, departments = []
               <TextField
                 fullWidth
                 label="Product Code"
-                value={newIngredient.ingr_prod_code}
-                onChange={(e) => setNewIngredient({...newIngredient, ingr_prod_code: e.target.value})}
+                value={getIngredientProductCode(newIngredient)}
+                onChange={(e) => {
+                  const code = e.target.value;
+                  const updatedIngredient = setIngredientProductCode(newIngredient, code);
+                  setNewIngredient(updatedIngredient);
+                }}
+                helperText="Auto-generated from description, but can be edited"
               />
             </Grid>
             <Grid item xs={12} sm={4}>

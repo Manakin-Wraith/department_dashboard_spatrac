@@ -114,6 +114,27 @@ const RecipeListPage = () => {
       console.error('Cannot edit recipe: Missing recipe ID or department context.');
     }
   };
+  
+  const handleSaveRecipe = async (updatedRecipe) => {
+    try {
+      console.log('Saving updated recipe:', updatedRecipe);
+      // Here you would typically call an API to save the recipe
+      // For now, we'll just update the local state
+      const updatedRecipes = recipes.map(recipe => 
+        recipe.product_code === updatedRecipe.product_code ? updatedRecipe : recipe
+      );
+      
+      setRecipes(updatedRecipes);
+      
+      // Show success message or notification here if needed
+      console.log(`Recipe ${updatedRecipe.description} saved successfully`);
+      return true;
+    } catch (error) {
+      console.error('Error saving recipe:', error);
+      // Show error message or notification here if needed
+      return false;
+    }
+  };
 
   return (
     <Box sx={{ maxWidth: '1200px', mx: 'auto', width: '100%', py: 2 }}> 
@@ -140,7 +161,13 @@ const RecipeListPage = () => {
             <p>No recipes found for {deptObj.department || department}. Try creating a new recipe.</p>
           </Box>
         ) : (
-          <RecipeListTable data={recipes} onEdit={handleEdit} departments={departments} onAddRecipe={handleOpenCreateRecipeModal} />
+          <RecipeListTable 
+            data={recipes} 
+            onEdit={handleEdit} 
+            onSave={handleSaveRecipe}
+            departments={departments} 
+            onAddRecipe={handleOpenCreateRecipeModal} 
+          />
         )}
       </Box>
 
