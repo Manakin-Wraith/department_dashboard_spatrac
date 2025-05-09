@@ -77,53 +77,67 @@ const ProductionDocumentList = ({
           </TableRow>
         </TableHead>
         <TableBody>
-          {schedules.flatMap(schedule => 
-            schedule.items.map((item, idx) => {
-              const recipe = recipes.find(r => r.product_code === item.recipeCode);
+          {schedules && schedules.length > 0 ? (
+            // Process schedules with safety checks
+            schedules.flatMap(schedule => {
+              // Handle the nested structure where schedule might have a "0" property
+              const scheduleData = schedule["0"] || schedule;
+              const items = scheduleData?.items || [];
               
-              return (
-                <TableRow key={`${schedule.id}-${idx}`}>
-                  <TableCell>{item.date}</TableCell>
-                  <TableCell>
-                    {item.productDescription || recipe?.description || item.recipeCode}
-                  </TableCell>
-                  <TableCell>{item.plannedQty}</TableCell>
-                  <TableCell>{item.handlerName || 'Not assigned'}</TableCell>
-                  <TableCell>
-                    {item.startTime && item.endTime 
-                      ? `${item.startTime} - ${item.endTime}` 
-                      : 'Not scheduled'}
-                  </TableCell>
-                  <TableCell>{getStatusChip(item.status)}</TableCell>
-                  <TableCell align="right">
-                    <Tooltip title="View History">
-                      <IconButton 
-                        size="small" 
-                        onClick={() => onViewHistory(item)}
-                      >
-                        <VisibilityIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Edit">
-                      <IconButton 
-                        size="small" 
-                        onClick={() => onEdit(schedule, item, idx)}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton 
-                        size="small" 
-                        onClick={() => onDelete(schedule, item, idx)}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              );
+              return items.map((item, idx) => {
+                const recipe = recipes.find(r => r.product_code === item.recipeCode);
+                const scheduleId = scheduleData.id || schedule.id || 'unknown';
+                
+                return (
+                  <TableRow key={`${scheduleId}-${idx}`}>
+                    <TableCell>{item.date}</TableCell>
+                    <TableCell>
+                      {item.productDescription || recipe?.description || item.recipeCode}
+                    </TableCell>
+                    <TableCell>{item.handlerName || 'Not assigned'}</TableCell>
+                    <TableCell>{item.plannedQty}</TableCell>
+                    <TableCell>
+                      {item.startTime && item.endTime 
+                        ? `${item.startTime} - ${item.endTime}` 
+                        : 'Not scheduled'}
+                    </TableCell>
+                    <TableCell>{getStatusChip(item.status)}</TableCell>
+                    <TableCell align="right">
+                      <Tooltip title="View History">
+                        <IconButton 
+                          size="small" 
+                          onClick={() => onViewHistory(item)}
+                        >
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Edit">
+                        <IconButton 
+                          size="small" 
+                          onClick={() => onEdit(scheduleData, item, idx)}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton 
+                          size="small" 
+                          onClick={() => onDelete(scheduleData, item, idx)}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                );
+              });
             })
+          ) : (
+            <TableRow>
+              <TableCell colSpan={7} align="center">
+                No production documents found
+              </TableCell>
+            </TableRow>
           )}
           {schedules.flatMap(s => s.items).length === 0 && (
             <TableRow>

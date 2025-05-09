@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { saveSchedule, saveAudit } from '../services/api';
+import { saveSchedule, saveAudit, deleteSchedule } from '../services/api';
 
 /**
  * Custom hook for managing production schedules
@@ -16,112 +16,6 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
   const [currentEventInfo, setCurrentEventInfo] = useState(null);
   const [currentSlotInfo, setCurrentSlotInfo] = useState(null);
   const [calendarEvents, setCalendarEvents] = useState([]);
-  
-  /**
-   * Save a time slot schedule
-   * @param {Object} data - Schedule data to save
-   */
-  const handleSaveTimeSlot = useCallback(async (data) => {
-    try {
-      const { recipeCode, plannedQty, handlerName, date, startTime, endTime, status, id, notes } = data;
-      
-      // Find the recipe for this item
-      const recipe = recipes.find(r => r.product_code === recipeCode);
-      
-      // Create a new schedule item
-      const newItem = {
-        id: id || `${date}-${recipeCode}-${Date.now()}`,
-        recipeCode,
-        plannedQty: Number(plannedQty),
-        handlerName,
-        startTime,
-        endTime,
-        date,
-        status,
-        notes,
-        productDescription: recipe?.description || recipeCode,
-        changeHistory: [
-          {
-            timestamp: new Date().toISOString(),
-            changedBy: 'Current User',
-            changes: [
-              {
-                field: id ? 'updated' : 'created',
-                oldValue: null,
-                newValue: id ? 'updated item' : 'new item'
-              }
-            ]
-          }
-        ]
-      };
-      
-      // Check if we're updating an existing schedule or creating a new one
-      const existingScheduleIndex = schedules.findIndex(s => 
-        s.weekStartDate === getWeekStartDate(date)
-      );
-      
-      let updatedSchedules;
-      
-      if (existingScheduleIndex >= 0) {
-        // Update existing schedule
-        const updatedSchedule = { ...schedules[existingScheduleIndex] };
-        
-        // Check if we're updating an existing item or adding a new one
-        const existingItemIndex = updatedSchedule.items.findIndex(item => item.id === newItem.id);
-        
-        if (existingItemIndex >= 0) {
-          // Update existing item
-          updatedSchedule.items[existingItemIndex] = {
-            ...updatedSchedule.items[existingItemIndex],
-            ...newItem,
-            changeHistory: [
-              ...newItem.changeHistory,
-              ...(updatedSchedule.items[existingItemIndex].changeHistory || [])
-            ]
-          };
-        } else {
-          // Add new item to existing schedule
-          updatedSchedule.items.push(newItem);
-        }
-        
-        // Update the schedules array
-        updatedSchedules = [
-          ...schedules.slice(0, existingScheduleIndex),
-          updatedSchedule,
-          ...schedules.slice(existingScheduleIndex + 1)
-        ];
-      } else {
-        // Create a new schedule
-        const newSchedule = {
-          id: Date.now(),
-          department,
-          weekStartDate: getWeekStartDate(date),
-          managerName: '',
-          items: [newItem]
-        };
-        
-        // Add the new schedule to the array
-        updatedSchedules = [...schedules, newSchedule];
-      }
-      
-      // Save the updated schedules
-      await saveSchedule(department, updatedSchedules);
-      
-      // Update the state
-      setSchedules(updatedSchedules);
-      
-      // If this is a completion, create an audit record
-      if (status === 'completed') {
-        const auditData = createAuditData(data, recipe);
-        await saveAudit(department, auditData);
-      }
-      
-      return newItem;
-    } catch (error) {
-      console.error('Failed to save schedule:', error);
-      throw error;
-    }
-  }, [department, recipes, schedules, setSchedules]);
   
   /**
    * Create audit data from schedule data
@@ -199,13 +93,137 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
       date: date,
       status: status,
       originalScheduleId: productionId,
-      actualQty: Number(actualQty) || Number(plannedQty) || 0,
-      qualityScore: Number(qualityScore) || 1,
-      confirmationTimestamp: new Date().toISOString()
     };
     
     return auditData;
   }, [department]);
+  
+  /**
+   * Save a time slot schedule
+   * @param {Object} data - Schedule data to save
+   */
+  const handleSaveTimeSlot = useCallback(async (data) => {
+    try {
+      const { recipeCode, plannedQty, handlerName, date, startTime, endTime, status, id, notes } = data;
+      
+      // Find the recipe for this item
+      const recipe = recipes.find(r => r.product_code === recipeCode);
+      
+      // Create a new schedule item
+      const newItem = {
+        id: id || `${date}-${recipeCode}-${Date.now()}`,
+        recipeCode,
+        plannedQty: Number(plannedQty),
+        handlerName,
+        startTime,
+        endTime,
+        date,
+        status,
+        notes,
+        productDescription: recipe?.description || recipeCode,
+        changeHistory: [
+          {
+            timestamp: new Date().toISOString(),
+            changedBy: 'Current User',
+            changes: [
+              {
+                field: id ? 'updated' : 'created',
+                oldValue: null,
+                newValue: id ? 'updated item' : 'new item'
+              }
+            ]
+          }
+        ]
+      };
+      
+      // Check if we're updating an existing schedule or creating a new one
+      const existingScheduleIndex = schedules.findIndex(s => {
+        // Handle the nested structure where schedule might have a "0" property
+        const scheduleData = s["0"] || s;
+        return scheduleData.weekStartDate === getWeekStartDate(date);
+      });
+      
+      let updatedSchedules;
+      let scheduleToSave;
+      
+      if (existingScheduleIndex >= 0) {
+        // Get the existing schedule, handling the nested structure
+        const existingSchedule = schedules[existingScheduleIndex];
+        const scheduleData = existingSchedule["0"] || existingSchedule;
+        
+        // Create a deep copy of the schedule
+        const updatedSchedule = JSON.parse(JSON.stringify(scheduleData));
+        
+        // Check if we're updating an existing item or adding a new one
+        const existingItemIndex = updatedSchedule.items ? 
+          updatedSchedule.items.findIndex(item => item.id === newItem.id) : -1;
+        
+        if (!updatedSchedule.items) {
+          updatedSchedule.items = [];
+        }
+        
+        if (existingItemIndex >= 0) {
+          // Update existing item
+          updatedSchedule.items[existingItemIndex] = {
+            ...updatedSchedule.items[existingItemIndex],
+            ...newItem,
+            changeHistory: [
+              ...newItem.changeHistory,
+              ...(updatedSchedule.items[existingItemIndex].changeHistory || [])
+            ]
+          };
+        } else {
+          // Add new item to existing schedule
+          updatedSchedule.items.push(newItem);
+        }
+        
+        // Prepare the schedule to save
+        scheduleToSave = updatedSchedule;
+        
+        // Update the schedules array
+        updatedSchedules = [...schedules];
+        
+        // If the schedule has a nested structure, update it properly
+        if (existingSchedule["0"]) {
+          updatedSchedules[existingScheduleIndex] = { "0": updatedSchedule, id: existingSchedule.id };
+        } else {
+          updatedSchedules[existingScheduleIndex] = updatedSchedule;
+        }
+      } else {
+        // Create a new schedule
+        const newSchedule = {
+          id: Date.now(),
+          department,
+          weekStartDate: getWeekStartDate(date),
+          managerName: '',
+          items: [newItem]
+        };
+        
+        // Prepare the schedule to save
+        scheduleToSave = newSchedule;
+        
+        // Add the new schedule to the array
+        updatedSchedules = [...schedules, { "0": newSchedule, id: newSchedule.id }];
+      }
+      
+      // Save the updated schedule to the server
+      await saveSchedule(department, scheduleToSave);
+      
+      // Update the state
+      setSchedules(updatedSchedules);
+      
+      // If this is a completion, create an audit record
+      if (status === 'completed') {
+        const auditData = createAuditData(data, recipe);
+        await saveAudit(department, auditData);
+      }
+      
+      return newItem;
+    } catch (error) {
+      console.error('Failed to save schedule:', error);
+      throw error;
+    }
+  }, [department, recipes, schedules, setSchedules, createAuditData]);
   
   /**
    * Get the start date of the week for a given date
@@ -320,6 +338,66 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
     const events = convertSchedulesToEvents(schedules);
     setCalendarEvents(events);
   }, [schedules, convertSchedulesToEvents]);
+
+  /**
+   * Delete a schedule item
+   * @param {Object} schedule - The schedule containing the item
+   * @param {Object} item - The item to delete
+   * @param {number} itemIndex - The index of the item in the schedule
+   * @returns {Promise<void>}
+   */
+  const handleDeleteScheduleItem = useCallback(async (schedule, item, itemIndex) => {
+    try {
+      // Handle the nested structure where schedule might have a "0" property
+      const scheduleData = schedule["0"] || schedule;
+      const scheduleId = scheduleData.id || schedule.id;
+      
+      // Find the schedule in the schedules array
+      const scheduleIndex = schedules.findIndex(s => {
+        const sData = s["0"] || s;
+        return sData.id === scheduleId;
+      });
+      
+      if (scheduleIndex === -1) {
+        console.error(`Schedule with ID ${scheduleId} not found`);
+        return;
+      }
+      
+      // Create a deep copy of the schedule
+      const updatedSchedule = JSON.parse(JSON.stringify(scheduleData));
+      
+      // Remove the item from the schedule
+      updatedSchedule.items = updatedSchedule.items.filter((_, idx) => idx !== itemIndex);
+      
+      // If there are no more items, delete the entire schedule
+      if (updatedSchedule.items.length === 0) {
+        // Delete the schedule from the server
+        await deleteSchedule(scheduleId);
+        
+        // Update the state
+        const updatedSchedules = schedules.filter((_, idx) => idx !== scheduleIndex);
+        setSchedules(updatedSchedules);
+      } else {
+        // Update the schedule on the server
+        await saveSchedule(department, updatedSchedule);
+        
+        // Update the state
+        const updatedSchedules = [...schedules];
+        
+        // If the schedule has a nested structure, update it properly
+        if (schedule["0"]) {
+          updatedSchedules[scheduleIndex] = { "0": updatedSchedule, id: scheduleId };
+        } else {
+          updatedSchedules[scheduleIndex] = updatedSchedule;
+        }
+        
+        setSchedules(updatedSchedules);
+      }
+    } catch (error) {
+      console.error('Failed to delete schedule item:', error);
+      throw error;
+    }
+  }, [department, schedules, setSchedules]);
   
   return {
     selectedSchedule,
@@ -333,6 +411,7 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
     calendarEvents,
     setCalendarEvents,
     handleSaveTimeSlot,
+    handleDeleteScheduleItem,
     createAuditData,
     updateCalendarEvents,
     getStatusColor

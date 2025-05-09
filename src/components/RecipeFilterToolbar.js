@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Grid, Box, Button, Avatar, Typography } from '@mui/material';
+import { Grid, Box, Avatar, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import BakeryDiningIcon from '@mui/icons-material/BakeryDining';
 import SetMealIcon from '@mui/icons-material/SetMeal';
@@ -9,7 +9,7 @@ import departments from '../data/department_table.json';
 // Map JSON icon key to component
 const iconMap = { BakeryDiningIcon, SetMealIcon, SoupKitchenIcon };
 
-const RecipeFilterToolbar = ({ onFilterChange, onCreate, initialDepartment = '', lockDepartment = false }) => {
+const RecipeFilterToolbar = ({ onFilterChange, initialDepartment = '', lockDepartment = false }) => {
   const [department, setDepartment] = useState(initialDepartment);
   const theme = useTheme();
 
@@ -22,8 +22,8 @@ const RecipeFilterToolbar = ({ onFilterChange, onCreate, initialDepartment = '',
 
   return (
     <Box sx={{ mt: 2, mb: 2 }}>
-      <Grid container spacing={2} alignItems="center" justifyContent="space-between">
-        <Grid item xs={12} sm={8} md={9}>
+      <Grid container spacing={2} alignItems="center">
+        <Grid item>
           <Box sx={{ display: 'flex', alignItems: 'center', minHeight: 56 }}>
             {(() => {
               // Use the internal 'department' state which is synced with 'initialDepartment'
@@ -43,11 +43,6 @@ const RecipeFilterToolbar = ({ onFilterChange, onCreate, initialDepartment = '',
               {department || 'All Recipes'} {/* Display department name or 'All Recipes' */}
             </Typography>
           </Box>
-        </Grid>
-        <Grid item xs={12} sm={4} md={3} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', sm: 'flex-end' } }}>
-          <Button variant="contained" color="primary" onClick={onCreate} sx={{ width: { xs: '100%', sm: 'auto'} }}>
-            Create New Recipe
-          </Button>
         </Grid>
       </Grid>
     </Box>

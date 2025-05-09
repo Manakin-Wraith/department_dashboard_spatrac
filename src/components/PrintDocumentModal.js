@@ -72,25 +72,32 @@ const PrintDocumentModal = ({ open, onClose, schedules, recipes }) => {
       >
         {/* This is only visible when printing */}
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, p: 1 }}>
-          {schedules.flatMap(schedule => 
-            schedule.items.map((item, idx) => {
-              const recipe = recipes.find(r => r.product_code === item.recipeCode) || {};
-              return (
-                <Box 
-                  key={`${schedule.id}-${idx}`} 
-                  sx={{ 
-                    border: `1px solid ${accentColor}`, 
-                    borderRadius: 1, 
-                    p: 1, 
-                    mb: 2,
-                    breakInside: 'avoid' 
+          {schedules && schedules.length > 0 ? (
+            schedules.flatMap(schedule => {
+              // Handle the nested structure where schedule might have a "0" property
+              const scheduleData = schedule["0"] || schedule;
+              const items = scheduleData?.items || [];
+              
+              return items.map((item, idx) => {
+                const recipe = recipes.find(r => r.product_code === item.recipeCode) || {};
+                const scheduleId = scheduleData.id || schedule.id || 'unknown';
+                
+                return (
+                  <Box 
+                    key={`${scheduleId}-${idx}`} 
+                    sx={{ 
+                      border: `1px solid ${accentColor}`, 
+                      borderRadius: 1, 
+                      p: 1, 
+                      mb: 2,
+                      breakInside: 'avoid' 
                   }}
                 >
                   <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
-                    Date: {schedule.weekStartDate}
+                    Date: {item.date || scheduleData.weekStartDate}
                   </Typography>
                   <Typography variant="body2">
-                    Recipe: {recipe.description || item.recipeCode}
+                    Recipe: {recipe.description || item.productDescription || item.recipeCode}
                   </Typography>
                   <Typography variant="body2">
                     Qty: {item.plannedQty}
@@ -101,10 +108,10 @@ const PrintDocumentModal = ({ open, onClose, schedules, recipes }) => {
                     </Typography>
                   )}
                   <Typography variant="body2">
-                    Handler: {item.handlerName || schedule.handlersNames}
+                    Handler: {item.handlerName || scheduleData.handlersNames || 'Not assigned'}
                   </Typography>
                   <Typography variant="body2">
-                    Manager: {schedule.managerName || 'Not assigned'}
+                    Manager: {scheduleData.managerName || 'Not assigned'}
                   </Typography>
                   
                   {recipe.ingredients && recipe.ingredients.length > 0 && (
@@ -129,6 +136,11 @@ const PrintDocumentModal = ({ open, onClose, schedules, recipes }) => {
                 </Box>
               );
             })
+            })
+          ) : (
+            <Box sx={{ textAlign: 'center', p: 2 }}>
+              <Typography variant="body1">No scheduled items to display</Typography>
+            </Box>
           )}
         </Box>
       </DialogContent>

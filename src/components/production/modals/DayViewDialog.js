@@ -70,9 +70,14 @@ const DayViewDialog = ({
                         // Find the schedule and item for detailed view
                         const schedule = schedules.find(s => s.id === scheduleId);
                         
-                        if (schedule && schedule.items && schedule.items[itemIndex]) {
-                          const item = schedule.items[itemIndex];
-                          onEventClick(item);
+                        // Handle the nested structure where schedule might have a "0" property
+                        if (schedule) {
+                          const scheduleData = schedule["0"] || schedule;
+                          const items = scheduleData?.items || [];
+                          
+                          if (items[itemIndex]) {
+                            onEventClick(items[itemIndex]);
+                          }
                         }
                       }}
                     >

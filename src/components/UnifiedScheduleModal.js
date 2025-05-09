@@ -74,26 +74,30 @@ const UnifiedScheduleModal = ({
       return null;
     }
     
-    console.log(`Looking for recipe with code ${recipeCode} in ${recipes.length} recipes for department ${department}`);
+    // Ensure department is a valid string
+    const deptStr = department ? String(department) : '';
+    
+    console.log(`Looking for recipe with code ${recipeCode} in ${recipes.length} recipes for department ${deptStr}`);
     
     // Find the recipe by product code
     const recipe = recipes.find(r => r.product_code === recipeCode);
     
     if (!recipe) {
-      console.warn(`Recipe with code ${recipeCode} not found in department ${department}`);
+      console.warn(`Recipe with code ${recipeCode} not found in department ${deptStr}`);
       return null;
     }
     
-    console.log(`Found recipe: ${recipe.name || recipe.description} (${recipe.product_code}) for department ${department}`);
+    console.log(`Found recipe: ${recipe.name || recipe.description} (${recipe.product_code}) for department ${deptStr}`);
     
     // Verify recipe belongs to the current department (case-insensitive)
     const recipeDepCode = recipe.department || recipe.department_code;
-    if (recipeDepCode) {
-      const normalizedRecipeDept = recipeDepCode.toLowerCase();
-      const normalizedDepartment = department.toLowerCase();
+    if (recipeDepCode && deptStr) {
+      // Safely convert to lowercase with type checking
+      const normalizedRecipeDept = String(recipeDepCode).toLowerCase();
+      const normalizedDepartment = deptStr.toLowerCase();
       
       if (normalizedRecipeDept !== normalizedDepartment) {
-        console.warn(`Recipe ${recipe.product_code} belongs to department ${recipeDepCode}, not ${department}`);
+        console.warn(`Recipe ${recipe.product_code} belongs to department ${recipeDepCode}, not ${deptStr}`);
         // We'll still return the recipe, but with a warning
       }
     }

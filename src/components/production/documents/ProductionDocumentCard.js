@@ -41,22 +41,28 @@ const ProductionDocumentCard = ({
 
   return (
     <Grid container spacing={2} sx={{ mt: 1 }}>
-      {schedules.flatMap(schedule => 
-        schedule.items.map((item, idx) => {
-          const recipe = recipes.find(r => r.product_code === item.recipeCode);
-          const statusColor = getStatusColor(item.status);
+      {schedules && schedules.length > 0 ? (
+        schedules.flatMap(schedule => {
+          // Handle the nested structure where schedule might have a "0" property
+          const scheduleData = schedule["0"] || schedule;
+          const items = scheduleData?.items || [];
           
-          return (
-            <Grid item xs={12} sm={6} md={4} key={`${schedule.id}-${idx}`}>
-              <Card 
-                elevation={2}
-                sx={{ 
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  borderTop: `4px solid ${statusColor}`
-                }}
-              >
+          return items.map((item, idx) => {
+            const recipe = recipes.find(r => r.product_code === item.recipeCode);
+            const statusColor = getStatusColor(item.status);
+            const scheduleId = scheduleData.id || schedule.id || 'unknown';
+            
+            return (
+              <Grid item xs={12} sm={6} md={4} key={`${scheduleId}-${idx}`}>
+                <Card 
+                  elevation={2}
+                  sx={{ 
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderTop: `4px solid ${statusColor}`
+                  }}
+                >
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                     <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold' }}>
@@ -130,9 +136,8 @@ const ProductionDocumentCard = ({
             </Grid>
           );
         })
-      )}
-      
-      {schedules.flatMap(s => s.items).length === 0 && (
+        })
+      ) : (
         <Grid item xs={12}>
           <Box 
             sx={{ 

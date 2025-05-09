@@ -173,6 +173,7 @@ const CreateProductionDocumentPage = () => {
     calendarEvents,
     setCalendarEvents,
     handleSaveTimeSlot,
+    handleDeleteScheduleItem,
     // eslint-disable-next-line no-unused-vars
     createAuditData,
     updateCalendarEvents,
@@ -319,18 +320,8 @@ const CreateProductionDocumentPage = () => {
     if (!schedule || !item) return;
     
     try {
-      const updatedSchedule = { ...schedule };
-      
-      // Remove the item from the schedule
-      updatedSchedule.items = updatedSchedule.items.filter((_, idx) => idx !== index);
-      
-      // If there are no more items, remove the entire schedule
-      if (updatedSchedule.items.length === 0) {
-        setSchedules(schedules.filter(s => s.id !== schedule.id));
-      } else {
-        // Otherwise, update the schedule
-        setSchedules(schedules.map(s => s.id === schedule.id ? updatedSchedule : s));
-      }
+      // Use the handleDeleteScheduleItem function from useScheduleManagement hook
+      await handleDeleteScheduleItem(schedule, item, index);
       
       // Update calendar events
       setCalendarEvents(calendarEvents.filter(event => 

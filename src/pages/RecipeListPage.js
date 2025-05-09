@@ -121,7 +121,6 @@ const RecipeListPage = () => {
       <Box sx={{ my: 2 }}>
         <RecipeFilterToolbar
           onFilterChange={handleFilterChange}
-          onCreate={handleOpenCreateRecipeModal}
           initialDepartment={deptObj.department || ''} 
           lockDepartment={!!department} 
         />
@@ -141,7 +140,7 @@ const RecipeListPage = () => {
             <p>No recipes found for {deptObj.department || department}. Try creating a new recipe.</p>
           </Box>
         ) : (
-          <RecipeListTable data={recipes} onEdit={handleEdit} departments={departments} />
+          <RecipeListTable data={recipes} onEdit={handleEdit} departments={departments} onAddRecipe={handleOpenCreateRecipeModal} />
         )}
       </Box>
 
