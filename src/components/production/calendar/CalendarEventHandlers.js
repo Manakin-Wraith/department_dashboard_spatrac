@@ -13,7 +13,8 @@ const useCalendarEventHandlers = ({
   recipes,
   calendarEvents,
   setDayViewOpen,
-  setDayEventsData
+  setDayEventsData,
+  handleDirectUpdate // Add the new direct update handler
 }) => {
   /**
    * Handle date click event
@@ -117,40 +118,109 @@ const useCalendarEventHandlers = ({
   }, [recipes, setCurrentEventInfo, setCurrentSlotInfo, setUnifiedModalOpen, setUnifiedModalMode, setUnifiedModalItem]);
   
   /**
-   * Handle event drop event (drag and drop)
+   * Check if only the time has changed during a drag-drop operation
+   * @param {Object} originalItem - The original schedule item
+   * @param {Object} updatedItem - The updated schedule item after drag-drop
+   * @returns {boolean} - True if only time changed, false if date also changed
    */
-  const handleEventDrop = useCallback((info) => {
+  const onlyTimeChanged = useCallback((originalItem, updatedItem) => {
+    return originalItem.date === updatedItem.date;
+  }, []);
+
+  /**
+   * Handle event drop (drag and drop)
+   */
+  const handleEventDrop = useCallback(async (info) => {
     const { event } = info;
     const { scheduleId, itemIndex, item } = event.extendedProps;
     
     // Get the new date and time from the dropped event
     const newDate = event.start.toISOString().split('T')[0];
-    const newStartTime = event.start.toTimeString().substring(0, 5);
-    const newEndTime = event.end ? event.end.toTimeString().substring(0, 5) : '';
+    
+    // Format start time properly as HH:MM
+    const startHours = event.start.getHours().toString().padStart(2, '0');
+    const startMinutes = event.start.getMinutes().toString().padStart(2, '0');
+    const newStartTime = `${startHours}:${startMinutes}`;
+    
+    // Format end time properly as HH:MM if end exists
+    let newEndTime = '';
+    if (event.end) {
+      const endHours = event.end.getHours().toString().padStart(2, '0');
+      const endMinutes = event.end.getMinutes().toString().padStart(2, '0');
+      newEndTime = `${endHours}:${endMinutes}`;
+    }
+    
+    // Log the extracted time information for debugging
+    console.log('Extracted time from drag event:', {
+      date: newDate,
+      startTime: newStartTime,
+      endTime: newEndTime
+    });
+    
+    // Create a more detailed slotInfo object similar to what TimeSlotScheduleModal expects
+    const detailedSlotInfo = {
+      date: newDate,
+      startTime: newStartTime,
+      endTime: newEndTime,
+      // Add additional properties that might be needed
+      allDay: false,
+      start: event.start,
+      end: event.end
+    };
+    
+    // Set this as the current slot info
+    setCurrentSlotInfo(detailedSlotInfo);
+    
+    // Create updated item with new date and time
+    const updatedItem = {
+      ...item,
+      date: newDate,
+      startTime: newStartTime,
+      endTime: newEndTime
+    };
     
     // Set current event info with updated date and time
     setCurrentEventInfo({
       event,
       scheduleId,
       itemIndex,
-      item: {
-        ...item,
-        date: newDate,
-        startTime: newStartTime,
-        endTime: newEndTime
-      }
+      item: updatedItem
     });
     
-    // Open modal in schedule mode
-    setUnifiedModalMode('schedule');
-    setUnifiedModalItem({
-      ...item,
-      date: newDate,
-      startTime: newStartTime,
-      endTime: newEndTime
-    });
-    setUnifiedModalOpen(true);
-  }, [setCurrentEventInfo, setUnifiedModalOpen, setUnifiedModalMode, setUnifiedModalItem]);
+    // If only the time changed (same date), we can update directly without confirmation
+    // This provides a smoother user experience for simple time adjustments
+    if (recipes && onlyTimeChanged(item, updatedItem) && handleDirectUpdate) {
+      // Use the direct update function for simple time changes
+      if (typeof info.revert === 'function') {
+        try {
+          console.log('Auto-updating schedule with new time:', updatedItem);
+          // Call the handleDirectUpdate function from useScheduleManagement
+          const success = await handleDirectUpdate(info);
+          
+          if (!success) {
+            // If direct update fails, revert the drag and open modal
+            info.revert();
+            setUnifiedModalMode('schedule');
+            setUnifiedModalItem(updatedItem);
+            setUnifiedModalOpen(true);
+          }
+        } catch (error) {
+          console.error('Failed to auto-update schedule:', error);
+          info.revert();
+          // Fall back to modal
+          setUnifiedModalMode('schedule');
+          setUnifiedModalItem(updatedItem);
+          setUnifiedModalOpen(true);
+        }
+      }
+    } else {
+      // If the date changed or handleDirectUpdate is not available, open the modal for confirmation
+      // This allows the user to review and confirm more significant changes
+      setUnifiedModalMode('schedule');
+      setUnifiedModalItem(updatedItem);
+      setUnifiedModalOpen(true);
+    }
+  }, [setCurrentEventInfo, setUnifiedModalOpen, setUnifiedModalMode, setUnifiedModalItem, setCurrentSlotInfo, recipes, onlyTimeChanged, handleDirectUpdate]);
   
   /**
    * Handle time slot selection event

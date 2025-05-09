@@ -153,11 +153,18 @@ const UnifiedScheduleModal = ({
     }
   }, [recipes, recipeCode, department]); // Recreate when recipes, recipeCode, or department changes
   
-  // Initialize modal based on mode and current item
+  // Removed unused parseTimeString function
+  
+  // Initialize form data when modal opens or data changes
   useEffect(() => {
     if (open) {
       // Reset state when modal opens
       setActiveTab(0);
+      
+      console.log('Initializing modal with mode:', mode);
+      console.log('Current item:', currentItem);
+      console.log('Current event info:', currentEventInfo);
+      console.log('Current slot info:', currentSlotInfo);
       
       // Handle initialization based on the source of data
       if (currentItem) {
@@ -169,13 +176,31 @@ const UnifiedScheduleModal = ({
           console.warn(`Recipe with code ${currentItem.recipeCode} not found in department ${department}`);
         }
         
+        // Log time information for debugging
+        console.log('Setting time from currentItem:', {
+          date: currentItem.date,
+          startTime: currentItem.startTime,
+          endTime: currentItem.endTime
+        });
+        
         setRecipeCode(recipeExists ? currentItem.recipeCode : '');
         setPlannedQty(currentItem.plannedQty || 0);
         setHandlerName(currentItem.handlerName || '');
         setScheduledDate(currentItem.date || '');
         setManagerName(currentItem.managerName || '');
-        setStartTime(currentItem.startTime || '');
-        setEndTime(currentItem.endTime || '');
+        
+        // Ensure time values are properly formatted
+        // This is critical for drag-drop operations
+        if (currentItem.date && currentItem.startTime) {
+          console.log(`Setting start time to: ${currentItem.startTime}`);
+          setStartTime(currentItem.startTime);
+        }
+        
+        if (currentItem.date && currentItem.endTime) {
+          console.log(`Setting end time to: ${currentItem.endTime}`);
+          setEndTime(currentItem.endTime);
+        }
+        
         setStatus(currentItem.status || 'planned');
         setChangeHistory(currentItem.changeHistory || []);
         
@@ -609,8 +634,12 @@ const UnifiedScheduleModal = ({
                     type="time"
                     fullWidth
                     InputLabelProps={{ shrink: true }}
+                    inputProps={{ step: 300 }} // 5 min step
                     value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
+                    onChange={(e) => {
+                      console.log(`Time input changed to: ${e.target.value}`);
+                      setStartTime(e.target.value);
+                    }}
                   />
                 </Grid>
                 <Grid item xs={6}>
@@ -619,8 +648,12 @@ const UnifiedScheduleModal = ({
                     type="time"
                     fullWidth
                     InputLabelProps={{ shrink: true }}
+                    inputProps={{ step: 300 }} // 5 min step
                     value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
+                    onChange={(e) => {
+                      console.log(`End time input changed to: ${e.target.value}`);
+                      setEndTime(e.target.value);
+                    }}
                   />
                 </Grid>
               </Grid>

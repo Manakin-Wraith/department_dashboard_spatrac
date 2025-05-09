@@ -111,6 +111,7 @@ const CreateProductionDocumentPage = () => {
   
   // State for modals
   const [printModalOpen, setPrintModalOpen] = useState(false);
+  // We'll keep these variables even if unused for future implementation
   // eslint-disable-next-line no-unused-vars
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
@@ -159,6 +160,7 @@ const CreateProductionDocumentPage = () => {
   }, [loading.recipes, recipes, department]);
   
   const {
+    // Keep these variables for future implementation
     // eslint-disable-next-line no-unused-vars
     selectedSchedule,
     setSelectedSchedule,
@@ -167,7 +169,6 @@ const CreateProductionDocumentPage = () => {
     setSelectedItem,
     currentEventInfo,
     setCurrentEventInfo,
-    // eslint-disable-next-line no-unused-vars
     currentSlotInfo,
     setCurrentSlotInfo,
     calendarEvents,
@@ -178,7 +179,8 @@ const CreateProductionDocumentPage = () => {
     createAuditData,
     updateCalendarEvents,
     // eslint-disable-next-line no-unused-vars
-    getStatusColor
+    getStatusColor,
+    handleDirectUpdate
   } = useScheduleManagement({
     schedules,
     setSchedules,
@@ -210,7 +212,8 @@ const CreateProductionDocumentPage = () => {
     recipes,
     calendarEvents,
     setDayViewOpen,
-    setDayEventsData
+    setDayEventsData,
+    handleDirectUpdate
   });
   
   // Staff loading indicator
