@@ -137,16 +137,27 @@ const useCalendarEventHandlers = ({
     // Get the new date and time from the dropped event
     const newDate = event.start.toISOString().split('T')[0];
     
+    // Create JavaScript Date objects for proper time handling
+    const startDate = new Date(event.start);
+    const endDate = event.end ? new Date(event.end) : null;
+    
     // Format start time properly as HH:MM
-    const startHours = event.start.getHours().toString().padStart(2, '0');
-    const startMinutes = event.start.getMinutes().toString().padStart(2, '0');
+    const startHours = startDate.getHours().toString().padStart(2, '0');
+    const startMinutes = startDate.getMinutes().toString().padStart(2, '0');
     const newStartTime = `${startHours}:${startMinutes}`;
     
     // Format end time properly as HH:MM if end exists
     let newEndTime = '';
-    if (event.end) {
-      const endHours = event.end.getHours().toString().padStart(2, '0');
-      const endMinutes = event.end.getMinutes().toString().padStart(2, '0');
+    if (endDate) {
+      const endHours = endDate.getHours().toString().padStart(2, '0');
+      const endMinutes = endDate.getMinutes().toString().padStart(2, '0');
+      newEndTime = `${endHours}:${endMinutes}`;
+    } else {
+      // If no end time is provided, set it to 1 hour after start time
+      const defaultEndDate = new Date(startDate);
+      defaultEndDate.setHours(defaultEndDate.getHours() + 1);
+      const endHours = defaultEndDate.getHours().toString().padStart(2, '0');
+      const endMinutes = defaultEndDate.getMinutes().toString().padStart(2, '0');
       newEndTime = `${endHours}:${endMinutes}`;
     }
     
@@ -154,18 +165,20 @@ const useCalendarEventHandlers = ({
     console.log('Extracted time from drag event:', {
       date: newDate,
       startTime: newStartTime,
-      endTime: newEndTime
+      endTime: newEndTime,
+      rawStart: startDate,
+      rawEnd: endDate
     });
     
-    // Create a more detailed slotInfo object similar to what TimeSlotScheduleModal expects
+    // Create a more detailed slotInfo object with properly formatted times
     const detailedSlotInfo = {
       date: newDate,
       startTime: newStartTime,
       endTime: newEndTime,
       // Add additional properties that might be needed
       allDay: false,
-      start: event.start,
-      end: event.end
+      start: startDate,
+      end: endDate || new Date(startDate.getTime() + 3600000) // Default to 1 hour later if no end time
     };
     
     // Set this as the current slot info

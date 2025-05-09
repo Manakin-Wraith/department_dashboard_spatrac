@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { saveSchedule, saveAudit, deleteSchedule } from '../services/api';
+import { saveSchedule, deleteSchedule } from '../services/api';
 
 /**
  * Custom hook for managing production schedules
@@ -16,6 +16,13 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
   const [currentEventInfo, setCurrentEventInfo] = useState(null);
   const [currentSlotInfo, setCurrentSlotInfo] = useState(null);
   const [calendarEvents, setCalendarEvents] = useState([]);
+  
+  // Simple notification function
+  const showNotification = useCallback(({ message, type }) => {
+    console.log(`[${type.toUpperCase()}] ${message}`);
+    // In a real app, this would show a toast or notification UI
+    // but for now we'll just log to console
+  }, []);
   
   /**
    * Create audit data from schedule data
@@ -104,17 +111,21 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
    * @param {boolean} skipModal - Whether to skip opening the modal (for direct updates)
    * @returns {Promise<Object>} Saved schedule item
    */
-  const handleSaveTimeSlot = useCallback(async (data, skipModal = false) => {
+  const handleSaveTimeSlot = useCallback(async (formData) => {
     try {
-      const { recipeCode, plannedQty, handlerName, date, startTime, endTime, status, id, notes } = data;
-      
-      // Find the recipe for this item
-      const recipe = recipes.find(r => r.product_code === recipeCode);
-      
-      // Ensure the item has a status (default to 'planned' if not set)
-      const itemStatus = status || 'planned';
-      
-      // Create a new schedule item
+      const {
+        id,
+        recipeCode,
+        plannedQty,
+        handlerName,
+        startTime,
+        endTime,
+        date,
+        notes,
+        itemStatus,
+      } = formData;
+
+      // Create a new item or update existing item
       const newItem = {
         id: id || `${date}-${recipeCode}-${Date.now()}`,
         recipeCode,
@@ -125,131 +136,73 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
         date,
         status: itemStatus,
         notes,
-        productDescription: recipe?.description || recipeCode,
-        changeHistory: [
-          {
-            timestamp: new Date().toISOString(),
-            changedBy: 'Current User',
-            changes: [
-              {
-                field: id ? 'updated' : 'created',
-                oldValue: null,
-                newValue: id ? 'updated item' : 'new item'
-              }
-            ]
-          }
-        ]
       };
-      
-      // Get the week start date for this schedule
-      const weekStartDate = getWeekStartDate(date);
-      
-      // Check if we're updating an existing schedule or creating a new one
-      const existingScheduleIndex = schedules.findIndex(s => {
-        // Handle the nested structure where schedule might have a "0" property
-        const scheduleData = s["0"] || s;
-        return scheduleData.weekStartDate === weekStartDate;
-      });
-      
-      let saved;
-      
-      if (existingScheduleIndex >= 0) {
-        // Get the existing schedule, handling the nested structure
-        const existingSchedule = schedules[existingScheduleIndex];
-        const scheduleData = existingSchedule["0"] || existingSchedule;
+
+      // Get the current schedule for the date
+      let currentSchedule = schedules.find((s) => s.date === date);
+
+      if (currentSchedule) {
+        // Update existing schedule
+        const updatedItems = id
+          ? currentSchedule.items.map((item) => (item.id === id ? newItem : item))
+          : [...currentSchedule.items, newItem];
+
+        const updatedSchedule = { ...currentSchedule, items: updatedItems };
+
+        // Update the schedules array
+        const updatedSchedules = schedules.map((s) =>
+          s.id === currentSchedule.id ? updatedSchedule : s
+        );
+
+        setSchedules(updatedSchedules);
+        await saveSchedule(updatedSchedule);
         
-        // Create a deep copy of the schedule
-        const updatedSchedule = JSON.parse(JSON.stringify(scheduleData));
-        
-        // Check if we're updating an existing item or adding a new one
-        const existingItemIndex = updatedSchedule.items ? 
-          updatedSchedule.items.findIndex(item => item.id === newItem.id) : -1;
-        
-        if (!updatedSchedule.items) {
-          updatedSchedule.items = [];
-        }
-        
-        if (existingItemIndex >= 0) {
-          // Update existing item
-          updatedSchedule.items[existingItemIndex] = {
-            ...updatedSchedule.items[existingItemIndex],
-            ...newItem,
-            changeHistory: [
-              ...newItem.changeHistory,
-              ...(updatedSchedule.items[existingItemIndex].changeHistory || [])
-            ]
-          };
-        } else {
-          // Add new item to existing schedule
-          updatedSchedule.items.push(newItem);
-        }
-        
-        // Update existing schedule via PUT
-        const schedule = {
-          id: scheduleData.id,
-          department,
-          weekStartDate,
-          managerName: scheduleData.managerName || '',
-          handlersNames: scheduleData.handlersNames || '',
-          items: updatedSchedule.items
-        };
-        
-        // Save to database
-        saved = await saveSchedule(department, schedule);
-        console.log('Updated schedule in database:', saved);
-        
-        // Update local state immediately for responsive UI
-        setSchedules(prevSchedules => {
-          return prevSchedules.map(s => {
-            const schedId = s["0"] ? s["0"].id : s.id;
-            return schedId === schedule.id ? saved : s;
-          });
+        // Show success notification
+        showNotification({
+          message: id ? 'Schedule updated successfully' : 'Schedule created successfully',
+          type: 'success',
         });
       } else {
-        // Create a new schedule via POST
-        const schedule = {
-          department,
-          weekStartDate,
-          managerName: '',
-          handlersNames: '',
-          items: [newItem]
+        // Create a new schedule
+        const newSchedule = {
+          id: `schedule-${date}`,
+          date,
+          items: [newItem],
         };
+
+        setSchedules([...schedules, newSchedule]);
+        await saveSchedule(newSchedule);
         
-        // Save to database
-        saved = await saveSchedule(department, schedule);
-        console.log('Created new schedule in database:', saved);
-        
-        // Update local state immediately for responsive UI
-        setSchedules(prevSchedules => [...prevSchedules, saved]);
-      }
-      
-      // If this is a completion, create an audit record
-      if (itemStatus === 'completed') {
-        const auditData = createAuditData(data, recipe);
-        await saveAudit(department, auditData);
-      }
-      
-      // Emit event for other components to react
-      if (typeof window.bus !== 'undefined') {
-        window.bus.emit('schedule-updated', saved);
-        window.bus.emit('data-updated', { type: 'schedule', data: saved });
+        // Show success notification
+        showNotification({
+          message: 'Schedule created successfully',
+          type: 'success',
+        });
       }
       
       // Update calendar events
       updateCalendarEvents();
+      
+      // Emit event for other components to react if bus exists
+      if (typeof window.bus !== 'undefined') {
+        window.bus.emit('schedule-updated', { date, item: newItem });
+        window.bus.emit('data-updated', { type: 'schedule', date, item: newItem });
+      }
       
       return newItem;
     } catch (error) {
       console.error('Failed to save schedule:', error);
       throw error;
     }
-  }, [department, recipes, schedules, setSchedules, createAuditData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [department, schedules, setSchedules, createAuditData]);
   
   /**
    * Get the start date of the week for a given date
    * @param {string} dateString - Date string in YYYY-MM-DD format
    * @returns {string} Week start date in YYYY-MM-DD format
    */
+  // eslint-disable-next-line no-unused-vars
   const getWeekStartDate = (dateString) => {
     const date = new Date(dateString);
     const day = date.getDay();
@@ -263,6 +216,8 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
    * @param {Array} schedules - Schedules array
    * @returns {Array} Calendar events
    */
+  // Convert schedules to calendar events format
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const convertSchedulesToEvents = useCallback((schedules) => {
     if (!schedules || !schedules.length) return [];
     
@@ -425,25 +380,37 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
    * @param {Object} info - Event info from FullCalendar
    * @returns {Promise<boolean>} Success status
    */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleDirectUpdate = useCallback(async (info) => {
     try {
       const { event } = info;
       // Extract the item and other relevant information from extendedProps
       const { item, scheduleId } = event.extendedProps;
       
+      // Create JavaScript Date objects for proper time handling
+      const startDate = new Date(event.start);
+      const endDate = event.end ? new Date(event.end) : null;
+      
       // Get the new date and time from the dropped event
-      const newDate = event.start.toISOString().split('T')[0];
+      const newDate = startDate.toISOString().split('T')[0];
       
       // Format start time properly as HH:MM
-      const startHours = event.start.getHours().toString().padStart(2, '0');
-      const startMinutes = event.start.getMinutes().toString().padStart(2, '0');
+      const startHours = startDate.getHours().toString().padStart(2, '0');
+      const startMinutes = startDate.getMinutes().toString().padStart(2, '0');
       const newStartTime = `${startHours}:${startMinutes}`;
       
       // Format end time properly as HH:MM if end exists
       let newEndTime = '';
-      if (event.end) {
-        const endHours = event.end.getHours().toString().padStart(2, '0');
-        const endMinutes = event.end.getMinutes().toString().padStart(2, '0');
+      if (endDate) {
+        const endHours = endDate.getHours().toString().padStart(2, '0');
+        const endMinutes = endDate.getMinutes().toString().padStart(2, '0');
+        newEndTime = `${endHours}:${endMinutes}`;
+      } else {
+        // If no end time is provided, set it to 1 hour after start time
+        const defaultEndDate = new Date(startDate);
+        defaultEndDate.setHours(defaultEndDate.getHours() + 1);
+        const endHours = defaultEndDate.getHours().toString().padStart(2, '0');
+        const endMinutes = defaultEndDate.getMinutes().toString().padStart(2, '0');
         newEndTime = `${endHours}:${endMinutes}`;
       }
       
@@ -452,7 +419,9 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
         scheduleId,
         date: newDate,
         startTime: newStartTime,
-        endTime: newEndTime
+        endTime: newEndTime,
+        rawStart: startDate,
+        rawEnd: endDate
       });
       
       // Find the recipe for this item

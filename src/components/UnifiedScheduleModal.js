@@ -153,7 +153,29 @@ const UnifiedScheduleModal = ({
     }
   }, [recipes, recipeCode, department]); // Recreate when recipes, recipeCode, or department changes
   
-  // Removed unused parseTimeString function
+  // Helper function to format time from Date object to HH:MM string
+  const formatTimeToHHMM = (dateObj) => {
+    if (!dateObj || !(dateObj instanceof Date)) return '';
+    const hours = dateObj.getHours().toString().padStart(2, '0');
+    const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+  
+  // Helper function to parse time string to Date object
+  // eslint-disable-next-line no-unused-vars
+  const parseTimeString = (timeStr, baseDate) => {
+    if (!timeStr || !baseDate) return null;
+    
+    try {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      const date = new Date(baseDate);
+      date.setHours(hours, minutes, 0, 0);
+      return date;
+    } catch (error) {
+      console.error('Error parsing time string:', error);
+      return null;
+    }
+  };
   
   // Initialize form data when modal opens or data changes
   useEffect(() => {
@@ -257,16 +279,49 @@ const UnifiedScheduleModal = ({
           // when recipeCode changes
         }
       } else if (currentSlotInfo) {
-        // New schedule from calendar slot
-        const { start, end } = currentSlotInfo;
+        // New schedule from calendar slot or drag-drop operation
+        console.log('Initializing from currentSlotInfo:', currentSlotInfo);
         
-        if (start) {
-          setStartTime(`${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`);
-          setScheduledDate(start.toISOString().split('T')[0]);
+        // Handle both direct date objects and string time formats
+        if (currentSlotInfo.date) {
+          setScheduledDate(currentSlotInfo.date);
         }
         
-        if (end) {
-          setEndTime(`${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`);
+        // Handle start time - could be a Date object or a string in HH:MM format
+        if (currentSlotInfo.startTime) {
+          if (typeof currentSlotInfo.startTime === 'string') {
+            console.log(`Setting start time from string: ${currentSlotInfo.startTime}`);
+            setStartTime(currentSlotInfo.startTime);
+          } else if (currentSlotInfo.start instanceof Date) {
+            const formattedTime = formatTimeToHHMM(currentSlotInfo.start);
+            console.log(`Setting start time from Date: ${formattedTime}`);
+            setStartTime(formattedTime);
+          }
+        } else if (currentSlotInfo.start instanceof Date) {
+          const formattedTime = formatTimeToHHMM(currentSlotInfo.start);
+          console.log(`Setting start time from Date: ${formattedTime}`);
+          setStartTime(formattedTime);
+          
+          // Also set the date if not already set
+          if (!currentSlotInfo.date) {
+            setScheduledDate(currentSlotInfo.start.toISOString().split('T')[0]);
+          }
+        }
+        
+        // Handle end time - could be a Date object or a string in HH:MM format
+        if (currentSlotInfo.endTime) {
+          if (typeof currentSlotInfo.endTime === 'string') {
+            console.log(`Setting end time from string: ${currentSlotInfo.endTime}`);
+            setEndTime(currentSlotInfo.endTime);
+          } else if (currentSlotInfo.end instanceof Date) {
+            const formattedTime = formatTimeToHHMM(currentSlotInfo.end);
+            console.log(`Setting end time from Date: ${formattedTime}`);
+            setEndTime(formattedTime);
+          }
+        } else if (currentSlotInfo.end instanceof Date) {
+          const formattedTime = formatTimeToHHMM(currentSlotInfo.end);
+          console.log(`Setting end time from Date: ${formattedTime}`);
+          setEndTime(formattedTime);
         }
         
         // Set default values for a new item

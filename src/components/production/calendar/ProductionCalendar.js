@@ -97,6 +97,15 @@ const ProductionCalendar = forwardRef((
           minute: '2-digit',
           hour12: true
         }}
+        nowIndicator={true}
+        now={new Date()}
+        scrollTime={new Date().getHours() + ':00:00'}
+        snapDuration={'00:15:00'}
+        eventTimeFormat={{
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }}
       />
     </Box>
   );
