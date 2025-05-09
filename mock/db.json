@@ -7,7 +7,7 @@
       "description": "WHITE BREAD",
       "title": "WHITE BREAD",
       "cost_excl_per_each_kg": "6.89",
-      "yield": "6.89",
+      "yield": "110.91",
       "ingredients": [
         {
           "prod_code": "15736",
@@ -54,7 +54,7 @@
       "description": "BROWN BREAD",
       "title": "BROWN BREAD",
       "cost_excl_per_each_kg": "6.35",
-      "yield": "6.35",
+      "yield": "112.88",
       "ingredients": [
         {
           "prod_code": "15737",
@@ -101,7 +101,7 @@
       "description": "RAISIN LOAF",
       "title": "RAISIN LOAF",
       "cost_excl_per_each_kg": "8.44",
-      "yield": "8.44",
+      "yield": "45.00",
       "ingredients": [
         {
           "prod_code": "28667",
@@ -156,6 +156,7 @@
       "product_code": "26910",
       "description": "TEA BUNS",
       "cost_excl_per_each_kg": "5.81",
+      "yield": "75.00",
       "ingredients": [
         {
           "prod_code": "28667",
@@ -210,6 +211,7 @@
       "product_code": "27322",
       "description": "MOSBOLLETJIES",
       "cost_excl_per_each_kg": "11.05",
+      "yield": "40.00",
       "ingredients": [
         {
           "prod_code": "28667",
@@ -264,6 +266,7 @@
       "product_code": "27323",
       "description": "SCHOOL BUN",
       "cost_excl_per_each_kg": "7.06",
+      "yield": "52.78",
       "ingredients": [
         {
           "prod_code": "28667",
@@ -327,6 +330,7 @@
       "product_code": "26713",
       "description": "SOFT ROUND ROLL",
       "cost_excl_per_each_kg": "0.95",
+      "yield": "271.43",
       "ingredients": [
         {
           "prod_code": "28667",
@@ -372,6 +376,7 @@
       "product_code": "26734",
       "description": "SOFT HOTDOG  ROLLS",
       "cost_excl_per_each_kg": "0.95",
+      "yield": "271.43",
       "ingredients": [
         {
           "prod_code": "28667",
@@ -417,6 +422,7 @@
       "product_code": "26665",
       "description": "BABALAS BRAAI WORS",
       "cost_excl_per_each_kg": "22.88",
+      "yield": "95.00",
       "ingredients": [
         {
           "prod_code": "28743",
@@ -471,6 +477,7 @@
       "product_code": "26751",
       "description": "ZUKI'S SCONE",
       "cost_excl_per_each_kg": "4.01",
+      "yield": "70.00",
       "ingredients": [
         {
           "prod_code": "15732",
@@ -534,6 +541,7 @@
       "product_code": "26753",
       "description": "ROCK BUNS",
       "cost_excl_per_each_kg": "6.06",
+      "yield": "54.77",
       "ingredients": [
         {
           "prod_code": "2520",
@@ -606,6 +614,7 @@
       "product_code": "26739",
       "description": "PORTUGUESE  BREAD",
       "cost_excl_per_each_kg": "5.09",
+      "yield": "41.00",
       "ingredients": [
         {
           "prod_code": "28483",
@@ -642,6 +651,7 @@
       "product_code": "26908",
       "description": "MILK TART",
       "cost_excl_per_each_kg": "21.18",
+      "yield": "41.94",
       "ingredients": [
         {
           "prod_code": "27492",
@@ -714,6 +724,7 @@
       "product_code": "28383",
       "description": "BREAD DOUGH",
       "cost_excl_per_each_kg": "5.81",
+      "yield": "122.00",
       "ingredients": [
         {
           "prod_code": "15736",
@@ -750,6 +761,7 @@
       "product_code": "32161",
       "description": "KOEKSISTERS",
       "cost_excl_per_each_kg": "0.87",
+      "yield": "389.39",
       "ingredients": [
         {
           "prod_code": "29030",
@@ -831,6 +843,7 @@
       "product_code": "26808",
       "description": "SMALL MUFFIN",
       "cost_excl_per_each_kg": "5.64",
+      "yield": "12.14",
       "ingredients": [
         {
           "prod_code": "27267",
@@ -849,6 +862,7 @@
       "product_code": "26799",
       "description": "APPLE SLICE",
       "cost_excl_per_each_kg": "17.59",
+      "yield": "16.00",
       "ingredients": [
         {
           "prod_code": "27492",
@@ -903,6 +917,7 @@
       "product_code": "28820",
       "description": "FOOTLONG CHEESE GRILLER + CHIPS",
       "cost_excl_per_each_kg": "18.65",
+      "yield": "1.00",
       "ingredients": [
         {
           "prod_code": "22585",
@@ -948,6 +963,7 @@
       "product_code": "27312",
       "description": "BUTTER BREAD",
       "cost_excl_per_each_kg": "7.45",
+      "yield": "66.36",
       "ingredients": [
         {
           "prod_code": "27987",
@@ -993,6 +1009,7 @@
       "product_code": "26659",
       "description": "SIPHO'S BRAAIWORS",
       "cost_excl_per_each_kg": "19.32",
+      "yield": "91.03",
       "ingredients": [
         {
           "prod_code": "28743",
@@ -1083,6 +1100,7 @@
       "product_code": "32168",
       "description": "C/N TOM & ONION FLAV GROUND BEEF",
       "cost_excl_per_each_kg": "53.75",
+      "yield": "15.00",
       "ingredients": [
         {
           "prod_code": "28863",
@@ -1128,6 +1146,7 @@
       "product_code": "32952",
       "description": "MZANSI RUSSIAN WORS",
       "cost_excl_per_each_kg": "32.17",
+      "yield": "30.00",
       "ingredients": [
         {
           "prod_code": "26707",
@@ -1200,6 +1219,7 @@
       "product_code": "26670",
       "description": "EXIM SPICY MUTTON SAUSAGE",
       "cost_excl_per_each_kg": "46.46",
+      "yield": "16.00",
       "ingredients": [
         {
           "prod_code": "28863",
@@ -1263,6 +1283,7 @@
       "product_code": "29708",
       "description": "OUKRAAL WORS",
       "cost_excl_per_each_kg": "48.86",
+      "yield": "25.00",
       "ingredients": [
         {
           "prod_code": "28863",
@@ -1326,6 +1347,7 @@
       "product_code": "28553",
       "description": "OUMA'SBOEREWORS",
       "cost_excl_per_each_kg": "67.85",
+      "yield": "33.10",
       "ingredients": [
         {
           "prod_code": "28863",
@@ -1380,6 +1402,7 @@
       "product_code": "26687",
       "description": "PRS OUTYDSE BOEREWORS",
       "cost_excl_per_each_kg": "70.07",
+      "yield": "27.15",
       "ingredients": [
         {
           "prod_code": "28863",
@@ -1452,6 +1475,7 @@
       "product_code": "27872",
       "description": "PRS TOMATO CKT GRILLER",
       "cost_excl_per_each_kg": "58.45",
+      "yield": "16.00",
       "ingredients": [
         {
           "prod_code": "28863",
@@ -1506,6 +1530,7 @@
       "product_code": "26943",
       "description": "C/N KAMPVUUR WORS",
       "cost_excl_per_each_kg": "49.00",
+      "yield": "25.00",
       "ingredients": [
         {
           "prod_code": "28863",
@@ -1569,6 +1594,7 @@
       "product_code": "26679",
       "description": "SPAR Y/B GROUND BEEF",
       "cost_excl_per_each_kg": "60.96",
+      "yield": "16.70",
       "ingredients": [
         {
           "prod_code": "28863",
@@ -1605,6 +1631,7 @@
       "product_code": "26695",
       "description": "SPAR DHANYA GRILLER.",
       "cost_excl_per_each_kg": "60.69",
+      "yield": "13.50",
       "ingredients": [
         {
           "prod_code": "28444",
@@ -1659,6 +1686,7 @@
       "product_code": "26673",
       "description": "PRS KALAHARI BOEREWORS",
       "cost_excl_per_each_kg": "65.96",
+      "yield": "24.40",
       "ingredients": [
         {
           "prod_code": "28863",
@@ -1722,6 +1750,7 @@
       "product_code": "32231",
       "description": "SHERIFF BOEREWORS",
       "cost_excl_per_each_kg": "62.44",
+      "yield": "31.00",
       "ingredients": [
         {
           "prod_code": "28863",
@@ -1776,6 +1805,7 @@
       "product_code": "31396",
       "description": "LEGACY BOEREWORS",
       "cost_excl_per_each_kg": "67.49",
+      "yield": "36.00",
       "ingredients": [
         {
           "prod_code": "28863",
@@ -1839,6 +1869,7 @@
       "product_code": "26678",
       "description": "SAVOURY MINCE",
       "cost_excl_per_each_kg": "60.40",
+      "yield": "17.30",
       "ingredients": [
         {
           "prod_code": "28863",
@@ -1875,6 +1906,7 @@
       "product_code": "28867",
       "description": "SIX GUN BEEF BURGER",
       "cost_excl_per_each_kg": "63.64",
+      "yield": "15.00",
       "ingredients": [
         {
           "prod_code": "28863",
@@ -1911,6 +1943,7 @@
       "product_code": "30357",
       "description": "IZOSO SHISA NYAMA BRAAIWORS",
       "cost_excl_per_each_kg": "50.34",
+      "yield": "53.35",
       "ingredients": [
         {
           "prod_code": "28863",
@@ -1965,6 +1998,7 @@
       "product_code": "33168",
       "description": "SWEET CHILLI BEEF SAUSAGE",
       "cost_excl_per_each_kg": "70.98",
+      "yield": "15.00",
       "ingredients": [
         {
           "prod_code": "28863",
@@ -2010,6 +2044,7 @@
       "product_code": "33937",
       "description": "DHL STORMERS BOEREWORS",
       "cost_excl_per_each_kg": "62.02",
+      "yield": "33.00",
       "ingredients": [
         {
           "prod_code": "28863",
@@ -2064,6 +2099,7 @@
       "product_code": "33938",
       "description": "SAFARI BOEREWORS",
       "cost_excl_per_each_kg": "63.84",
+      "yield": "22.25",
       "ingredients": [
         {
           "prod_code": "28863",
@@ -2127,6 +2163,7 @@
       "product_code": "31942",
       "description": "MARGHERITA PIZZA SLICE",
       "cost_excl_per_each_kg": "14.44",
+      "yield": "6.00",
       "ingredients": [
         {
           "prod_code": "33926",
@@ -2145,6 +2182,7 @@
       "product_code": "26712",
       "description": "PANINI ROLLS",
       "cost_excl_per_each_kg": "3.08",
+      "yield": "94.20",
       "ingredients": [
         {
           "prod_code": "32007",
@@ -2199,6 +2237,7 @@
       "product_code": "34039",
       "description": "VHFS SOSATIE SAUSAGE",
       "cost_excl_per_each_kg": null,
+      "yield": "11.00",
       "ingredients": [
         {
           "prod_code": "28951",
@@ -2270,6 +2309,7 @@
       "department": "HMR",
       "product_code": "26917",
       "description": "COOKED SAMP&BEANS",
+      "yield": "60.00",
       "cost_excl_per_each_kg": "27.13",
       "ingredients": [
         {
@@ -2307,6 +2347,7 @@
       "product_code": "26966",
       "description": "PLAIN RICE",
       "cost_excl_per_each_kg": "7.85",
+      "yield": "30.00",
       "ingredients": [
         {
           "prod_code": "2813",
@@ -2334,6 +2375,7 @@
       "product_code": "26905",
       "description": "CHAKALAKA BEANS SALAD",
       "cost_excl_per_each_kg": null,
+      "yield": null,
       "ingredients": [
         {
           "prod_code": "28825",
@@ -2451,6 +2493,7 @@
       "product_code": "29171",
       "description": "SPAR Y/B BEEF & PORK MINCE",
       "cost_excl_per_each_kg": "48.49",
+      "yield": "20.00",
       "ingredients": [
         {
           "prod_code": "28951",
@@ -2478,6 +2521,7 @@
       "product_code": "27131",
       "description": "CHOC SPONGE SHEETS",
       "cost_excl_per_each_kg": "82.88",
+      "yield": "4.04",
       "ingredients": [
         {
           "prod_code": "28292",
@@ -2514,6 +2558,7 @@
       "product_code": "27204",
       "description": "RAINBOW CAKE",
       "cost_excl_per_each_kg": "18.07",
+      "yield": "20.00",
       "ingredients": [
         {
           "prod_code": "27131",
@@ -2559,6 +2604,7 @@
       "product_code": "29161",
       "description": "RAINBOW SLAB",
       "cost_excl_per_each_kg": "9.04",
+      "yield": "40.00",
       "ingredients": [
         {
           "prod_code": "27131",
@@ -2603,6 +2649,7 @@
       "department": "BAKERY",
       "product_code": "27144",
       "description": "VANILLA SPONGE SHEETS",
+      "yield": "4.00",
       "cost_excl_per_each_kg": "78.20",
       "ingredients": [
         {
@@ -2639,6 +2686,7 @@
       "department": "BAKERY",
       "product_code": "29067",
       "description": "PEPPERMINT CAKE",
+      "yield": "1.07",
       "cost_excl_per_each_kg": "75.27",
       "ingredients": [
         {
@@ -2711,6 +2759,7 @@
       "department": "BAKERY",
       "product_code": "27300",
       "description": "IMITATION CREAM CAKE",
+      "yield": "1.00",
       "cost_excl_per_each_kg": "59.79",
       "ingredients": [
         {
@@ -2766,6 +2815,7 @@
       "product_code": "26981",
       "description": "GRILLED BACON",
       "cost_excl_per_each_kg": "166.58",
+      "yield": "0.60",
       "ingredients": [
         {
           "prod_code": "30462",
@@ -2784,6 +2834,7 @@
       "product_code": "27770",
       "description": "RUSSIAN LONG",
       "cost_excl_per_each_kg": "10.58",
+      "yield": "1.00",
       "ingredients": [
         {
           "prod_code": "31903",
@@ -2801,6 +2852,7 @@
       "department": "HMR",
       "product_code": "26982",
       "description": "SUNNY SIDE UP EGGS",
+      "yield": "30.00",
       "cost_excl_per_each_kg": "1.97",
       "ingredients": [
         {
@@ -2819,6 +2871,7 @@
       "department": "HMR",
       "product_code": "30024",
       "description": "SPAR TFS GRILLER FRZ BBQ 1'S",
+      "yield": "1.00",
       "cost_excl_per_each_kg": "58.83",
       "ingredients": [
         {
@@ -2837,6 +2890,7 @@
       "department": "HMR",
       "product_code": "28750",
       "description": "BBQ  CHICKEN",
+      "yield": "1.40",
       "cost_excl_per_each_kg": "67.05",
       "ingredients": [
         {
@@ -2865,6 +2919,7 @@
       "product_code": "29457",
       "description": "JELLY",
       "cost_excl_per_each_kg": "22.67",
+      "yield": "6.00",
       "ingredients": [
         {
           "prod_code": "29030",
@@ -2891,6 +2946,7 @@
       "department": "BAKERY",
       "product_code": "26958",
       "description": "JELLY & CUSTARD CUP",
+      "yield": null,
       "cost_excl_per_each_kg": null,
       "ingredients": [
         {
@@ -2918,6 +2974,7 @@
       "department": "BAKERY",
       "product_code": "34121",
       "description": "CUSTARD INSTANT",
+      "yield": "1.30",
       "cost_excl_per_each_kg": "20.05",
       "ingredients": [
         {
@@ -2946,6 +3003,7 @@
       "product_code": "29037",
       "description": "EGG SALAD",
       "cost_excl_per_each_kg": "41.20",
+      "yield": "5.50",
       "ingredients": [
         {
           "prod_code": "26371",
@@ -2972,6 +3030,7 @@
       "department": "HMR",
       "product_code": "28567",
       "description": "SLUSH PUPPIE ASSORTED",
+      "yield": "40.00",
       "cost_excl_per_each_kg": "7.26",
       "ingredients": [
         {
@@ -3008,6 +3067,7 @@
       "department": "BUTCHERY",
       "product_code": "34221",
       "description": "STETSON BEEF BOERIE BURGER",
+      "yield": "10.00",
       "cost_excl_per_each_kg": "61.60",
       "ingredients": [
         {
@@ -3044,6 +3104,7 @@
       "department": "BUTCHERY",
       "product_code": "34222",
       "description": "STETSON BEEF PEPPER BURGER.",
+      "yield": "10.00",
       "cost_excl_per_each_kg": "62.43",
       "ingredients": [
         {
@@ -3080,6 +3141,7 @@
       "department": "BUTCHERY",
       "product_code": "34223",
       "description": "STETSON TEXAS VALUE BURGER",
+      "yield": "27.00",
       "cost_excl_per_each_kg": "56.33",
       "ingredients": [
         {
@@ -3116,6 +3178,7 @@
       "department": "BUTCHERY",
       "product_code": "27125",
       "description": "SIPHO'S BUDGET BURGERS",
+      "yield": "86.04",
       "cost_excl_per_each_kg": "15.94",
       "ingredients": [
         {
@@ -3197,6 +3260,7 @@
       "department": "BUTCHERY",
       "product_code": "29303",
       "description": "SIPHO'S BUDGET BURGERS 24S",
+      "yield": "2.40",
       "cost_excl_per_each_kg": "39.41",
       "ingredients": [
         {
@@ -3216,6 +3280,7 @@
       "product_code": "26956",
       "description": "CHICKEN STEWS",
       "cost_excl_per_each_kg": "45.05",
+      "yield": "4.37",
       "ingredients": [
         {
           "prod_code": "28361",
@@ -3279,6 +3344,7 @@
       "product_code": "30818",
       "description": "BEEF STEWS",
       "cost_excl_per_each_kg": "42.08",
+      "yield": "7.50",
       "ingredients": [
         {
           "prod_code": "27095",
@@ -3350,6 +3416,7 @@
       "department": "BUTCHERY",
       "product_code": "28092",
       "description": "BEEF STEAK BURGER",
+      "yield": "10.00",
       "cost_excl_per_each_kg": "64.89",
       "ingredients": [
         {
@@ -3386,6 +3453,7 @@
       "department": "BAKERY",
       "product_code": "26801",
       "description": "RING DOUGHUT",
+      "yield": "329.75",
       "cost_excl_per_each_kg": "1.91",
       "ingredients": [
         {
@@ -3449,6 +3517,7 @@
       "department": "BAKERY",
       "product_code": "28093",
       "description": "ICED CARROT LOAF",
+      "yield": "100.52",
       "cost_excl_per_each_kg": "17.31",
       "ingredients": [
         {
@@ -3584,6 +3653,7 @@
       "department": "BAKERY",
       "product_code": "27871",
       "description": "JAM SWISSROLLS",
+      "yield": "4.02",
       "cost_excl_per_each_kg": "13.55",
       "ingredients": [
         {
@@ -3647,6 +3717,7 @@
       "department": "HMR",
       "product_code": "28609",
       "description": "TUNA MAYO SAMI.",
+      "yield": "16.00",
       "cost_excl_per_each_kg": "11.41",
       "ingredients": [
         {
