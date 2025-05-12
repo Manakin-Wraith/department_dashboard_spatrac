@@ -10,6 +10,7 @@ import EventNoteIcon from '@mui/icons-material/EventNote';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
+import useDeptProductSupplier from '../utils/useDeptProductSupplier';
 
 /**
  * UnifiedScheduleModal - A combined modal for recipe scheduling and production management
@@ -33,6 +34,10 @@ const UnifiedScheduleModal = ({
   currentEventInfo = null,
   currentSlotInfo = null
 }) => {
+  // Get supplier mapping for the current department
+  // Ensure department is a string before passing to the hook
+  const deptString = department ? String(department) : '';
+  const supplierMapping = useDeptProductSupplier(deptString);
   const theme = useTheme();
   const accentColor = department?.color || theme.palette.primary.main;
   
@@ -351,6 +356,48 @@ const UnifiedScheduleModal = ({
   // Handle tab change
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
+    
+    // If changing to Production Data tab (index 2) and status is scheduled, populate suppliers
+    if (newValue === 2 && status === 'scheduled') {
+      populateIngredientSuppliers();
+    }
+  };
+  
+  // Function to populate ingredient suppliers based on the current recipe and supplier mapping
+  const populateIngredientSuppliers = () => {
+    // Find the current recipe
+    const recipe = findAndValidateRecipe(recipeCode, recipes, department);
+    
+    if (recipe && recipe.ingredients) {
+      // Automatically populate suppliers for each ingredient
+      const updatedSuppliers = recipe.ingredients.map((ingredient, index) => {
+        const ingredientCode = ingredient.prod_code || ingredient.product_code || '';
+        const ingredientName = ingredient.description || ingredient.name || '';
+        
+        // Try to find supplier from mapping
+        let supplierName = '';
+        
+        // First try by product code
+        if (ingredientCode && supplierMapping[ingredientCode]) {
+          supplierName = supplierMapping[ingredientCode].supplier_name || '';
+        }
+        // Then try by ingredient name/description
+        else if (ingredientName && supplierMapping[ingredientName]) {
+          supplierName = supplierMapping[ingredientName].supplier_name || '';
+        }
+        // If no specific supplier found, keep the current one if it exists
+        else if (ingredientSuppliers[index]) {
+          supplierName = ingredientSuppliers[index];
+        }
+        
+        return supplierName;
+      });
+      
+      // Update the suppliers state
+      setIngredientSuppliers(updatedSuppliers);
+      
+      console.log('Automatically populated suppliers:', updatedSuppliers);
+    }
   };
   
   // Handle recipe change
@@ -395,8 +442,8 @@ const UnifiedScheduleModal = ({
       setQualityScore(1);
       setNotes('');
       
-      // Recipe data will be initialized by the recipe-specific useEffect
-      // when recipeCode changes
+      // Automatically populate suppliers for ingredients
+      populateIngredientSuppliers();
       
       // Show the production data tab
       setActiveTab(2);
@@ -803,7 +850,7 @@ const UnifiedScheduleModal = ({
           </Box>
         )}
         
-        {/* Tab 3: Production Data (only for production statuses) */}
+        {/* Tab 3: Production Data */}
         {activeTab === 2 && (status === 'scheduled' || status === 'in-progress' || status === 'completed') && (
           <Box>
             <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -858,6 +905,38 @@ const UnifiedScheduleModal = ({
                             label="Supplier"
                           >
                             <MenuItem value=""><em>None</em></MenuItem>
+                            {/* First try to get supplier from mapping */}
+                            {(() => {
+                              // Try to find supplier from mapping
+                              const ingredientCode = ing.prod_code || ing.product_code || '';
+                              const ingredientName = ing.description || ing.name || '';
+                              
+                              // Check if we have a specific supplier in the mapping
+                              if (ingredientCode && supplierMapping[ingredientCode] && 
+                                  supplierMapping[ingredientCode].supplier_name) {
+                                return (
+                                  <MenuItem 
+                                    value={supplierMapping[ingredientCode].supplier_name}
+                                    sx={{ fontWeight: 'bold', bgcolor: 'rgba(25, 118, 210, 0.08)' }}
+                                  >
+                                    {supplierMapping[ingredientCode].supplier_name} (Recommended)
+                                  </MenuItem>
+                                );
+                              } else if (ingredientName && supplierMapping[ingredientName] && 
+                                         supplierMapping[ingredientName].supplier_name) {
+                                return (
+                                  <MenuItem 
+                                    value={supplierMapping[ingredientName].supplier_name}
+                                    sx={{ fontWeight: 'bold', bgcolor: 'rgba(25, 118, 210, 0.08)' }}
+                                  >
+                                    {supplierMapping[ingredientName].supplier_name} (Recommended)
+                                  </MenuItem>
+                                );
+                              }
+                              return null;
+                            })()}
+                            
+                            {/* Show all available suppliers */}
                             {suppliers.map((supplier, sidx) => (
                               <MenuItem key={sidx} value={supplier.supplier_name || supplier}>
                                 {supplier.supplier_name || supplier}

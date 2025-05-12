@@ -8,7 +8,12 @@ import { useState, useEffect } from 'react';
 export default function useDeptProductSupplier(department) {
   const [mapping, setMapping] = useState({});
   useEffect(() => {
-    if (!department) return;
+    // Return early if department is undefined, null, or not a string
+    if (!department || typeof department !== 'string') {
+      console.log('[useDeptProductSupplier] Invalid department value:', department);
+      return;
+    }
+    
     // determine exact filename for case-sensitive public assets
     let fileName;
     if (department.length <= 3 && department === department.toUpperCase()) {
