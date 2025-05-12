@@ -25,30 +25,35 @@ const ProductionDocumentList = ({
    * @returns {JSX.Element} Status chip component
    */
   const getStatusChip = (status) => {
-    let color = 'primary';
+    // Define background color based on status
+    let bgcolor = '#2196f3'; // Default blue
     
     switch (status) {
       case 'completed':
-        color = 'success';
+        bgcolor = '#4caf50'; // Green
         break;
       case 'scheduled':
-        color = 'warning';
+        bgcolor = '#ff9800'; // Orange
         break;
       case 'cancelled':
-        color = 'error';
+        bgcolor = '#f44336'; // Red
         break;
       case 'planned':
       default:
-        color = 'info';
+        bgcolor = '#2196f3'; // Blue
         break;
     }
     
     return (
       <Chip 
         label={status} 
-        color={color} 
         size="small" 
-        sx={{ textTransform: 'capitalize' }}
+        sx={{ 
+          textTransform: 'capitalize',
+          bgcolor: bgcolor,
+          color: '#fff',
+          fontWeight: 'medium'
+        }}
       />
     );
   };

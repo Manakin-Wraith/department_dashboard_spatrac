@@ -84,11 +84,11 @@ const WeeklySchedulePage = () => {
         fetchHandlers(deptObj.department) // Use department name for handlers too
       ]);
       
-      // If handlers are still empty, try using the handlers array from the department object
+      // If handlers are still empty, try using the handlers_names array from the department object
       let finalHandlers = handlersData;
       if (!handlersData || handlersData.length === 0) {
-        console.log('No handlers returned from API, using handlers from department object');
-        finalHandlers = deptObj.handlers ? deptObj.handlers.map(name => ({ name, id: name })) : [];
+        console.log('No handlers returned from API, using handlers_names from department object');
+        finalHandlers = deptObj.handlers_names ? deptObj.handlers_names.map(name => ({ name, id: name })) : [];
       }
       
       console.log('Fetched data:', { 

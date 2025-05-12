@@ -53,7 +53,7 @@ const StaffManagementPage = () => {
       ]);
       
       // Setup handlers with additional properties
-      const defaultList = (deptObj.handlers || []).map((name, idx) => ({ 
+      const defaultList = (deptObj.handlers_names || []).map((name, idx) => ({ 
         id: `handler-${idx}`, 
         department, 
         name,
@@ -92,7 +92,7 @@ const StaffManagementPage = () => {
   // Initial data loading
   useEffect(() => {
     loadData();
-  }, [department, deptObj.handlers, deptObj.department, deptObj.department_manager, loadData]);
+  }, [department, deptObj.handlers_names, deptObj.department, deptObj.department_manager, loadData]);
 
   useEffect(() => {
     // Listen for schedule deletions

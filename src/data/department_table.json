@@ -4,7 +4,7 @@
     "supplier_code": "1152",
     "department": "BUTCHERY",
     "department_manager": "Clive",
-    "handlers":["Sipho", "Asavela", "Sinazo", "Lukhanyo", "Wendy", "Sinako", "Thato", "Athi", "Fatima", "Ayabulela", "Thandaswa", "Pamela", "Clive", "Nosiviwe", "Thandiwe"],
+    "handlers_names":["Sipho", "Asavela", "Sinazo", "Lukhanyo", "Wendy", "Sinako", "Thato", "Athi", "Fatima", "Ayabulela", "Thandaswa", "Pamela", "Clive", "Nosiviwe", "Thandiwe"],
     "icon": "SetMealIcon",
     "color": "#C0392B"
   },
@@ -13,7 +13,7 @@
     "supplier_code": "1155",
     "department": "HMR",
     "department_manager": "Monica",
-    "handlers": ["Ntombi", "Zintle", "Zuzu", "Nomhle", "Bulana", "Nonnie", "Faniswa", "Nolubabalo", "Agie", "Nandipha", "Khanyisa"],
+    "handlers_names": ["Ntombi", "Zintle", "Zuzu", "Nomhle", "Bulana", "Nonnie", "Faniswa", "Nolubabalo", "Agie", "Nandipha", "Khanyisa"],
     "icon": "SoupKitchenIcon",
     "color": "#2980B9"
   },
@@ -22,7 +22,7 @@
     "supplier_code": "1154",
     "department": "BAKERY",
     "department_manager": "Monica",
-    "handlers": ["Swazi", "Princess", "Phumla", "Max", "Tami", "Qhawe", "Lutho", "Skwash", "Phelisa", "Zikhona", "Cebisa" ],
+    "handlers_names": ["Swazi", "Princess", "Phumla", "Max", "Tami", "Qhawe", "Lutho", "Skwash", "Phelisa", "Zikhona", "Cebisa" ],
     "icon": "BakeryDiningIcon",
     "color": "#F39C12"
   }

@@ -111,21 +111,45 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
    * @param {boolean} skipModal - Whether to skip opening the modal (for direct updates)
    * @returns {Promise<Object>} Saved schedule item
    */
-  const handleSaveTimeSlot = useCallback(async (formData) => {
+  const handleSaveTimeSlot = useCallback(async (formData, skipModal = false) => {
     try {
-      const {
-        id,
-        recipeCode,
-        plannedQty,
-        handlerName,
-        startTime,
-        endTime,
-        date,
-        notes,
-        itemStatus,
-      } = formData;
+      // Extract data from formData, handling both object formats
+      let id, recipeCode, plannedQty, handlerName, startTime, endTime, date, notes, itemStatus;
+      
+      if (formData.id !== undefined) {
+        // Standard format from modal
+        ({
+          id,
+          recipeCode,
+          plannedQty,
+          handlerName,
+          startTime,
+          endTime,
+          date,
+          notes,
+          itemStatus,
+        } = formData);
+      } else {
+        // Format from direct update (drag-drop)
+        id = formData.id;
+        recipeCode = formData.recipeCode;
+        plannedQty = formData.plannedQty;
+        handlerName = formData.handlerName;
+        startTime = formData.startTime;
+        endTime = formData.endTime;
+        date = formData.date;
+        notes = formData.notes;
+        itemStatus = formData.status || 'planned';
+      }
+      
+      console.log('Saving time slot with data:', {
+        id, recipeCode, plannedQty, handlerName, startTime, endTime, date, notes, itemStatus
+      });
 
-      // Create a new item or update existing item
+      // Find the recipe for this item
+      const recipe = recipes.find(r => r.product_code === recipeCode);
+      
+      // Create a new item or update existing item with all required fields for chain of custody
       const newItem = {
         id: id || `${date}-${recipeCode}-${Date.now()}`,
         recipeCode,
@@ -134,8 +158,22 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
         startTime,
         endTime,
         date,
-        status: itemStatus,
+        status: itemStatus || 'planned', // Ensure status always has a default value
         notes,
+        productDescription: recipe?.description || recipeCode,
+        changeHistory: [
+          {
+            timestamp: new Date().toISOString(),
+            changedBy: id ? 'User' : 'System',
+            changes: [
+              {
+                field: id ? 'updated' : 'created',
+                oldValue: null,
+                newValue: id ? 'updated item' : 'new item'
+              }
+            ]
+          }
+        ]
       };
 
       // Get the current schedule for the date
@@ -155,7 +193,7 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
         );
 
         setSchedules(updatedSchedules);
-        await saveSchedule(updatedSchedule);
+        await saveSchedule(department, updatedSchedule);
         
         // Show success notification
         showNotification({
@@ -163,15 +201,18 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
           type: 'success',
         });
       } else {
-        // Create a new schedule
+        // Create a new schedule with all required fields
         const newSchedule = {
           id: `schedule-${date}`,
           date,
+          department,
+          managerName: department === '1152' ? 'Clive' : department === '1155' || department === '1154' ? 'Monica' : '',
+          handlersNames: handlerName,
           items: [newItem],
         };
 
         setSchedules([...schedules, newSchedule]);
-        await saveSchedule(newSchedule);
+        await saveSchedule(department, newSchedule);
         
         // Show success notification
         showNotification({
@@ -424,7 +465,8 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
         rawEnd: endDate
       });
       
-      // Find the recipe for this item
+      // Find the recipe for this item (for future use if needed)
+      // eslint-disable-next-line no-unused-vars
       const recipe = recipes.find(r => r.product_code === item.recipeCode);
       
       // Create updated item with new date and time
@@ -434,22 +476,11 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
         date: newDate,
         startTime: newStartTime,
         endTime: newEndTime,
-        productDescription: recipe?.description || item.recipeCode,
-        // Add a change history entry for this drag-drop operation
-        changeHistory: [
-          ...(item.changeHistory || []),
-          {
-            timestamp: new Date().toISOString(),
-            changedBy: 'Current User',
-            changes: [
-              {
-                field: 'time',
-                oldValue: `${item.date} ${item.startTime}-${item.endTime}`,
-                newValue: `${newDate} ${newStartTime}-${newEndTime}`
-              }
-            ]
-          }
-        ]
+        recipeCode: item.recipeCode,
+        plannedQty: item.plannedQty,
+        handlerName: item.handlerName,
+        status: item.status,
+        notes: item.notes
       };
       
       // Save the updated item directly using the same pattern as in WeeklySchedulePage
@@ -460,7 +491,8 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
       console.error('Failed to directly update schedule:', error);
       return false;
     }
-  }, [handleSaveTimeSlot, recipes, updateCalendarEvents]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handleSaveTimeSlot, recipes]);
 
   return {
     selectedSchedule,
