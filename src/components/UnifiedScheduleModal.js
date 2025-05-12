@@ -5,7 +5,7 @@ import {
   FormControl, InputLabel, Grid, Typography, 
   List, ListItem, useTheme, Stepper, Step, StepLabel
 } from '@mui/material';
-import { darken } from '@mui/material/styles';
+// useTheme is already imported from @mui/material
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -389,6 +389,12 @@ const UnifiedScheduleModal = ({
         else if (ingredientSuppliers[index]) {
           supplierName = ingredientSuppliers[index];
         }
+        // If still no supplier, try to find any supplier from available suppliers list
+        else if (suppliers && suppliers.length > 0) {
+          // Just use the first available supplier as a fallback
+          const firstSupplier = suppliers[0];
+          supplierName = firstSupplier.supplier_name || firstSupplier || '';
+        }
         
         return supplierName;
       });
@@ -461,11 +467,24 @@ const UnifiedScheduleModal = ({
     // Use the current status without automatic changes
     let currentStatus = status;
     
-    // If we're in production mode and still in planned status, suggest scheduling
+    // If we're in production mode and still in planned status, automatically transition to scheduled
     if (mode === 'production' && status === 'planned') {
-      // We'll keep the status as is, but the UI will guide the user to click
-      // the Schedule Production button instead of forcing the transition
-      console.log('Production mode with planned status - user should use Schedule Production button');
+      // Automatically transition to scheduled status for better UX
+      currentStatus = 'scheduled';
+      console.log('Production mode with planned status - automatically transitioning to scheduled');
+      
+      // Track the status change in history
+      const statusChange = {
+        timestamp: new Date().toISOString(),
+        changedBy: 'System',
+        changes: [{ field: 'status', oldValue: status, newValue: currentStatus }]
+      };
+      
+      // Update change history
+      setChangeHistory([...changeHistory, statusChange]);
+      
+      // Populate suppliers for ingredients
+      populateIngredientSuppliers();
     }
     
     // Get the current recipe for additional data
@@ -590,8 +609,7 @@ const UnifiedScheduleModal = ({
         >
           <Tab label="Basic Information" />
           <Tab label="Recipe Details" />
-          {(status === 'scheduled' || status === 'in-progress' || status === 'completed') && 
-            <Tab label="Production Data" />}
+          <Tab label="Production Data" />
           <Tab label="Change History" />
         </Tabs>
       </Box>
@@ -850,8 +868,8 @@ const UnifiedScheduleModal = ({
           </Box>
         )}
         
-        {/* Tab 3: Production Data */}
-        {activeTab === 2 && (status === 'scheduled' || status === 'in-progress' || status === 'completed') && (
+        {/* Tab 3: Production Data - Always visible regardless of status */}
+        {activeTab === 2 && (
           <Box>
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={12} sm={6}>
@@ -890,60 +908,12 @@ const UnifiedScheduleModal = ({
                         <Typography variant="caption" color="textSecondary">
                           Code: {ing.prod_code} | Required Qty: {(Number(ing.recipe_use || 0) * Number(plannedQty || 0)).toFixed(3)}
                         </Typography>
-                      </Grid>
-                      
-                      <Grid item xs={12} sm={6}>
-                        <FormControl fullWidth size="small" sx={{ mb: 1 }}>
-                          <InputLabel>Supplier</InputLabel>
-                          <Select
-                            value={ingredientSuppliers[idx] || ''}
-                            onChange={(e) => {
-                              const newSuppliers = [...ingredientSuppliers];
-                              newSuppliers[idx] = e.target.value;
-                              setIngredientSuppliers(newSuppliers);
-                            }}
-                            label="Supplier"
-                          >
-                            <MenuItem value=""><em>None</em></MenuItem>
-                            {/* First try to get supplier from mapping */}
-                            {(() => {
-                              // Try to find supplier from mapping
-                              const ingredientCode = ing.prod_code || ing.product_code || '';
-                              const ingredientName = ing.description || ing.name || '';
-                              
-                              // Check if we have a specific supplier in the mapping
-                              if (ingredientCode && supplierMapping[ingredientCode] && 
-                                  supplierMapping[ingredientCode].supplier_name) {
-                                return (
-                                  <MenuItem 
-                                    value={supplierMapping[ingredientCode].supplier_name}
-                                    sx={{ fontWeight: 'bold', bgcolor: 'rgba(25, 118, 210, 0.08)' }}
-                                  >
-                                    {supplierMapping[ingredientCode].supplier_name} (Recommended)
-                                  </MenuItem>
-                                );
-                              } else if (ingredientName && supplierMapping[ingredientName] && 
-                                         supplierMapping[ingredientName].supplier_name) {
-                                return (
-                                  <MenuItem 
-                                    value={supplierMapping[ingredientName].supplier_name}
-                                    sx={{ fontWeight: 'bold', bgcolor: 'rgba(25, 118, 210, 0.08)' }}
-                                  >
-                                    {supplierMapping[ingredientName].supplier_name} (Recommended)
-                                  </MenuItem>
-                                );
-                              }
-                              return null;
-                            })()}
-                            
-                            {/* Show all available suppliers */}
-                            {suppliers.map((supplier, sidx) => (
-                              <MenuItem key={sidx} value={supplier.supplier_name || supplier}>
-                                {supplier.supplier_name || supplier}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
+                        {/* Display the auto-assigned supplier as read-only information */}
+                        {ingredientSuppliers[idx] && (
+                          <Typography variant="caption" sx={{ display: 'block', color: 'success.main', mt: 0.5 }}>
+                            Supplier: {ingredientSuppliers[idx]}
+                          </Typography>
+                        )}
                       </Grid>
                       
                       <Grid item xs={12} sm={6}>
@@ -1068,54 +1038,66 @@ const UnifiedScheduleModal = ({
       </DialogContent>
       
       <DialogActions sx={{ flexDirection: 'column', alignItems: 'stretch', p: 2 }}>
-        {/* Workflow action buttons */}
+        {/* Simplified workflow action buttons */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-          {status === 'planned' && (
-            <Button 
-              variant="contained" 
-              color="warning"
-              onClick={() => handleStatusTransition('scheduled')}
-              startIcon={<FactCheckIcon />}
-              sx={{ flex: 1, mr: 1 }}
-            >
-              Schedule Production
-            </Button>
-          )}
+          
+              <Button 
+                variant="contained" 
+                color="warning"
+                onClick={() => {
+                  handleStatusTransition('scheduled');
+                  // Short delay before saving to ensure state updates
+                  setTimeout(() => handleSave(), 100);
+                }}
+                startIcon={<FactCheckIcon />}
+                sx={{ flex: 1, mr: 1 }}
+              >
+                Schedule Now
+              </Button>
           
           {status === 'scheduled' && (
-            <Button 
-              variant="contained" 
-              color="success"
-              onClick={() => handleStatusTransition('completed')}
-              startIcon={<CheckCircleIcon />}
-              sx={{ flex: 1, mr: 1 }}
-            >
-              Complete Production
-            </Button>
+            <>
+              <Button 
+                variant="contained" 
+                color="primary"
+                onClick={handleSave}
+                sx={{ flex: 1, mr: 1 }}
+              >
+                Save Schedule
+              </Button>
+              <Button 
+                variant="contained" 
+                color="success"
+                onClick={() => {
+                  handleStatusTransition('completed');
+                  // Short delay before saving to ensure state updates
+                  setTimeout(() => handleSave(), 100);
+                }}
+                startIcon={<CheckCircleIcon />}
+                sx={{ flex: 1, mr: 1 }}
+              >
+                Complete Production
+              </Button>
+            </>
           )}
           
-          {status !== 'cancelled' && status !== 'completed' && (
+          {(status === 'completed' || status === 'cancelled') && (
             <Button 
-              variant="outlined" 
-              color="error"
-              onClick={() => handleStatusTransition('cancelled')}
-              startIcon={<CancelIcon />}
-              sx={{ ...(status === 'planned' || status === 'scheduled' ? { ml: 1 } : { flex: 1 }) }}
+              variant="contained" 
+              color="primary"
+              onClick={handleSave}
+              sx={{ flex: 1 }}
+              startIcon={status === 'completed' ? <CheckCircleIcon /> : <CancelIcon />}
             >
-              Cancel
+              Save {status === 'completed' ? 'Completed' : 'Cancelled'} Production
             </Button>
           )}
         </Box>
         
-        {/* Standard save/close buttons */}
+        {/* Close button */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button onClick={onClose} sx={{ mr: 1 }}>Close</Button>
-          <Button 
-            onClick={handleSave}
-            variant="contained"
-            sx={{ bgcolor: accentColor, '&:hover': { bgcolor: darken(accentColor, 0.1) } }}
-          >
-            Save
+          <Button onClick={onClose} sx={{ mr: 1 }}>
+            Close Without Saving
           </Button>
         </Box>
       </DialogActions>

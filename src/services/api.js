@@ -193,6 +193,28 @@ export async function saveSchedule(department, schedule) {
   // Ensure we have a proper ID format for the API
   let processedSchedule = { ...schedule };
   
+  // Log the schedule data for debugging
+  console.log('Saving schedule with data:', processedSchedule);
+  
+  // Ensure change history is properly tracked
+  if (processedSchedule.items) {
+    processedSchedule.items = processedSchedule.items.map(item => {
+      // If the item doesn't have a changeHistory array, create one
+      if (!item.changeHistory) {
+        item.changeHistory = [{
+          timestamp: new Date().toISOString(),
+          changedBy: 'System',
+          changes: [{
+            field: 'created',
+            oldValue: null,
+            newValue: 'new item'
+          }]
+        }];
+      }
+      return item;
+    });
+  }
+  
   // For new schedules, ensure we're using POST
   if (!processedSchedule.id) {
     const method = 'POST';

@@ -121,7 +121,7 @@ const WeeklySchedulePage = () => {
       // Ensure all items have a status (default to 'Planned' if not set)
       const itemsWithStatus = newItems.map(item => ({
         ...item,
-        status: item.status || 'Planned'
+        status: item.status || 'Scheduled'
       }));
       
       let saved;

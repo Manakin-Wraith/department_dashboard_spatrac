@@ -8,6 +8,8 @@ import { formatDistance } from 'date-fns';
 import HistoryIcon from '@mui/icons-material/History';
 import EditIcon from '@mui/icons-material/Edit';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import UpdateIcon from '@mui/icons-material/Update';
 
 /**
  * Dialog component to display the change history of a scheduled item
@@ -58,11 +60,17 @@ const ChangeHistoryDialog = ({ open, onClose, item, accentColor }) => {
                         <Box display="flex" alignItems="center">
                           {isCreation ? (
                             <AddCircleIcon sx={{ mr: 1, color: theme.palette.success.main }} />
+                          ) : entry.changes.some(c => c.field === 'time') ? (
+                            <AccessTimeIcon sx={{ mr: 1, color: '#1976d2' }} />
+                          ) : entry.changedBy === 'User (Drag & Drop)' ? (
+                            <UpdateIcon sx={{ mr: 1, color: '#ff9800' }} />
                           ) : (
                             <EditIcon sx={{ mr: 1, color: theme.palette.info.main }} />
                           )}
                           <Typography variant="subtitle1" fontWeight="bold">
-                            {isCreation ? 'Created' : 'Modified'} by {entry.changedBy}
+                            {isCreation ? 'Created' : 
+                             entry.changes.some(c => c.field === 'time') ? 'Time Changed' : 
+                             'Modified'} by {entry.changedBy}
                           </Typography>
                         </Box>
                         <Box>
@@ -80,7 +88,11 @@ const ChangeHistoryDialog = ({ open, onClose, item, accentColor }) => {
                         {entry.changes.map((change, changeIdx) => (
                           <Box key={changeIdx} mb={1}>
                             <Typography variant="body2" fontWeight="medium" color="text.secondary">
-                              {change.field}:
+                              {change.field === 'time' ? 'Schedule Time Changed' : 
+                               change.field === 'updated' ? 'Updated' : 
+                               change.field === 'created' ? 'Created' : 
+                               change.field === 'status' ? 'Status Changed' : 
+                               change.field}
                             </Typography>
                             <Box display="flex" alignItems="center" mt={0.5}>
                               {change.oldValue !== null ? (
@@ -89,15 +101,25 @@ const ChangeHistoryDialog = ({ open, onClose, item, accentColor }) => {
                                     label={change.oldValue.toString()} 
                                     size="small"
                                     color="default"
-                                    sx={{ mr: 1 }}
+                                    sx={{ 
+                                      mr: 1, 
+                                      ...(change.field === 'time' && { bgcolor: '#f0f4ff', border: '1px dashed #3f51b5' })
+                                    }}
                                   />
-                                  <Typography variant="body2" sx={{ mx: 1 }}>→</Typography>
+                                  <Typography variant="body2" sx={{ mx: 1, fontWeight: change.field === 'time' ? 'bold' : 'normal' }}>→</Typography>
                                 </>
                               ) : null}
                               <Chip 
                                 label={change.newValue.toString()}
                                 size="small"
                                 color="primary"
+                                sx={{
+                                  ...(change.field === 'time' && { 
+                                    bgcolor: '#e3f2fd', 
+                                    border: '1px solid #2196f3',
+                                    fontWeight: 'bold'
+                                  })
+                                }}
                               />
                             </Box>
                           </Box>

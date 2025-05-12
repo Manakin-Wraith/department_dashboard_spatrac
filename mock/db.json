@@ -3786,7 +3786,75 @@
       ]
     }
   ],
-  "schedules": [],
+  "schedules": [
+    {
+      "id": 1,
+      "date": "2025-05-12",
+      "department": "1154",
+      "managerName": "Monica",
+      "handlersNames": "Swazi",
+      "items": [
+        {
+          "id": "2025-05-12-26710-1747041713316",
+          "recipeCode": "26710",
+          "plannedQty": 1,
+          "handlerName": "Swazi",
+          "startTime": "07:30",
+          "endTime": "09:15",
+          "date": "2025-05-12",
+          "status": "scheduled",
+          "notes": "Made an extra x1 ",
+          "productDescription": "WHITE BREAD",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-12T09:29:41.885Z",
+              "changedBy": "User",
+              "changes": [
+                {
+                  "field": "updated",
+                  "oldValue": null,
+                  "newValue": "updated item"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "date": "2025-05-13",
+      "department": "1154",
+      "managerName": "Monica",
+      "handlersNames": "Lutho",
+      "items": [
+        {
+          "id": "2025-05-13-26799-1747042045181",
+          "recipeCode": "26799",
+          "plannedQty": 14,
+          "handlerName": "Lutho",
+          "startTime": "08:45",
+          "endTime": "10:45",
+          "date": "2025-05-13",
+          "status": "scheduled",
+          "productDescription": "APPLE SLICE",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-12T09:27:25.182Z",
+              "changedBy": "User",
+              "changes": [
+                {
+                  "field": "updated",
+                  "oldValue": null,
+                  "newValue": "updated item"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "audits": [],
   "production-documents": [],
   "department_staff": [

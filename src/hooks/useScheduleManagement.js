@@ -158,7 +158,7 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
         startTime,
         endTime,
         date,
-        status: itemStatus || 'planned', // Ensure status always has a default value
+        status: itemStatus || 'scheduled', // Ensure status always has a default value
         notes,
         productDescription: recipe?.description || recipeCode,
         changeHistory: [
@@ -469,6 +469,9 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
       // eslint-disable-next-line no-unused-vars
       const recipe = recipes.find(r => r.product_code === item.recipeCode);
       
+      // Create a timestamp for all changes
+      const timestamp = new Date().toISOString();
+      
       // Create updated item with new date and time
       const updatedItem = {
         ...item,
@@ -480,19 +483,73 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
         plannedQty: item.plannedQty,
         handlerName: item.handlerName,
         status: item.status,
-        notes: item.notes
+        notes: item.notes,
+        // Add a change history entry for the time/date change
+        changeHistory: [
+          ...(item.changeHistory || []),
+          {
+            timestamp: timestamp,
+            changedBy: 'User (Drag & Drop)',
+            changes: [
+              {
+                field: 'time',
+                oldValue: `${item.date} ${item.startTime}-${item.endTime}`,
+                newValue: `${newDate} ${newStartTime}-${newEndTime}`
+              }
+            ]
+          }
+        ]
       };
       
-      // Save the updated item directly using the same pattern as in WeeklySchedulePage
-      await handleSaveTimeSlot(updatedItem, true);
+      // Find the schedule that contains this item
+      const schedule = schedules.find(s => s.id === scheduleId);
+      if (!schedule) {
+        console.error(`Schedule with ID ${scheduleId} not found`);
+        return false;
+      }
       
-      return true;
+      // Create a copy of the schedule with the updated item
+      const updatedSchedule = {
+        ...schedule,
+        items: schedule.items.map(i => i.id === updatedItem.id ? updatedItem : i)
+      };
+      
+      // Update the local state immediately for a responsive UI
+      setSchedules(prevSchedules => 
+        prevSchedules.map(s => s.id === scheduleId ? updatedSchedule : s)
+      );
+      
+      // Save the updated item to the mock data
+      try {
+        await saveSchedule(department, updatedSchedule);
+        
+        // Emit events for other components to react
+        if (typeof window.bus !== 'undefined') {
+          window.bus.emit('schedule-updated', updatedSchedule);
+          window.bus.emit('data-updated', { 
+            type: 'schedule', 
+            date: newDate, 
+            item: updatedItem,
+            timestamp: timestamp
+          });
+        }
+        
+        console.log('Successfully updated schedule with drag-drop operation');
+        return true;
+      } catch (error) {
+        console.error('Failed to save schedule after drag-drop:', error);
+        // Revert the local state update if the save failed
+        setSchedules(prevSchedules => 
+          prevSchedules.map(s => s.id === scheduleId ? schedule : s)
+        );
+        return false;
+      }
     } catch (error) {
       console.error('Failed to directly update schedule:', error);
       return false;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [handleSaveTimeSlot, recipes]);
+  }, [schedules, department, recipes]);
 
   return {
     selectedSchedule,
