@@ -23,6 +23,12 @@ import {
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { 
+  SCHEDULE_STATUS, 
+  normalizeStatus, 
+  isValidStatusTransition,
+  getStatusLabel 
+} from '../utils/statusUtils';
 
 const ConfirmProductionModal = ({ open, onClose, scheduleItem, recipes, onConfirm }) => {
   const [actualQty, setActualQty] = useState(0);
@@ -84,9 +90,27 @@ const ConfirmProductionModal = ({ open, onClose, scheduleItem, recipes, onConfir
     setBatchCodes(batchCodes.filter((_, i) => i !== index));
   };
 
+  const isConfirmDisabled = () => {
+    // Check if this is a valid status transition
+    const currentStatus = normalizeStatus(scheduleItem?.status);
+    const canTransition = scheduleItem ? isValidStatusTransition(currentStatus, SCHEDULE_STATUS.COMPLETED) : false;
+    
+    return actualQty <= 0 || qualityScore <= 0 || !canTransition;
+  };
+
   const handleConfirm = () => {
     if (!scheduleItem) return;
 
+    // Get the current status and normalize it
+    const currentStatus = normalizeStatus(scheduleItem.status);
+    const newStatus = SCHEDULE_STATUS.COMPLETED;
+    
+    // Check if this is a valid status transition
+    if (!isValidStatusTransition(currentStatus, newStatus)) {
+      alert(`Cannot confirm an item with status: ${getStatusLabel(currentStatus)}`);
+      return;
+    }
+    
     // Format dates properly
     const formattedSellByDate = sellByDate ? sellByDate.toISOString().split('T')[0] : '';
     const formattedReceivingDate = receivingDate ? receivingDate.toISOString().split('T')[0] : '';
@@ -130,7 +154,8 @@ const ConfirmProductionModal = ({ open, onClose, scheduleItem, recipes, onConfir
       deviations: deviations,
       confirmation_timestamp: timestamp,
       productDescription: recipe?.description,
-      date: scheduleItem.date
+      date: scheduleItem.date,
+      status: newStatus
     };
 
     // Log the audit data for debugging
@@ -139,7 +164,6 @@ const ConfirmProductionModal = ({ open, onClose, scheduleItem, recipes, onConfir
     // Update the schedule item with the confirmed status
     const updatedScheduleItem = {
       ...scheduleItem,
-      status: 'Confirmed',
       actualQty,
       notes,
       qualityScore,

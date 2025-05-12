@@ -1,0 +1,752 @@
+import { useState, useCallback } from 'react';
+import { saveSchedule, saveAudit, deleteSchedule } from '../services/api';
+import { 
+  SCHEDULE_STATUS, 
+  normalizeStatus, 
+  isValidStatusTransition, 
+  getStatusColor as getStatusColorUtil,
+  createStatusChangeHistoryEntry
+} from '../utils/statusUtils';
+
+/**
+ * Custom hook for managing production schedules
+ * @param {Object} options - Configuration options
+ * @param {Array} options.schedules - Current schedules array
+ * @param {Function} options.setSchedules - Function to update schedules
+ * @param {Array} options.recipes - Available recipes
+ * @param {string} options.department - Department code
+ * @returns {Object} Schedule management functions and state
+ */
+const useScheduleManagement = ({ schedules, setSchedules, recipes, department }) => {
+  const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [currentEventInfo, setCurrentEventInfo] = useState(null);
+  const [currentSlotInfo, setCurrentSlotInfo] = useState(null);
+  const [calendarEvents, setCalendarEvents] = useState([]);
+  
+  // Helper function for logging status messages
+  const logStatus = useCallback((message, type = 'info') => {
+    console.log(`[${type.toUpperCase()}] ${message}`);
+    // In a real app, this would show a toast or notification UI
+    // but for now we'll just log to console
+  }, []);
+  
+  /**
+   * Create audit data from schedule item
+   * @param {Object} data - Schedule item data
+   * @param {Object} recipe - Recipe data
+   * @returns {Object} Audit data
+   */
+  const createAuditData = useCallback((data, recipe) => {
+    const { 
+      recipeCode, plannedQty, handlerName, date, actualQty, 
+      qualityScore, notes, deviations, batchCodes, sellByDates, 
+      receivingDates, managerName, id: productionId 
+    } = data;
+    
+    // Get ingredient information from the recipe
+    const ingredientList = recipe?.ingredients?.map(ing => ing.description) || [];
+    const supplierNames = recipe?.ingredients?.map(ing => ing.supplier_name || 'Unknown') || [];
+    const addressOfSupplier = recipe?.ingredients?.map(ing => ing.supplier_address || 'Unknown') || [];
+    const countryOfOrigin = recipe?.ingredients?.map(ing => ing.country_of_origin || 'Unknown') || [];
+    
+    // Process batch codes, sell-by dates, and receiving dates
+    const finalBatchCodes = [];
+    const finalSellByDates = [];
+    const finalReceivingDates = [];
+    
+    if (ingredientList.length > 0) {
+      ingredientList.forEach((_, idx) => {
+        // Use batch codes if available, or generate new ones
+        const batchCode = batchCodes && batchCodes[idx] ? 
+          batchCodes[idx] : 
+          `BC-${Date.now()}-${idx}`;
+        finalBatchCodes.push(batchCode);
+        
+        // Use sell-by dates if available, or generate new ones
+        const sellByDate = sellByDates && sellByDates[idx] ? 
+          sellByDates[idx] : 
+          (() => {
+            const date = new Date();
+            date.setDate(date.getDate() + 7);
+            return date.toISOString().split('T')[0];
+          })();
+        finalSellByDates.push(sellByDate);
+        
+        // Use receiving dates if available, or use today
+        const receivingDate = receivingDates && receivingDates[idx] ? 
+          receivingDates[idx] : 
+          new Date().toISOString().split('T')[0];
+        finalReceivingDates.push(receivingDate);
+      });
+    }
+    
+    // Generate a unique ID for the audit record
+    const timestamp = new Date().toISOString();
+    const auditId = Date.now();
+    
+    // Create the audit data object
+    const auditData = {
+      id: auditId,
+      uid: `${date}-${recipeCode}-${auditId}`,
+      department: department,
+      department_manager: managerName || 'Department Manager',
+      food_handler_responsible: handlerName || 'Food Handler',
+      packing_batch_code: data.packingBatchCode || [`PK-${recipeCode}-${auditId}`],
+      product_name: [recipe?.description || 'Unknown'],
+      ingredient_list: ingredientList,
+      supplier_name: supplierNames,
+      address_of_supplier: addressOfSupplier,
+      batch_code: finalBatchCodes,
+      sell_by_date: finalSellByDates,
+      receiving_date: finalReceivingDates,
+      country_of_origin: countryOfOrigin,
+      planned_qty: Number(plannedQty) || 0,
+      actual_qty: Number(actualQty) || Number(plannedQty) || 0,
+      notes: notes || '',
+      quality_score: Number(qualityScore) || 1,
+      deviations: deviations || ['none'],
+      confirmation_timestamp: timestamp,
+      productDescription: recipe?.description || recipeCode,
+      date: date,
+      originalScheduleId: productionId,
+      completedAt: timestamp,
+      // Add recipe details for better traceability
+      recipeDetails: {
+        code: recipeCode,
+        name: recipe?.description || 'Unknown',
+        yield: recipe?.yield || 0,
+        category: recipe?.category || 'Unknown'
+      }
+    };
+    
+    console.log('Created audit data:', auditData);
+    return auditData;
+  }, [department]);
+  
+  /**
+   * Handle saving a time slot
+   * @param {Object} data - Schedule data
+   * @param {boolean} skipModal - Whether to skip opening the modal (for direct updates)
+   * @returns {Promise<Object>} Saved schedule item
+   */
+  const handleSaveTimeSlot = useCallback(async (formData, skipModal = false) => {
+    try {
+      // Extract data from formData, handling both object formats
+      let id, recipeCode, plannedQty, handlerName, startTime, endTime, date, notes, status;
+      
+      // Normalize the data format regardless of source
+      if (formData.recipeCode !== undefined) {
+        // Standard format from modal
+        ({
+          id,
+          recipeCode,
+          plannedQty,
+          handlerName,
+          startTime,
+          endTime,
+          date,
+          notes,
+          status = 'scheduled',
+        } = formData);
+      } else if (formData.recipe !== undefined) {
+        // Alternative format from calendar
+        ({
+          id,
+          recipe: recipeCode,
+          qty: plannedQty,
+          handler: handlerName,
+          start: startTime,
+          end: endTime,
+          date,
+          notes,
+          status = 'scheduled',
+        } = formData);
+      } else {
+        // Direct object format
+        ({
+          id,
+          recipeCode,
+          plannedQty,
+          handlerName,
+          startTime,
+          endTime,
+          date,
+          notes,
+          status = 'scheduled'
+        } = formData);
+      }
+      
+      // Get the recipe details
+      const recipe = recipes.find(r => r.product_code === recipeCode);
+      
+      if (!recipe) {
+        logStatus(`Recipe with code ${recipeCode} not found`, 'error');
+        return null;
+      }
+      
+      // Create a unique ID if not provided
+      const itemId = id || `${date}-${recipeCode}-${Date.now()}`;
+      
+      // Create the item object with all necessary fields
+      const item = {
+        id: itemId,
+        recipeCode,
+        plannedQty: Number(plannedQty) || 1,
+        handlerName,
+        startTime,
+        endTime,
+        date,
+        status,
+        notes: notes || '',
+        productDescription: recipe.description || recipe.name || recipeCode,
+        // Add any additional fields from formData that we want to preserve
+        ...(formData.actualQty !== undefined && { actualQty: Number(formData.actualQty) }),
+        ...(formData.qualityScore !== undefined && { qualityScore: Number(formData.qualityScore) }),
+        ...(formData.deviations !== undefined && { deviations: formData.deviations }),
+        ...(formData.changeHistory !== undefined && { changeHistory: formData.changeHistory }),
+        ...(formData.confirmationTimestamp !== undefined && { confirmationTimestamp: formData.confirmationTimestamp }),
+      };
+      
+      // Find or create the schedule for this date
+      let schedule = schedules.find(s => s.weekStartDate === date || s.date === date);
+      let savedSchedule;
+      
+      // Handle completed items - create audit and remove from schedule
+      if (status === 'completed') {
+        try {
+          // Create audit data
+          const auditData = createAuditData(item, recipe);
+          
+          // Save audit data
+          const savedAudit = await saveAudit(department, auditData);
+          const auditRecord = savedAudit || auditData;
+          
+          // Add confirmation to the item's change history
+          if (!item.changeHistory) item.changeHistory = [];
+          item.changeHistory.push({
+            timestamp: new Date().toISOString(),
+            changedBy: 'System',
+            changes: [{ 
+              field: 'status', 
+              oldValue: 'scheduled', 
+              newValue: 'completed',
+              auditId: auditRecord.id
+            }]
+          });
+          
+          // If we have a schedule, remove the completed item
+          if (schedule) {
+            // Remove the completed item from the schedule
+            schedule.items = schedule.items.filter(i => i.id !== item.id);
+            
+            // If the schedule has no more items, remove it entirely
+            if (schedule.items.length === 0) {
+              try {
+                await deleteSchedule(department, schedule.id);
+                logStatus(`Empty schedule ${schedule.id} deleted from database`, 'success');
+                setSchedules(prevSchedules => prevSchedules.filter(s => s.id !== schedule.id));
+              } catch (error) {
+                logStatus(`Failed to delete empty schedule: ${error.message}`, 'error');
+              }
+            } else {
+              // Save the updated schedule with the item removed
+              savedSchedule = await saveSchedule(department, schedule);
+              setSchedules(prevSchedules => 
+                prevSchedules.map(s => s.id === savedSchedule.id ? savedSchedule : s)
+              );
+            }
+          }
+          
+          logStatus(`Production completed and moved to audit`, 'success');
+          return item;
+        } catch (error) {
+          logStatus(`Failed to create audit record: ${error.message}`, 'error');
+          console.error('Failed to create audit record:', error);
+          return null;
+        }
+      } else {
+        // Handle regular schedule updates (not completed items)
+        if (!schedule) {
+          // Create new schedule
+          schedule = {
+            id: `${department}-${date}`,
+            department,
+            weekStartDate: date,
+            managerName: formData.managerName || '',
+            handlersNames: handlerName || formData.handlersNames || '',
+        } else {
+          // Save the updated schedule with the item removed
+          savedSchedule = await saveSchedule(department, schedule);
+          setSchedules(prevSchedules =>
+            prevSchedules.map(s => s.id === savedSchedule.id ? savedSchedule : s)
+          );
+        }
+      };
+
+      logStatus(`Production completed and moved to audit`, 'success');
+      return item;
+    } catch (error) {
+      logStatus(`Failed to create audit record: ${error.message}`, 'error');
+      console.error('Failed to create audit record:', error);
+      return null;
+    }
+  } else {
+    try {
+      // Handle regular schedule updates (not completed items)
+      if (!schedule) {
+        // Create new schedule
+        schedule = {
+          id: `${department}-${date}`,
+          department,
+          weekStartDate: date,
+          managerName: formData.managerName || '',
+          handlersNames: handlerName || formData.handlersNames || '',
+          items: [item]
+        };
+      } else {
+        // Check if the item already exists in the schedule
+        const existingItemIndex = schedule.items.findIndex(i => i.id === itemId);
+
+        if (existingItemIndex >= 0) {
+          // Update existing item
+          schedule.items[existingItemIndex] = {
+            ...schedule.items[existingItemIndex],
+            ...item
+          };
+        } else {
+          // Add new item
+          schedule.items.push(item);
+        }
+      }
+
+    // Save the schedule
+    try {
+      savedSchedule = await saveSchedule(department, schedule);
+
+      // Update the schedules state
+      setSchedules(prevSchedules => {
+        const scheduleIndex = prevSchedules.findIndex(s => s.id === savedSchedule.id);
+        if (scheduleIndex >= 0) {
+          // Update existing schedule
+          return prevSchedules.map(s => s.id === savedSchedule.id ? savedSchedule : s);
+        } else {
+          // Add new schedule
+          return [...prevSchedules, savedSchedule];
+        }
+      });
+
+      logStatus(`Schedule saved successfully`, 'success');
+      return item;
+    } catch (error) {
+      logStatus(`Failed to save schedule: ${error.message}`, 'error');
+      console.error('Failed to save schedule:', error);
+      return null;
+      }
+    } catch (error) {
+      logStatus(`Error in handleSaveTimeSlot: ${error.message}`, 'error');
+      console.error('Error in handleSaveTimeSlot:', error);
+      return null;
+    }
+  }
+}
+}), [department, schedules, recipes, setSchedules, createAuditData, logStatus]);
+
+/**
+ * Create a new schedule item
+ * @param {Object} scheduleData - Schedule data
+ * @param {Object} itemData - Item data
+ */
+const createScheduleItem = useCallback(async (scheduleData, itemData) => {
+  try {
+  // Ensure the item has a valid status
+  if (!itemData.status) {
+    itemData.status = SCHEDULE_STATUS.SCHEDULED;
+  } else {
+    // Normalize any legacy status values
+    itemData.status = normalizeStatus(itemData.status);
+  }
+
+  // Ensure change history is initialized
+  if (!itemData.changeHistory) {
+    itemData.changeHistory = [{
+      timestamp: new Date().toISOString(),
+      changedBy: 'Current User', // In a real app, get from auth context
+      changes: [
+        {
+          field: 'created',
+          oldValue: null,
+          newValue: 'new item'
+        }
+      ]
+    }];
+  }
+
+  // Check if schedule exists
+  let scheduleIndex = schedules.findIndex(s => s.id === scheduleData.id);
+  let updatedSchedule;
+
+  if (scheduleIndex === -1) {
+    // Create new schedule
+    updatedSchedule = {
+      ...scheduleData,
+      items: [itemData]
+    };
+
+    // Save to API
+    const savedSchedule = await saveSchedule(updatedSchedule);
+
+    // Update local state
+    setSchedules(prev => [...prev, savedSchedule]);
+    logStatus(`Created new schedule for ${scheduleData.weekStartDate}`, 'success');
+  } else {
+    // Add item to existing schedule
+    updatedSchedule = {
+      ...schedules[scheduleIndex],
+      ...scheduleData,
+      items: [...schedules[scheduleIndex].items, itemData]
+    };
+
+    // Save to API
+    await saveSchedule(updatedSchedule);
+
+    // Update local state
+    const updatedSchedules = [...schedules];
+    updatedSchedules[scheduleIndex] = updatedSchedule;
+    setSchedules(updatedSchedules);
+    logStatus(`Added item to schedule for ${scheduleData.weekStartDate}`, 'success');
+  }
+
+  return updatedSchedule;
+} catch (error) {
+  logStatus(`Error creating schedule item: ${error.message}`, 'error');
+  console.error('Error creating schedule item:', error);
+  return null;
+}
+}, [schedules, setSchedules, logStatus]);
+
+/**
+ * Update a schedule item
+ * @param {Object} scheduleData - Schedule data
+ * @param {Object} itemData - Item data
+ */
+const updateScheduleItem = useCallback(async (scheduleData, itemData) => {
+try {
+  // Find the schedule to update
+  const scheduleIndex = schedules.findIndex(s => s.id === scheduleData.id);
+
+  if (scheduleIndex === -1) {
+    logStatus(`Schedule with ID ${scheduleData.id} not found`, 'error');
+    return;
+  }
+
+  // Find the item to update
+  const itemIndex = schedules[scheduleIndex].items.findIndex(i => i.id === itemData.id);
+
+  if (itemIndex === -1) {
+    logStatus(`Item with ID ${itemData.id} not found in schedule ${scheduleData.id}`, 'error');
+    return;
+  }
+
+  // Get the current item
+  const currentItem = schedules[scheduleIndex].items[itemIndex];
+
+  // If status is changing, validate the transition
+  if (itemData.status && itemData.status !== currentItem.status) {
+    // Normalize status values
+    const normalizedCurrentStatus = normalizeStatus(currentItem.status);
+    const normalizedNewStatus = normalizeStatus(itemData.status);
+
+    // Only proceed if the transition is valid
+    if (!isValidStatusTransition(normalizedCurrentStatus, normalizedNewStatus)) {
+      logStatus(`Invalid status transition from ${normalizedCurrentStatus} to ${normalizedNewStatus}`, 'error');
+      return null;
+    }
+
+    // Add status change to history
+    if (!itemData.changeHistory) {
+      itemData.changeHistory = [...(currentItem.changeHistory || [])];
+    }
+
+    itemData.changeHistory.push(
+      createStatusChangeHistoryEntry(
+        normalizedCurrentStatus,
+        normalizedNewStatus,
+        'Current User' // In a real app, get from auth context
+      )
+    );
+  }
+
+  // Create updated schedule
+  const updatedSchedule = {
+    ...schedules[scheduleIndex],
+    ...scheduleData,
+    items: [...schedules[scheduleIndex].items]
+  };
+
+  // Update the specific item
+  updatedSchedule.items[itemIndex] = {
+    ...updatedSchedule.items[itemIndex],
+    ...itemData
+  };
+
+  // Save to API
+  await saveSchedule(updatedSchedule);
+
+  // Update local state
+  const updatedSchedules = [...schedules];
+  updatedSchedules[scheduleIndex] = updatedSchedule;
+  setSchedules(updatedSchedules);
+
+  logStatus(`Updated schedule item ${itemData.id}`, 'success');
+  return updatedSchedule;
+} catch (error) {
+  logStatus(`Error updating schedule item: ${error.message}`, 'error');
+  console.error('Error updating schedule item:', error);
+  return null;
+}
+}, [schedules, setSchedules, logStatus]);
+
+/**
+ * Get color based on status
+ * @param {string} status - Status string
+ * @returns {string} Color hex code
+ */
+const getStatusColor = (status) => {
+  // Use the centralized status color utility
+  return getStatusColorUtil(status);
+};
+
+/**
+ * Update calendar events based on schedules
+ */
+const updateCalendarEvents = useCallback(() => {
+  const events = convertSchedulesToEvents(schedules);
+  setCalendarEvents(events);
+}, [schedules, convertSchedulesToEvents]);
+
+/**
+ * Delete a schedule item
+ * @param {Object} schedule - The schedule containing the item
+ * @param {Object} item - The item to delete
+ * @param {number} itemIndex - The index of the item in the schedule
+ * @returns {Promise<void>}
+ */
+const handleDeleteScheduleItem = useCallback(async (schedule, item, itemIndex) => {
+try {
+  // Handle the nested structure where schedule might have a "0" property
+  const scheduleData = schedule["0"] || schedule;
+  const scheduleId = scheduleData.id || schedule.id;
+
+  // Find the schedule in the schedules array
+  const scheduleIndex = schedules.findIndex(s => {
+    const sData = s["0"] || s;
+    return sData.id === scheduleId;
+  });
+
+  if (scheduleIndex === -1) {
+    console.error(`Schedule with ID ${scheduleId} not found`);
+    return;
+  }
+
+  // Create a deep copy of the schedule
+  const updatedSchedule = JSON.parse(JSON.stringify(scheduleData));
+
+  // Remove the item from the schedule
+  updatedSchedule.items = updatedSchedule.items.filter((_, idx) => idx !== itemIndex);
+
+  // If there are no more items, delete the entire schedule
+  if (updatedSchedule.items.length === 0) {
+    // Delete the schedule from the server
+    await deleteSchedule(scheduleId);
+
+    // Update the state
+    const updatedSchedules = schedules.filter((_, idx) => idx !== scheduleIndex);
+    setSchedules(updatedSchedules);
+  } else {
+    // Update the schedule on the server
+    await saveSchedule(department, updatedSchedule);
+
+    // Update the state
+    const updatedSchedules = [...schedules];
+
+    // If the schedule has a nested structure, update it properly
+    if (schedule["0"]) {
+      updatedSchedules[scheduleIndex] = { "0": updatedSchedule, id: scheduleId };
+    } else {
+      updatedSchedules[scheduleIndex] = updatedSchedule;
+    }
+
+    setSchedules(updatedSchedules);
+  }
+} catch (error) {
+  console.error('Failed to delete schedule item:', error);
+  throw error;
+}
+}, [department, schedules, setSchedules]);
+
+/**
+ * Handle direct update from drag-drop without opening modal
+ * This function is specifically designed for drag-drop operations
+ * @param {Object} info - Event info from FullCalendar
+ * @returns {Promise<boolean>} Success status
+ */
+const handleDirectUpdate = useCallback(async (info) => {
+try {
+  const { event } = info;
+  // Extract the item and other relevant information from extendedProps
+  const { item, scheduleId } = event.extendedProps;
+
+  // Create JavaScript Date objects for proper time handling
+  const startDate = new Date(event.start);
+  const endDate = event.end ? new Date(event.end) : null;
+
+  // Get the new date and time from the dropped event
+  const newDate = startDate.toISOString().split('T')[0];
+
+  // Format start time properly as HH:MM
+  const startHours = startDate.getHours().toString().padStart(2, '0');
+  const startMinutes = startDate.getMinutes().toString().padStart(2, '0');
+  const newStartTime = `${startHours}:${startMinutes}`;
+
+  // Format end time properly as HH:MM if end exists
+  let newEndTime = '';
+  if (endDate) {
+    const endHours = endDate.getHours().toString().padStart(2, '0');
+    const endMinutes = endDate.getMinutes().toString().padStart(2, '0');
+    newEndTime = `${endHours}:${endMinutes}`;
+  } else {
+    // If no end time is provided, set it to 1 hour after start time
+    const defaultEndDate = new Date(startDate);
+    defaultEndDate.setHours(defaultEndDate.getHours() + 1);
+    const endHours = defaultEndDate.getHours().toString().padStart(2, '0');
+    const endMinutes = defaultEndDate.getMinutes().toString().padStart(2, '0');
+    newEndTime = `${endHours}:${endMinutes}`;
+  }
+
+  // Log the extracted time information for debugging
+  console.log('Direct update - Extracted time from drag event:', {
+    scheduleId,
+    date: newDate,
+    startTime: newStartTime,
+    endTime: newEndTime,
+    rawStart: startDate,
+    rawEnd: endDate
+  });
+
+  // Find the recipe for this item (for future use if needed)
+  // eslint-disable-next-line no-unused-vars
+  const recipe = recipes.find(r => r.product_code === item.recipeCode);
+
+  // Create a timestamp for all changes
+  const timestamp = new Date().toISOString();
+
+  // Create updated item with new date and time
+  const updatedItem = {
+    ...item,
+    id: item.id, // Ensure we keep the same ID
+    date: newDate,
+    startTime: newStartTime,
+    endTime: newEndTime,
+    recipeCode: item.recipeCode,
+    plannedQty: item.plannedQty,
+    handlerName: item.handlerName,
+    status: item.status,
+    notes: item.notes,
+    // Add a change history entry for the time/date change
+    changeHistory: [
+      ...(item.changeHistory || []),
+      {
+        timestamp: timestamp,
+        changedBy: 'User (Drag & Drop)',
+        changes: [
+          {
+            field: 'time',
+            oldValue: `${item.date} ${item.startTime}-${item.endTime}`,
+            newValue: `${newDate} ${newStartTime}-${newEndTime}`
+          }
+        ]
+      }
+    ]
+  };
+
+  // Find the schedule that contains this item
+  const schedule = schedules.find(s => s.id === scheduleId);
+  if (!schedule) {
+    console.error(`Schedule with ID ${scheduleId} not found`);
+    return false;
+  }
+
+  // Create a copy of the schedule with the updated item
+  const updatedSchedule = {
+    ...schedule,
+    items: schedule.items.map(i => i.id === updatedItem.id ? updatedItem : i)
+  };
+
+  // Update the local state immediately for a responsive UI
+  setSchedules(prevSchedules =>
+    prevSchedules.map(s => s.id === scheduleId ? updatedSchedule : s)
+  );
+
+  // Save the updated item to the mock data
+  try {
+    await saveSchedule(department, updatedSchedule);
+
+    // Emit events for other components to react
+    if (typeof window.bus !== 'undefined') {
+      window.bus.emit('schedule-updated', updatedSchedule);
+      window.bus.emit('data-updated', {
+        type: 'schedule',
+        date: newDate,
+        item: updatedItem,
+        timestamp: timestamp
+      });
+    }
+
+    logStatus('Successfully updated schedule with drag-drop operation', 'success');
+    return true;
+  } catch (error) {
+    logStatus(`Failed to save schedule after drag-drop: ${error.message}`, 'error');
+    console.error('Failed to save schedule after drag-drop:', error);
+    // Revert the local state update if the save failed
+    setSchedules(prevSchedules =>
+      prevSchedules.map(s => s.id === scheduleId ? schedule : s)
+    );
+    return false;
+  }
+} catch (error) {
+  console.error('Failed to directly update schedule:', error);
+  return false;
+}
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, [schedules, department, recipes, logStatus]);
+
+return {
+  // State
+  selectedSchedule,
+  setSelectedSchedule,
+  selectedItem,
+  setSelectedItem,
+  currentEventInfo,
+  setCurrentEventInfo,
+  currentSlotInfo,
+  setCurrentSlotInfo,
+  calendarEvents,
+
+  // Functions
+  createScheduleItem,
+  updateScheduleItem,
+  deleteScheduleItem,
+  confirmProduction,
+  updateCalendarEvents,
+  getStatusColor,
+
+  // Status utilities
+  normalizeStatus,
+  isValidStatusTransition,
+
+  // Direct update function
+  handleDirectUpdate
+};
+
+export default useScheduleManagement;

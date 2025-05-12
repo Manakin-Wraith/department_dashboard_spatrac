@@ -153,15 +153,116 @@ export async function fetchAudits(department) {
   return res.json();
 }
 
+/**
+ * Save an audit record to the database
+ * @param {string} department - Department code
+ * @param {Object} auditRecord - Audit record data
+ * @returns {Promise<Object>} Saved audit record
+ */
 export async function saveAudit(department, auditRecord) {
   const url = `${API_BASE}/api/audits`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(auditRecord)
-  });
-  if (!res.ok) throw new Error('Failed to save audit');
-  return res.json();
+  
+  // Ensure we have all required fields
+  const processedAudit = {
+    ...auditRecord,
+    department: department || auditRecord.department,
+    confirmation_timestamp: auditRecord.confirmation_timestamp || new Date().toISOString(),
+    status: 'completed' // Always set to completed for audit records
+  };
+  
+  // Log the audit data for debugging
+  console.log('Saving audit with data:', processedAudit);
+  
+  try {
+    // First, get the current audits to see if we need to update an existing one
+    const getRes = await fetch(`${API_BASE}/api/audits`);
+    if (!getRes.ok) throw new Error(`Failed to get audits: ${getRes.status}`);
+    
+    const audits = await getRes.json();
+    
+    // Check if we already have an audit with the same ID or originalScheduleId
+    const existingAuditIndex = audits.findIndex(a => 
+      a.id === processedAudit.id || 
+      (processedAudit.originalScheduleId && a.originalScheduleId === processedAudit.originalScheduleId)
+    );
+    
+    let method = 'POST';
+    let finalUrl = url;
+    
+    if (existingAuditIndex >= 0) {
+      // Update existing audit
+      method = 'PUT';
+      finalUrl = `${url}/${audits[existingAuditIndex].id}`;
+      console.log(`Updating existing audit with ID ${audits[existingAuditIndex].id}`);
+    } else {
+      console.log('Creating new audit record');
+    }
+    
+    // Save the audit record
+    const res = await fetch(finalUrl, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(processedAudit)
+    });
+    
+    if (!res.ok) throw new Error(`Failed to save audit: ${res.status}`);
+    
+    const savedAudit = await res.json();
+    console.log('Successfully saved audit record:', savedAudit);
+    
+    // Emit an event to notify other components
+    if (typeof window.bus !== 'undefined') {
+      window.bus.emit('new-audit', savedAudit);
+      window.bus.emit('data-updated', { 
+        type: 'audit', 
+        item: savedAudit,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // If this audit was created from a scheduled item, remove that item from the schedule
+    if (processedAudit.originalScheduleId) {
+      try {
+        // Get the schedules
+        const getSchedulesRes = await fetch(`${API_BASE}/api/schedules`);
+        if (!getSchedulesRes.ok) throw new Error(`Failed to get schedules: ${getSchedulesRes.status}`);
+        
+        const schedules = await getSchedulesRes.json();
+        
+        // Find schedules that contain the completed item
+        for (const schedule of schedules) {
+          if (schedule.items && Array.isArray(schedule.items)) {
+            const itemIndex = schedule.items.findIndex(item => item.id === processedAudit.originalScheduleId);
+            
+            if (itemIndex >= 0) {
+              // Remove the item from the schedule
+              schedule.items = schedule.items.filter(item => item.id !== processedAudit.originalScheduleId);
+              
+              // If the schedule has no more items, delete it
+              if (schedule.items.length === 0) {
+                await deleteSchedule(schedule.id);
+                console.log(`Deleted empty schedule with ID ${schedule.id}`);
+              } else {
+                // Otherwise, update the schedule
+                await saveSchedule(department, schedule);
+                console.log(`Updated schedule ${schedule.id} after removing completed item`);
+              }
+              
+              break; // We found and processed the schedule, no need to continue
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error updating schedules after audit creation:', error);
+        // Don't throw this error, as the audit was successfully saved
+      }
+    }
+    
+    return savedAudit;
+  } catch (error) {
+    console.error('Error in saveAudit:', error);
+    throw error;
+  }
 }
 
 export async function deleteAudit(auditId) {
@@ -196,7 +297,7 @@ export async function saveSchedule(department, schedule) {
   // Log the schedule data for debugging
   console.log('Saving schedule with data:', processedSchedule);
   
-  // Ensure change history is properly tracked
+  // Ensure change history is properly tracked and status is preserved
   if (processedSchedule.items) {
     processedSchedule.items = processedSchedule.items.map(item => {
       // If the item doesn't have a changeHistory array, create one
@@ -204,13 +305,33 @@ export async function saveSchedule(department, schedule) {
         item.changeHistory = [{
           timestamp: new Date().toISOString(),
           changedBy: 'System',
-          changes: [{
-            field: 'created',
-            oldValue: null,
-            newValue: 'new item'
-          }]
+          changes: [{ field: 'created', oldValue: null, newValue: 'new item' }]
         }];
       }
+      
+      // Ensure all items have scheduled status by default
+      if (!item.status) {
+        item.status = 'scheduled';
+      }
+      
+      // Ensure status is properly set
+      if (item.status === 'completed') {
+        console.log(`Item ${item.id} is marked as completed`);
+        
+        // Add a status change to the change history if not already there
+        const hasStatusChange = item.changeHistory.some(change => 
+          change.changes.some(c => c.field === 'status' && c.newValue === 'completed')
+        );
+        
+        if (!hasStatusChange) {
+          item.changeHistory.push({
+            timestamp: new Date().toISOString(),
+            changedBy: 'System',
+            changes: [{ field: 'status', oldValue: 'scheduled', newValue: 'completed' }]
+          });
+        }
+      }
+      
       return item;
     });
   }

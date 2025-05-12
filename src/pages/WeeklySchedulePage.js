@@ -118,10 +118,10 @@ const WeeklySchedulePage = () => {
 
   const handleSave = async (newItems, newManager, newHandler, dateToSave, scheduleIdToUpdate) => {
     try {
-      // Ensure all items have a status (default to 'Planned' if not set)
+      // Ensure all items have a status (always 'scheduled')
       const itemsWithStatus = newItems.map(item => ({
         ...item,
-        status: item.status || 'Scheduled'
+        status: 'scheduled'
       }));
       
       let saved;

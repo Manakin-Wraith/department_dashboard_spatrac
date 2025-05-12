@@ -31,9 +31,8 @@ const AuditProductionDocumentsPage = () => {
         const audits = await fetchAudits(department);
         console.log('Fetched audits:', audits);
         
-        // Set all audits - we're no longer filtering by UIDs from schedules
-        // since confirmed productions automatically create valid audits
-        setData(audits);
+        // Only show audits with a confirmationTimestamp
+        setData(audits.filter(item => !!item.confirmationTimestamp));
       } catch (err) {
         console.error('Failed to load audits', err);
       }
@@ -45,7 +44,9 @@ const AuditProductionDocumentsPage = () => {
     // Listen for new audit records coming from the confirmation process
     const handleNewAudit = rec => {
       console.log('New audit received in AuditProductionDocumentsPage:', rec);
-      setData(prev => [rec, ...prev]);
+      if (rec && rec.confirmationTimestamp) {
+        setData(prev => [rec, ...prev]);
+      }
     };
     
     // Listen to both 'audit' and 'new-audit' events

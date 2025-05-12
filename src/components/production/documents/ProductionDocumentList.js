@@ -24,11 +24,25 @@ const ProductionDocumentList = ({
    * @param {string} status - Status string
    * @returns {JSX.Element} Status chip component
    */
-  const getStatusChip = (status) => {
-    // Define background color based on status
+  const getStatusChip = (item) => {
+    // If confirmationTimestamp is present, show 'Finished' chip
+    if (item.confirmationTimestamp) {
+      return (
+        <Chip 
+          label="Complete Production" 
+          size="small" 
+          sx={{
+            textTransform: 'capitalize',
+            bgcolor: '#4caf50', // Green
+            color: '#fff',
+            fontWeight: 'medium'
+          }}
+        />
+      );
+    }
+    // Otherwise, use legacy status
     let bgcolor = '#2196f3'; // Default blue
-    
-    switch (status) {
+    switch (item.status) {
       case 'completed':
         bgcolor = '#4caf50'; // Green
         break;
@@ -38,15 +52,13 @@ const ProductionDocumentList = ({
       case 'cancelled':
         bgcolor = '#f44336'; // Red
         break;
-      case 'planned':
       default:
         bgcolor = '#2196f3'; // Blue
         break;
     }
-    
     return (
       <Chip 
-        label={status} 
+        label="Scheduled" 
         size="small" 
         sx={{ 
           textTransform: 'capitalize',
@@ -106,7 +118,7 @@ const ProductionDocumentList = ({
                         ? `${item.startTime} - ${item.endTime}` 
                         : 'Not scheduled'}
                     </TableCell>
-                    <TableCell>{getStatusChip(item.status)}</TableCell>
+                    <TableCell>{getStatusChip(item)}</TableCell>
                     <TableCell align="right">
                       <Tooltip title="View History">
                         <IconButton 

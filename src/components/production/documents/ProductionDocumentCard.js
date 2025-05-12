@@ -33,7 +33,6 @@ const ProductionDocumentCard = ({
         return '#ff9800'; // Orange
       case 'cancelled':
         return '#f44336'; // Red
-      case 'planned':
       default:
         return '#2196f3'; // Blue
     }
@@ -49,7 +48,9 @@ const ProductionDocumentCard = ({
           
           return items.map((item, idx) => {
             const recipe = recipes.find(r => r.product_code === item.recipeCode);
-            const statusColor = getStatusColor(item.status);
+            // Determine finished state and color
+            const isFinished = !!item.confirmationTimestamp;
+            const statusColor = isFinished ? '#4caf50' : getStatusColor(item.status);
             const scheduleId = scheduleData.id || schedule.id || 'unknown';
             
             return (
@@ -69,7 +70,7 @@ const ProductionDocumentCard = ({
                       {item.productDescription || recipe?.description || item.recipeCode}
                     </Typography>
                     <Chip 
-                      label={item.status} 
+                      label={isFinished ? 'Complete Production' : 'Scheduled'} 
                       size="small" 
                       sx={{ 
                         textTransform: 'capitalize',

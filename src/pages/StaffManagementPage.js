@@ -169,10 +169,10 @@ const StaffManagementPage = () => {
     }
   };
 
-  // Get current assignments for a handler (only planned, not confirmed)
+  // Get current assignments for a handler (only scheduled, not confirmed)
   const getAssignments = (handlerName) => {
     // Filter schedules where this staff member is assigned
-    // In Option 2, schedules only contain planned items (not confirmed)
+    // In Option 2, schedules only contain scheduled items (not confirmed)
     return schedules
       .filter(s => s.handlersNames === handlerName)
       .map(s => ({
