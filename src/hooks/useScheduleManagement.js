@@ -99,6 +99,51 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
   }, [department]);
   
   /**
+   * Convert schedules to calendar events
+   * @param {Array} scheduleList - List of schedules
+   * @returns {Array} Calendar events
+   */
+  const convertSchedulesToEvents = useCallback((scheduleList) => {
+    return scheduleList.flatMap(schedule => {
+      // Handle the nested structure where schedule might have a "0" property
+      const scheduleData = schedule["0"] || schedule;
+      const { id: scheduleId, items = [], weekStartDate } = scheduleData;
+      
+      return items.map((item, index) => {
+        const recipe = recipes.find(r => r.product_code === item.recipeCode) || {};
+        const baseDate = item.date || weekStartDate;
+        let itemStartTime = `${baseDate}T${item.startTime || '09:00'}:00`;
+        let itemEndTime = `${baseDate}T${item.endTime || '17:00'}:00`;
+        
+        return {
+          id: item.id || `${scheduleId}-${index}`,
+          title: `${recipe.description || item.recipeCode} (${item.plannedQty})`,
+          start: itemStartTime,
+          end: itemEndTime,
+          allDay: false,
+          extendedProps: {
+            scheduleId,
+            itemIndex: index,
+            item,
+            status: item.status,
+            recipe
+          }
+        };
+      });
+    });
+  }, [recipes]);
+  
+  /**
+   * Update calendar events based on schedules
+   */
+  const updateCalendarEvents = useCallback(() => {
+    const events = convertSchedulesToEvents(schedules);
+    setCalendarEvents(events);
+  }, [schedules, convertSchedulesToEvents]);
+  
+  // These functions were moved up before handleSaveTimeSlot to fix the ESLint warning
+  
+  /**
    * Handle saving a time slot
    * @param {Object} data - Schedule data
    * @param {boolean} skipModal - Whether to skip opening the modal (for direct updates)
@@ -243,7 +288,7 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
       console.error('Failed to save schedule:', error);
       throw error;
     }
-  }, [department, recipes, schedules, setSchedules, createAuditData]);
+  }, [department, recipes, schedules, setSchedules, createAuditData, updateCalendarEvents]);
   
   /**
    * Get the start date of the week for a given date
@@ -257,80 +302,6 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
     const monday = new Date(date.setDate(diff));
     return monday.toISOString().split('T')[0];
   };
-  
-  /**
-   * Convert schedules to calendar events
-   * @param {Array} schedules - Schedules array
-   * @returns {Array} Calendar events
-   */
-  const convertSchedulesToEvents = useCallback((schedules) => {
-    if (!schedules || !schedules.length) return [];
-    
-    const events = [];
-    
-    schedules.forEach(schedule => {
-      if (!schedule.items || !schedule.items.length) return;
-      
-      schedule.items.forEach((item, index) => {
-        if (!item.date) return;
-        
-        // Skip items without a start time or end time if they're scheduled
-        if (item.status === 'scheduled' && (!item.startTime || !item.endTime)) return;
-        
-        const date = new Date(item.date);
-        const recipe = recipes.find(r => r.product_code === item.recipeCode);
-        
-        // For scheduled items with time slots
-        if (item.status === 'scheduled' && item.startTime && item.endTime) {
-          const [startHour, startMinute] = item.startTime.split(':').map(Number);
-          const [endHour, endMinute] = item.endTime.split(':').map(Number);
-          
-          const start = new Date(date);
-          start.setHours(startHour, startMinute, 0);
-          
-          const end = new Date(date);
-          end.setHours(endHour, endMinute, 0);
-          
-          events.push({
-            id: `${schedule.id}-${index}`,
-            title: `${recipe?.description || item.recipeCode} (${item.plannedQty})`,
-            start,
-            end,
-            backgroundColor: getStatusColor(item.status),
-            borderColor: getStatusColor(item.status),
-            textColor: '#ffffff',
-            extendedProps: {
-              scheduleId: schedule.id,
-              itemIndex: index,
-              item,
-              recipe,
-              status: item.status
-            }
-          });
-        } else {
-          // For planned or other items without specific time slots
-          events.push({
-            id: `${schedule.id}-${index}`,
-            title: `${recipe?.description || item.recipeCode} (${item.plannedQty})`,
-            start: date,
-            allDay: true,
-            backgroundColor: getStatusColor(item.status),
-            borderColor: getStatusColor(item.status),
-            textColor: '#ffffff',
-            extendedProps: {
-              scheduleId: schedule.id,
-              itemIndex: index,
-              item,
-              recipe,
-              status: item.status
-            }
-          });
-        }
-      });
-    });
-    
-    return events;
-  }, [recipes]);
   
   /**
    * Get color based on status
@@ -351,13 +322,7 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
     }
   };
   
-  /**
-   * Update calendar events based on schedules
-   */
-  const updateCalendarEvents = useCallback(() => {
-    const events = convertSchedulesToEvents(schedules);
-    setCalendarEvents(events);
-  }, [schedules, convertSchedulesToEvents]);
+  // Functions moved up to fix ESLint warnings
 
   /**
    * Delete a schedule item
@@ -491,7 +456,7 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
       console.error('Failed to directly update schedule:', error);
       return false;
     }
-  }, [handleSaveTimeSlot, recipes, updateCalendarEvents]);
+  }, [handleSaveTimeSlot, recipes]);
 
   return {
     selectedSchedule,

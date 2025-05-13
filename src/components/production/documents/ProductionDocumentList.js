@@ -139,13 +139,6 @@ const ProductionDocumentList = ({
               </TableCell>
             </TableRow>
           )}
-          {schedules.flatMap(s => s.items).length === 0 && (
-            <TableRow>
-              <TableCell colSpan={7} align="center">
-                No production documents found
-              </TableCell>
-            </TableRow>
-          )}
         </TableBody>
       </Table>
     </TableContainer>
