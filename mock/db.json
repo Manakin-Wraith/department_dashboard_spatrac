@@ -3786,7 +3786,144 @@
       ]
     }
   ],
-  "schedules": [],
+  "schedules": [
+    {
+      "id": 1,
+      "department": "1154",
+      "weekStartDate": "2025-05-12",
+      "managerName": "Monica",
+      "handlersNames": "Swazi",
+      "items": [
+        {
+          "id": "2025-05-12-26710-1747126852548",
+          "recipeCode": "26710",
+          "plannedQty": 1,
+          "handlerName": "Swazi",
+          "startTime": "01:30",
+          "endTime": "03:15",
+          "date": "2025-05-12",
+          "status": "scheduled",
+          "notes": "",
+          "productDescription": "WHITE BREAD",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-13T09:00:52.540Z",
+              "changedBy": "Manager",
+              "changes": [
+                {
+                  "field": "created",
+                  "oldValue": null,
+                  "newValue": "new item"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "department": "1154",
+      "weekStartDate": "2025-05-13",
+      "managerName": "Monica",
+      "handlersNames": "Swazi",
+      "items": [
+        {
+          "id": "2025-05-13-26710-1747128382437",
+          "recipeCode": "26710",
+          "plannedQty": 1,
+          "handlerName": "Swazi",
+          "startTime": "09:00",
+          "endTime": "17:00",
+          "date": "2025-05-13",
+          "status": "scheduled",
+          "notes": "",
+          "productDescription": "WHITE BREAD",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-13T09:26:22.430Z",
+              "changedBy": "Manager",
+              "changes": [
+                {
+                  "field": "created",
+                  "oldValue": null,
+                  "newValue": "new item"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "department": "1154",
+      "weekStartDate": "2025-05-14",
+      "managerName": "Monica",
+      "handlersNames": "Swazi",
+      "items": [
+        {
+          "id": "2025-05-14-26710-1747128442618",
+          "recipeCode": "26710",
+          "plannedQty": 1,
+          "handlerName": "Swazi",
+          "startTime": "04:00",
+          "endTime": "06:30",
+          "date": "2025-05-14",
+          "status": "scheduled",
+          "notes": "",
+          "productDescription": "WHITE BREAD",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-13T09:27:22.611Z",
+              "changedBy": "Manager",
+              "changes": [
+                {
+                  "field": "created",
+                  "oldValue": null,
+                  "newValue": "new item"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "department": "1154",
+      "weekStartDate": "2025-05-15",
+      "managerName": "Monica",
+      "handlersNames": "Swazi",
+      "items": [
+        {
+          "id": "2025-05-15-26710-1747128651324",
+          "recipeCode": "26710",
+          "plannedQty": 1,
+          "handlerName": "Swazi",
+          "startTime": "04:00",
+          "endTime": "05:00",
+          "date": "2025-05-15",
+          "status": "scheduled",
+          "notes": "",
+          "productDescription": "WHITE BREAD",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-13T09:30:51.318Z",
+              "changedBy": "Manager",
+              "changes": [
+                {
+                  "field": "created",
+                  "oldValue": null,
+                  "newValue": "new item"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "audits": [],
   "production-documents": [],
   "department_staff": [
