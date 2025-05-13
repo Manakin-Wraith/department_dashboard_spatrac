@@ -3,9 +3,8 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Tabs, Tab, Box, TextField, Select, MenuItem,
   FormControl, InputLabel, Grid, Typography, 
-  List, ListItem, useTheme, Stepper, Step, StepLabel
+  List, ListItem, Stepper, Step, StepLabel
 } from '@mui/material';
-// useTheme is already imported from @mui/material
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import useDeptProductSupplier from '../utils/useDeptProductSupplier';
@@ -32,29 +31,30 @@ const UnifiedScheduleModal = ({
   managers = [], // Department managers
   suppliers = [],
   currentItem = null,
-  mode = 'scheduled', // 'schedule' or 'production'
+  mode = 'scheduled', // 'scheduled', 'production', or 'confirm'
   currentEventInfo = null,
-  currentSlotInfo = null
+  currentSlotInfo = null,
+  initialItems = [], // Used for confirm mode
+  initialDate = null, // Used for confirm mode
+  deprecationNotice = null // Optional deprecation notice for wrapper components
 }) => {
   // Get supplier mapping for the current department
   // Ensure department is a string before passing to the hook
   const deptString = department ? String(department) : '';
   const supplierMapping = useDeptProductSupplier(deptString);
-  const theme = useTheme();
-  const accentColor = department?.color || theme.palette.primary.main;
   
   // Use the notification hook for consistent notifications
   const { notification, closeNotification, showSuccess, showError } = useNotifications();
   
-  // Tab state
-  const [activeTab, setActiveTab] = useState(0);
+  // Tab state - for confirm mode, we'll start on the schedule tab
+  const [activeTab, setActiveTab] = useState(mode === 'confirm' ? 0 : 0);
   
   // Common fields
   const [recipeCode, setRecipeCode] = useState('');
   const [plannedQty, setPlannedQty] = useState(0);
   const [handlerName, setHandlerName] = useState('');
   const [managerName, setManagerName] = useState('');
-  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledDate, setScheduledDate] = useState(initialDate ? initialDate.substring(0, 10) : '');
   const [status, setStatus] = useState('scheduled'); // New status field: planned, scheduled, in-progress, completed, cancelled
   
   // Schedule-specific fields
@@ -190,13 +190,19 @@ const UnifiedScheduleModal = ({
   // Initialize form data when modal opens or data changes
   useEffect(() => {
     if (open) {
-      // Reset state when modal opens
+      // Initialize modal state when opened
       setActiveTab(0);
       
       console.log('Initializing modal with mode:', mode);
       console.log('Current item:', currentItem);
       console.log('Current event info:', currentEventInfo);
       console.log('Current slot info:', currentSlotInfo);
+      
+      // Handle confirm mode initialization
+      if (mode === 'confirm' && initialItems && initialItems.length > 0) {
+        console.log('Initializing confirm mode with items:', initialItems);
+        return;
+      }
       
       // Handle initialization based on the source of data
       if (currentItem) {
@@ -357,7 +363,7 @@ const UnifiedScheduleModal = ({
         // when recipeCode changes
       }
     }
-  }, [open, mode, currentEventInfo, currentSlotInfo, currentItem, recipes, handlers, managers, department, managerName]);
+  }, [open, mode, currentEventInfo, currentSlotInfo, currentItem, recipes, handlers, managers, department, managerName, initialItems]);
   
   // Handle tab change
   const handleTabChange = (event, newValue) => {
@@ -566,33 +572,13 @@ const UnifiedScheduleModal = ({
   }
   
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-    >
-      <DialogTitle sx={{ borderBottom: `2px solid ${accentColor}`, color: accentColor }}>
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Box display="flex" alignItems="center">
-            {status === 'scheduled' ? (
-              <>
-                <FactCheckIcon sx={{ mr: 1 }} />
-                {currentItem ? 'Edit Scheduled Production' : 'Schedule Production'}
-              </>
-            ) : (
-              <>
-                <FactCheckIcon sx={{ mr: 1 }} />
-                {`${status.charAt(0).toUpperCase() + status.slice(1)} Production`}
-              </>
-            )}
-          </Box>
-          
-          {/* Status badge */}
-          <Box 
-            sx={{ 
-              bgcolor: status === 'scheduled' ? 'warning.light' : 
-                     status === 'completed' ? 'success.light' : 'error.light',
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+      <DialogTitle>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box
+            sx={{
+              bgcolor: status === SCHEDULE_STATUS.SCHEDULED ? 'warning.light' :
+                     status === SCHEDULE_STATUS.COMPLETED ? 'success.light' : 'error.light',
               color: '#fff',
               px: 1.5,
               py: 0.5,
@@ -604,23 +590,19 @@ const UnifiedScheduleModal = ({
           >
             {status}
           </Box>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            textColor="primary"
+            indicatorColor="primary"
+          >
+            <Tab label="Basic Information" />
+            <Tab label="Recipe Details" />
+            <Tab label="Production Data" />
+            <Tab label="Change History" />
+          </Tabs>
         </Box>
       </DialogTitle>
-      
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 3 }}>
-        <Tabs 
-          value={activeTab} 
-          onChange={handleTabChange}
-          textColor="primary"
-          indicatorColor="primary"
-        >
-          <Tab label="Basic Information" />
-          <Tab label="Recipe Details" />
-          <Tab label="Production Data" />
-          <Tab label="Change History" />
-        </Tabs>
-      </Box>
-      
       <DialogContent dividers>
         {/* Tab 1: Basic Information */}
         {activeTab === 0 && (
@@ -1077,7 +1059,7 @@ const UnifiedScheduleModal = ({
                   // Short delay before saving to ensure state updates
                   setTimeout(() => {
                     // Ensure we have all the required data for the audit
-                    if (!actualQty) setActualQty(plannedQty || 1);
+                    if (!actualQty) setActualQty(plannedQty);
                     if (!qualityScore) setQualityScore(5);
                     
                     // Save and complete the production

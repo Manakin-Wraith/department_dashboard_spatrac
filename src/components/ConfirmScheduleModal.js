@@ -1,284 +1,56 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, Accordion, AccordionSummary, AccordionDetails,
-  Typography, List, ListItem, Grid, TextField, Card, CardContent,
-  Select, MenuItem, FormControl, InputLabel
-} from '@mui/material';
+import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { useTheme, darken } from '@mui/material/styles';
-import departments from '../data/department_table.json';
-import supplierTable from '../data/supplier_table.json';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import AddCircleOutline from '@mui/icons-material/AddCircleOutline';
-import useDeptProductSupplier from '../utils/useDeptProductSupplier';
 import useNotifications from '../hooks/useNotifications';
-import NotificationSystem from './production/common/NotificationSystem';
-import { SCHEDULE_STATUS, getStatusLabel, getStatusColor } from '../utils/statusUtils';
-import { EVENT_TYPES, bus } from '../utils/eventBus';
+import UnifiedScheduleModal from './UnifiedScheduleModal';
 
+/**
+ * DEPRECATED: This component has been replaced by UnifiedScheduleModal
+ * This file is kept for backward compatibility but forwards props to UnifiedScheduleModal
+ * 
+ * @deprecated Use UnifiedScheduleModal instead with mode='confirm'
+ */
 const ConfirmScheduleModal = ({ open, onClose, items, recipes, onConfirm, initialDate }) => {
-  const [localItems, setLocalItems] = useState([]);
-  const [managerName, setManagerName] = useState('');
-  const [handlersNames, setHandlersNames] = useState('');
-  const [ingredientSuppliers, setIngredientSuppliers] = useState([]);
-  const [scheduledDate, setScheduledDate] = useState('');
-
-  const theme = useTheme();
   const { department } = useParams();
-  const deptObj = departments.find(d => d.department_code === department) || {};
-  const accentColor = deptObj.color || theme.palette.primary.main;
-  const suppliers = supplierTable.filter(s => !s.department || s.department === deptObj.department);
+  const { showWarning } = useNotifications();
   
-  // Use the notification hook for consistent notifications
-  const { notification, closeNotification, showSuccess, showError, showInfo } = useNotifications();
-
-  // load department-specific product->supplier mappings (using department name for CSV lookup)
-  const productSupplierMap = useDeptProductSupplier(deptObj.department);
-
+  // Show deprecation warning
   useEffect(() => {
-    setLocalItems(items);
-    // init suppliers map from dept CSV mapping
-    const init = items.map(item => {
-      const recipe = recipes.find(r => r.product_code === item.recipeCode) || {};
-      return recipe.ingredients?.map(ing => 
-        productSupplierMap[ing.prod_code]?.supplier_name 
-        || productSupplierMap[ing.description]?.supplier_name 
-        || '') || [];
-    });
-    setIngredientSuppliers(init);
-  }, [items, recipes, productSupplierMap]);
-
-  useEffect(() => {
-    if (initialDate) {
-      // initialDate might be a full ISO string (e.g., "2023-10-27T10:00:00") 
-      // or just a date string (e.g., "2023-10-27").
-      // The TextField type="date" expects "YYYY-MM-DD".
-      setScheduledDate(initialDate.substring(0, 10));
-    }
-  }, [initialDate]);
-
-  useEffect(() => {
-    const dm = deptObj.department_manager;
-    if (Array.isArray(dm) && dm.length) {
-      setManagerName(dm[0]);
-    } else if (typeof dm === 'string' && dm) {
-      setManagerName(dm);
-    }
-  }, [deptObj.department_manager]);
-
-  useEffect(() => {
-    const handlersList = deptObj.handlers;
-    if (Array.isArray(handlersList) && handlersList.length) {
-      setHandlersNames(handlersList[0]);
-    }
-  }, [deptObj.handlers]);
-
-  // Handle quantity change with proper state updates
-  const handleQtyChange = (idx, value) => {
-    // Parse the input value to a number or default to 0 if invalid
-    const numValue = value === '' ? 0 : Number(value);
+    console.warn('ConfirmScheduleModal is deprecated. Use UnifiedScheduleModal with mode="confirm" instead.');
     
-    // Create a deep copy of the items array
-    const newItems = JSON.parse(JSON.stringify(localItems));
-    
-    // Update the quantity for the specific item
-    if (newItems[idx]) {
-      newItems[idx].plannedQty = numValue;
-      
-      // Update the state with the new array
-      setLocalItems(newItems);
-      console.log(`Updated quantity for item ${idx} to ${numValue}`);
+    if (open) {
+      showWarning('This component is deprecated. Please use UnifiedScheduleModal instead.');
     }
-  };
-
-  const addItem = () => {
-    const defaultCode = recipes[0]?.product_code || '';
-    setLocalItems(prev => [...prev, { recipeCode: defaultCode, plannedQty: 0 }]);
-    const count = recipes.find(r => r.product_code === defaultCode)?.ingredients?.length || 0;
-    setIngredientSuppliers(prev => [...prev, Array(count).fill('')]);
-  };
-
-  const handleRecipeChange = (idx, code) => {
-    const updated = [...localItems];
-    updated[idx].recipeCode = code;
-    setLocalItems(updated);
-    // reset suppliers for new recipe from mapping
-    const recipe = recipes.find(r => r.product_code === code) || {};
-    setIngredientSuppliers(prev => {
-      const arr = [...prev];
-      arr[idx] = recipe.ingredients?.map(ing => 
-        productSupplierMap[ing.prod_code]?.supplier_name 
-        || productSupplierMap[ing.description]?.supplier_name 
-        || '') || [];
-      return arr;
+  }, [open, showWarning]);
+  
+  // Handle the onConfirm callback
+  const handleSave = (data) => {
+    // Map the data format from UnifiedScheduleModal to the format expected by onConfirm
+    onConfirm({
+      items: data.items || [],
+      scheduledDate: data.scheduledDate || initialDate,
+      managerName: data.managerName || '',
+      handlersNames: data.handlersNames || '',
+      ingredientSuppliers: data.ingredientSuppliers || []
     });
   };
-
+  
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ borderBottom: `2px solid ${accentColor}`, color: accentColor }}>Confirm Schedule</DialogTitle>
-      <DialogContent dividers>
-        <Button
-          variant="outlined"
-          startIcon={<AddCircleOutline />}
-          onClick={addItem}
-          sx={{ mb: 2, borderColor: accentColor, color: accentColor, '&:hover': { borderColor: accentColor } }}
-        >Add Item</Button>
-        <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid item xs={4}>
-            <TextField label="Department Manager" fullWidth value={managerName} onChange={e => setManagerName(e.target.value)} />
-          </Grid>
-          <Grid item xs={4}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Food Handler</InputLabel>
-              <Select
-                label="Food Handler"
-                size="small"
-                value={handlersNames}
-                onChange={e => setHandlersNames(e.target.value)}
-              >
-                {deptObj.handlers?.map((h, idx) => (
-                  <MenuItem key={idx} value={h}>
-                    {h}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={4}>
-            <TextField
-              label="Production Date"
-              type="date"
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-              value={scheduledDate}
-              onChange={e => setScheduledDate(e.target.value)}
-            />
-          </Grid>
-        </Grid>
-        {localItems.map((item, idx) => {
-          const recipe = recipes.find(r => r.product_code === item.recipeCode) || {};
-          return (
-            <Card key={idx} sx={{ mb: 2 }}>
-              <CardContent>
-                <Accordion sx={{ boxShadow: 'none' }}>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Select
-                      value={localItems[idx].recipeCode}
-                      size="small"
-                      onChange={e => handleRecipeChange(idx, e.target.value)}
-                      sx={{ mr: 2, minWidth: 200 }}
-                    >
-                      {recipes.map((r, recipeIdx) => (
-                        <MenuItem key={`${r.product_code}-${recipeIdx}`} value={r.product_code}>
-                          {r.description}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    <TextField
-                      label="Qty"
-                      type="number"
-                      size="small"
-                      value={item.plannedQty === 0 ? '0' : (item.plannedQty || '')}
-                      onChange={e => handleQtyChange(idx, e.target.value)}
-                      onBlur={() => {
-                        // Ensure we have a valid number on blur
-                        if (localItems[idx] && (localItems[idx].plannedQty === '' || isNaN(localItems[idx].plannedQty))) {
-                          handleQtyChange(idx, 0);
-                        }
-                      }}
-                      inputProps={{ 
-                        min: 0, 
-                        step: 1,
-                        style: { textAlign: 'center' }
-                      }}
-                      sx={{ width: 120 }}
-                    />
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Card>
-                      <CardContent>
-                        <Typography variant="subtitle2" gutterBottom>Ingredients</Typography>
-                        <List>
-                          {recipe.ingredients?.map((ing, i) => (
-                            <ListItem key={i}>
-                              <Grid container spacing={2} alignItems="center">
-                                <Grid item xs={4}>
-                                  <Typography>{ing.description}</Typography>
-                                  <Typography variant="caption">Code: {ing.prod_code}</Typography>
-                                </Grid>
-                                <Grid item xs={6}>
-                                  <Select
-                                    label="Supplier"
-                                    size="small"
-                                    fullWidth
-                                    sx={{ minWidth: 200 }}
-                                    value={ingredientSuppliers[idx]?.[i] || ''}
-                                    onChange={e => {
-                                      const supArr = [...ingredientSuppliers];
-                                      supArr[idx][i] = e.target.value;
-                                      setIngredientSuppliers(supArr);
-                                    }}
-                                  >
-                                    <MenuItem value=""><em>None</em></MenuItem>
-                                    {(() => {
-                                      const entry = productSupplierMap[ing.prod_code] || productSupplierMap[ing.description];
-                                      return entry ? [entry] : suppliers;
-                                    })().map(s => (
-                                      <MenuItem key={s.supplier_code} value={s.supplier_name}>
-                                        {s.supplier_name}
-                                      </MenuItem>
-                                    ))}
-                                  </Select>
-                                </Grid>
-                                <Grid item xs={2}>
-                                  <TextField
-                                    label="Qty Used"
-                                    size="small"
-                                    fullWidth
-                                    value={
-                                      (() => {
-                                        const qty = Number(ing.recipe_use) || 0;
-                                        const planned = Number(item.plannedQty) || 0;
-                                        return qty * planned;
-                                      })()
-                                    }
-                                    InputProps={{ readOnly: true }}
-                                  />
-                                </Grid>
-                              </Grid>
-                            </ListItem>
-                          ))}
-                        </List>
-                      </CardContent>
-                    </Card>
-                  </AccordionDetails>
-                </Accordion>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </DialogContent>
-      <DialogActions>
-        <Button
-          variant="outlined"
-          onClick={onClose}
-          sx={{ borderColor: accentColor, color: accentColor, '&:hover': { borderColor: accentColor } }}
-        >Cancel</Button>
-        <Button
-          variant="contained"
-          onClick={() => onConfirm({ items: localItems, scheduledDate, managerName, handlersNames, ingredientSuppliers })}
-          sx={{ backgroundColor: accentColor, '&:hover': { backgroundColor: darken(accentColor, 0.2) } }}
-        >Confirm & Save</Button>
-      </DialogActions>
-      
-      {/* Add NotificationSystem for consistent notifications */}
-      <NotificationSystem 
-        notification={notification} 
-        onClose={closeNotification} 
-      />
-    </Dialog>
+    <UnifiedScheduleModal
+      open={open}
+      onClose={onClose}
+      onSave={handleSave}
+      department={department}
+      recipes={recipes}
+      initialItems={items}
+      initialDate={initialDate}
+      mode="confirm"
+      deprecationNotice={
+        <div style={{ padding: '8px 16px', backgroundColor: '#fff3cd', color: '#856404', marginBottom: '16px', borderRadius: '4px' }}>
+          This component has been replaced by UnifiedScheduleModal for better functionality.
+          Future updates will only be made to the new component.
+        </div>
+      }
+    />
   );
 };
 
