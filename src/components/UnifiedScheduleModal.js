@@ -8,8 +8,11 @@ import {
 // useTheme is already imported from @mui/material
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
 import useDeptProductSupplier from '../utils/useDeptProductSupplier';
+import { SCHEDULE_STATUS, normalizeStatus, isValidStatusTransition, getStatusLabel } from '../utils/statusUtils';
+import useNotifications from '../hooks/useNotifications';
+import NotificationSystem from './production/common/NotificationSystem';
+import { EVENT_TYPES, bus } from '../utils/eventBus';
 
 /**
  * UnifiedScheduleModal - A combined modal for recipe scheduling and production management
@@ -39,6 +42,9 @@ const UnifiedScheduleModal = ({
   const supplierMapping = useDeptProductSupplier(deptString);
   const theme = useTheme();
   const accentColor = department?.color || theme.palette.primary.main;
+  
+  // Use the notification hook for consistent notifications
+  const { notification, closeNotification, showSuccess, showError } = useNotifications();
   
   // Tab state
   const [activeTab, setActiveTab] = useState(0);
@@ -231,7 +237,8 @@ const UnifiedScheduleModal = ({
         setChangeHistory(currentItem.changeHistory || []);
         
         // If the item has production data, initialize those fields
-        if (currentItem.status === 'scheduled' || currentItem.status === 'in-progress' || currentItem.status === 'completed') {
+        const normalizedItemStatus = normalizeStatus(currentItem.status);
+        if (normalizedItemStatus === SCHEDULE_STATUS.SCHEDULED || normalizedItemStatus === SCHEDULE_STATUS.IN_PROGRESS || normalizedItemStatus === SCHEDULE_STATUS.COMPLETED) {
           setActualQty(currentItem.actualQty || currentItem.plannedQty || 0);
           setQualityScore(currentItem.qualityScore || 1);
           setNotes(currentItem.notes || '');
@@ -339,10 +346,10 @@ const UnifiedScheduleModal = ({
         // Set default manager from managers list
         setManagerName(managers.length > 0 ? (managers[0].name || managers[0]) : '');
         
-        setStatus('scheduled'); // New items start as scheduled
+        setStatus(SCHEDULE_STATUS.SCHEDULED); // New items start as scheduled
         setChangeHistory([{
           timestamp: new Date().toISOString(),
-          changedBy: 'Current User', // This would come from auth context in a real app
+          changedBy: 'Manager',
           changes: [{ field: 'created', oldValue: null, newValue: 'new item' }]
         }]);
         
@@ -430,10 +437,22 @@ const UnifiedScheduleModal = ({
   
   // Handle status transition with guided workflow
   const handleStatusTransition = (newStatus) => {
+    // Normalize current status
+    const normalizedCurrentStatus = normalizeStatus(status);
+    
+    // Check if the transition is valid
+    if (!isValidStatusTransition(normalizedCurrentStatus, newStatus)) {
+      console.error(`Invalid status transition from ${normalizedCurrentStatus} to ${newStatus}`);
+      
+      // Use our standardized notification system
+      showError(`Cannot change status from ${getStatusLabel(normalizedCurrentStatus)} to ${getStatusLabel(newStatus)}`);
+      return false;
+    }
+    
     // Track the status change in history
     const statusChange = {
       timestamp: new Date().toISOString(),
-      changedBy: 'Current User', // This would come from auth context in a real app
+      changedBy: 'Production Manager', // This would come from auth context in a real app
       changes: [{ field: 'status', oldValue: status, newValue: newStatus }]
     };
     
@@ -441,7 +460,7 @@ const UnifiedScheduleModal = ({
     setStatus(newStatus);
     
     // Navigate to relevant tab based on new status
-    if (newStatus === 'completed') {
+    if (newStatus === SCHEDULE_STATUS.COMPLETED) {
       // Initialize production fields if not already set
       if (actualQty === 0) setActualQty(plannedQty);
       
@@ -450,10 +469,12 @@ const UnifiedScheduleModal = ({
       
       // After a short delay, show the change history tab
       setTimeout(() => setActiveTab(3), 300);
-    } else if (newStatus === 'cancelled') {
+    } else if (newStatus === SCHEDULE_STATUS.CANCELLED) {
       // Show the change history tab to display cancellation
       setActiveTab(3);
     }
+    
+    return true;
   };
   
   // Handle save with simplified status-based workflow
@@ -462,9 +483,12 @@ const UnifiedScheduleModal = ({
     let currentStatus = status;
     const timestamp = new Date().toISOString();
     
+    // Debug the current status
+    console.log('Current status before save:', status);
+    
     // Ensure the status is properly set when completing production
-    if (status === 'completed' && currentStatus !== 'completed') {
-      currentStatus = 'completed';
+    if (status === SCHEDULE_STATUS.COMPLETED) {
+      currentStatus = SCHEDULE_STATUS.COMPLETED;
       console.log('Ensuring production is marked as completed');
     }
     
@@ -487,7 +511,7 @@ const UnifiedScheduleModal = ({
     };
     
     // Add production-specific fields if in a production status
-    if (currentStatus === 'scheduled' || currentStatus === 'in-progress' || currentStatus === 'completed') {
+    if (currentStatus === SCHEDULE_STATUS.SCHEDULED || currentStatus === SCHEDULE_STATUS.IN_PROGRESS || currentStatus === SCHEDULE_STATUS.COMPLETED) {
       // Ensure actual quantity is set if not provided
       const finalActualQty = Number(actualQty) || Number(plannedQty);
       
@@ -505,7 +529,7 @@ const UnifiedScheduleModal = ({
       };
       
       // If status is completed, create an audit record
-      if (currentStatus === 'completed') {
+      if (currentStatus === SCHEDULE_STATUS.COMPLETED) {
         console.log('Production completed - creating audit record');
         // The audit data will be created in the useScheduleManagement hook
       }
@@ -640,7 +664,7 @@ const UnifiedScheduleModal = ({
                 sx={{ mb: 2 }}
               />
               
-              {(status === 'scheduled' || status === 'in-progress' || status === 'completed') && (
+              {(status === 'scheduled' || status === 'in-progress' || (status === SCHEDULE_STATUS.COMPLETED || status === SCHEDULE_STATUS.CANCELLED)) && (
                 <TextField
                   label="Actual Quantity"
                   type="number"
@@ -659,7 +683,7 @@ const UnifiedScheduleModal = ({
                   sx={{ 
                     bgcolor: status === 'scheduled' ? 'info.light' : 
                            status === 'scheduled' ? 'warning.light' : 
-                           status === 'completed' ? 'success.light' : 'error.light',
+                           status === SCHEDULE_STATUS.COMPLETED ? 'success.light' : 'error.light',
                     color: '#fff',
                     px: 2,
                     py: 1,
@@ -675,7 +699,7 @@ const UnifiedScheduleModal = ({
               
               {/* Workflow stepper */}
               <Box sx={{ mb: 3, mt: 2 }}>
-                <Stepper activeStep={status === 'scheduled' ? 0 : status === 'completed' ? 1 : -1} alternativeLabel>
+                <Stepper activeStep={status === SCHEDULE_STATUS.SCHEDULED ? 0 : status === SCHEDULE_STATUS.COMPLETED ? 1 : -1} alternativeLabel>
                   <Step>
                     <StepLabel>Planned</StepLabel>
                   </Step>
@@ -1023,7 +1047,7 @@ const UnifiedScheduleModal = ({
       <DialogActions sx={{ flexDirection: 'column', alignItems: 'stretch', p: 2 }}>
         {/* Simplified workflow action buttons */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-          
+        {status === SCHEDULE_STATUS.SCHEDULED && (
               <Button 
                 variant="contained" 
                 color="warning"
@@ -1033,37 +1057,25 @@ const UnifiedScheduleModal = ({
               >
                 Save Schedule
               </Button>
-          
-          {status === 'scheduled' && (
+        )}
             <>
-              <Button 
-                variant="contained" 
-                color="primary"
-                onClick={handleSave}
-                sx={{ flex: 1, mr: 1 }}
-              >
-                Save Schedule
-              </Button>
               <Button 
                 variant="contained" 
                 color="success"
                 onClick={() => {
-                  // Set status to completed
-                  handleStatusTransition('completed');
+                  console.log('Current status before transition:', status);
                   
-                  // Add a status change entry to change history
-                  const statusChange = {
-                    timestamp: new Date().toISOString(),
-                    changedBy: 'User',
-                    changes: [{ field: 'status', oldValue: status, newValue: 'completed' }]
-                  };
-                  setChangeHistory(prev => [...prev, statusChange]);
+                  // Set status to completed with validation
+                  const transitionSuccess = handleStatusTransition(SCHEDULE_STATUS.COMPLETED);
+                  
+                  console.log('Transition success:', transitionSuccess);
+                  console.log('Status after transition:', status);
+                  
+                  // If transition failed, don't proceed
+                  if (!transitionSuccess) return;
                   
                   // Short delay before saving to ensure state updates
                   setTimeout(() => {
-                    // Force status to completed before saving
-                    setStatus('completed');
-                    
                     // Ensure we have all the required data for the audit
                     if (!actualQty) setActualQty(plannedQty || 1);
                     if (!qualityScore) setQualityScore(5);
@@ -1071,8 +1083,19 @@ const UnifiedScheduleModal = ({
                     // Save and complete the production
                     handleSave();
                     
-                    // Show success message
+                    // Show success message using our standardized notification system
                     console.log('Production completed and moved to audit');
+                    showSuccess('Production completed and moved to audit records');
+                    
+                    // Emit an event to notify other components
+                    bus.emit(EVENT_TYPES.PRODUCTION_COMPLETED, {
+                      id: currentItem?.id || `${scheduledDate}-${recipeCode}-${Date.now()}`,
+                      status: SCHEDULE_STATUS.COMPLETED,
+                      timestamp: new Date().toISOString()
+                    });
+                    
+                    // Close the modal after completion
+                    onClose();
                   }, 100);
                 }}
                 startIcon={<CheckCircleIcon />}
@@ -1081,19 +1104,6 @@ const UnifiedScheduleModal = ({
                 Complete Production
               </Button>
             </>
-          )}
-          
-          {(status === 'completed' || status === 'cancelled') && (
-            <Button 
-              variant="contained" 
-              color="primary"
-              onClick={handleSave}
-              sx={{ flex: 1 }}
-              startIcon={status === 'completed' ? <CheckCircleIcon /> : <CancelIcon />}
-            >
-              Save {status === 'completed' ? 'Completed' : 'Cancelled'} Production
-            </Button>
-          )}
         </Box>
         
         {/* Close button */}
@@ -1103,6 +1113,12 @@ const UnifiedScheduleModal = ({
           </Button>
         </Box>
       </DialogActions>
+      
+      {/* Add NotificationSystem for consistent notifications */}
+      <NotificationSystem 
+        notification={notification} 
+        onClose={closeNotification} 
+      />
     </Dialog>
   );
 };

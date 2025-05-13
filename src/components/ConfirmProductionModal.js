@@ -27,8 +27,11 @@ import {
   SCHEDULE_STATUS, 
   normalizeStatus, 
   isValidStatusTransition,
-  getStatusLabel 
+  getStatusLabel,
+  getStatusColor
 } from '../utils/statusUtils';
+import useNotifications from '../hooks/useNotifications';
+import NotificationSystem from './production/common/NotificationSystem';
 
 const ConfirmProductionModal = ({ open, onClose, scheduleItem, recipes, onConfirm }) => {
   const [actualQty, setActualQty] = useState(0);
@@ -36,6 +39,9 @@ const ConfirmProductionModal = ({ open, onClose, scheduleItem, recipes, onConfir
   const [qualityScore, setQualityScore] = useState(5);
   const [deviations, setDeviations] = useState([]);
   const [newDeviation, setNewDeviation] = useState('');
+  
+  // Use the notification hook for consistent notifications
+  const { notification, closeNotification, showError } = useNotifications();
   const [packingBatchCode, setPackingBatchCode] = useState('');
   const [batchCodes, setBatchCodes] = useState([]);
   const [sellByDate, setSellByDate] = useState(null);
@@ -101,15 +107,26 @@ const ConfirmProductionModal = ({ open, onClose, scheduleItem, recipes, onConfir
   const handleConfirm = () => {
     if (!scheduleItem) return;
 
+    console.log('ConfirmProductionModal - Starting confirmation process');
+    console.log('Original schedule item:', scheduleItem);
+
     // Get the current status and normalize it
     const currentStatus = normalizeStatus(scheduleItem.status);
     const newStatus = SCHEDULE_STATUS.COMPLETED;
     
+    console.log('Current status (normalized):', currentStatus);
+    console.log('New status:', newStatus);
+    
     // Check if this is a valid status transition
     if (!isValidStatusTransition(currentStatus, newStatus)) {
-      alert(`Cannot confirm an item with status: ${getStatusLabel(currentStatus)}`);
+      console.error(`Invalid status transition from ${currentStatus} to ${newStatus}`);
+      // Use our standardized notification system
+      showError(`Cannot confirm an item with status: ${getStatusLabel(currentStatus)}`);
       return;
     }
+    
+    console.log('Status transition is valid');
+
     
     // Format dates properly
     const formattedSellByDate = sellByDate ? sellByDate.toISOString().split('T')[0] : '';
@@ -168,10 +185,23 @@ const ConfirmProductionModal = ({ open, onClose, scheduleItem, recipes, onConfir
       notes,
       qualityScore,
       deviations,
-      confirmationTimestamp: timestamp
+      confirmationTimestamp: timestamp,
+      status: newStatus // Add the new status to ensure it's updated
     };
 
+    console.log('Updated schedule item with new status:', updatedScheduleItem);
+    console.log('Audit data being created:', auditData);
+    
+    // Emit an event for debugging purposes
+    console.log('Emitting production completed event');
+    
+    // Call the onConfirm callback with the updated data
+    console.log('Calling onConfirm with updated data');
     onConfirm(updatedScheduleItem, auditData);
+    
+    // Show success message
+    console.log('Showing success notification');
+    showSuccess('Production confirmed and moved to audit records');
     onClose();
   };
 
@@ -404,6 +434,12 @@ const ConfirmProductionModal = ({ open, onClose, scheduleItem, recipes, onConfir
           Confirm Production
         </Button>
       </DialogActions>
+      
+      {/* Add NotificationSystem for consistent notifications */}
+      <NotificationSystem 
+        notification={notification} 
+        onClose={closeNotification} 
+      />
     </Dialog>
   );
 };

@@ -1,3 +1,5 @@
+import { SCHEDULE_STATUS, normalizeStatus } from '../utils/statusUtils';
+
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:4000';
 
 // Department code mapping between URL parameters and database values
@@ -167,7 +169,7 @@ export async function saveAudit(department, auditRecord) {
     ...auditRecord,
     department: department || auditRecord.department,
     confirmation_timestamp: auditRecord.confirmation_timestamp || new Date().toISOString(),
-    status: 'completed' // Always set to completed for audit records
+    status: SCHEDULE_STATUS.COMPLETED // Always set to completed for audit records
   };
   
   // Log the audit data for debugging
@@ -311,25 +313,35 @@ export async function saveSchedule(department, schedule) {
       
       // Ensure all items have scheduled status by default
       if (!item.status) {
-        item.status = 'scheduled';
+        item.status = SCHEDULE_STATUS.SCHEDULED;
       }
       
       // Ensure status is properly set
-      if (item.status === 'completed') {
+      const normalizedStatus = normalizeStatus(item.status);
+      
+      // CRITICAL FIX: Explicitly set the status to the normalized value
+      // This ensures the status is consistently represented in the database
+      item.status = normalizedStatus;
+      
+      if (normalizedStatus === SCHEDULE_STATUS.COMPLETED) {
         console.log(`Item ${item.id} is marked as completed`);
         
         // Add a status change to the change history if not already there
         const hasStatusChange = item.changeHistory.some(change => 
-          change.changes.some(c => c.field === 'status' && c.newValue === 'completed')
+          change.changes.some(c => c.field === 'status' && c.newValue === SCHEDULE_STATUS.COMPLETED)
         );
         
         if (!hasStatusChange) {
           item.changeHistory.push({
             timestamp: new Date().toISOString(),
             changedBy: 'System',
-            changes: [{ field: 'status', oldValue: 'scheduled', newValue: 'completed' }]
+            changes: [{ field: 'status', oldValue: SCHEDULE_STATUS.SCHEDULED, newValue: SCHEDULE_STATUS.COMPLETED }]
           });
         }
+        
+        // CRITICAL FIX: Ensure the status is explicitly set to COMPLETED
+        console.log(`Explicitly setting item ${item.id} status to COMPLETED`);
+        item.status = SCHEDULE_STATUS.COMPLETED;
       }
       
       return item;

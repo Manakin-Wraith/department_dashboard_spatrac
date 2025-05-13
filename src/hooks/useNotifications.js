@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { bus } from '../utils/eventBus';
 
 /**
  * Custom hook for managing notifications
@@ -30,6 +31,19 @@ const useNotifications = () => {
   const closeNotification = useCallback(() => {
     setNotification(prev => ({ ...prev, open: false }));
   }, []);
+  
+  // Listen for global toast notifications via event bus
+  useEffect(() => {
+    const handleToast = (toastData) => {
+      showNotification(toastData.message, toastData.severity);
+    };
+    
+    bus.on('show-toast', handleToast);
+    
+    return () => {
+      bus.off('show-toast', handleToast);
+    };
+  }, [showNotification]);
 
   /**
    * Show a success notification

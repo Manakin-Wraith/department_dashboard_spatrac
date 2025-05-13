@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { format } from 'date-fns';
+import { SCHEDULE_STATUS, normalizeStatus } from '../../../utils/statusUtils';
 
 /**
  * Custom hook for calendar event handlers
@@ -107,7 +108,8 @@ const useCalendarEventHandlers = ({
     setCurrentSlotInfo(null);
     
     // Open modal in appropriate mode based on status
-    if (item.status === 'completed') {
+    const normalizedStatus = normalizeStatus(item.status);
+    if (normalizedStatus === SCHEDULE_STATUS.COMPLETED) {
       setUnifiedModalMode('production');
     } else {
       setUnifiedModalMode('schedule');

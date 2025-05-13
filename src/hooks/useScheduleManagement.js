@@ -77,7 +77,8 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
       confirmation_timestamp: new Date().toISOString(),
       productDescription: recipe?.description,
       date,
-      production_id: productionId
+      production_id: productionId,
+      originalScheduleId: productionId // Critical for linking audit to original schedule item
     };
   }, [department]);
   
@@ -159,7 +160,7 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
           const auditData = createAuditData(item, recipe);
           
           // Save audit record
-          await saveAudit(auditData);
+          await saveAudit(department, auditData);
           
           // Remove the item from the schedule if it exists
           if (schedule) {
@@ -290,7 +291,7 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
         };
         
         // Save to API
-        const savedSchedule = await saveSchedule(updatedSchedule);
+        const savedSchedule = await saveSchedule(department, updatedSchedule);
         
         // Update local state
         setSchedules(prev => [...prev, savedSchedule]);
@@ -304,7 +305,7 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
         };
         
         // Save to API
-        await saveSchedule(updatedSchedule);
+        await saveSchedule(department, updatedSchedule);
         
         // Update local state
         const updatedSchedules = [...schedules];
@@ -319,7 +320,7 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
       console.error('Error creating schedule item:', error);
       return null;
     }
-  }, [schedules, setSchedules, logStatus]);
+  }, [schedules, setSchedules, logStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Update a schedule item
@@ -387,21 +388,26 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
       };
       
       // Save to API
-      await saveSchedule(updatedSchedule);
+      await saveSchedule(department, updatedSchedule);
       
       // Update local state
       const updatedSchedules = [...schedules];
       updatedSchedules[scheduleIndex] = updatedSchedule;
+      console.log('Updating local state with new schedules:', updatedSchedules);
       setSchedules(updatedSchedules);
       
+      // Log the updated schedules
+      console.log('Updated schedules:', updatedSchedules);
+      
+      console.log('Schedule item update process completed successfully');
       logStatus(`Updated schedule item ${itemData.id}`, 'success');
       return updatedSchedule;
     } catch (error) {
-      logStatus(`Error updating schedule item: ${error.message}`, 'error');
       console.error('Error updating schedule item:', error);
+      logStatus(`Error updating schedule item: ${error.message}`, 'error');
       return null;
     }
-  }, [schedules, setSchedules, logStatus]);
+  }, [schedules, setSchedules, logStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Delete a schedule item
@@ -450,7 +456,7 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
       console.error('Error deleting schedule item:', error);
       return null;
     }
-  }, [schedules, setSchedules, logStatus]);
+  }, [schedules, setSchedules, logStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Confirm a production item (mark as completed)
@@ -458,6 +464,8 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
    * @param {Object} confirmData - Confirmation data
    */
   const confirmProduction = useCallback(async (scheduleItem, confirmData) => {
+    console.log('useScheduleManagement - confirmProduction called with:', { scheduleItem, confirmData });
+    
     try {
       // Find the schedule containing this item
       const scheduleIndex = schedules.findIndex(s => 
@@ -465,30 +473,43 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
       );
       
       if (scheduleIndex === -1) {
+        console.error(`Schedule containing item ${scheduleItem.id} not found`);
         logStatus(`Schedule containing item ${scheduleItem.id} not found`, 'error');
         return null;
       }
       
+      // Create a deep copy of the schedule to avoid mutation issues
+      const updatedSchedule = JSON.parse(JSON.stringify(schedules[scheduleIndex]));
+      
       // Find the item index
-      const itemIndex = schedules[scheduleIndex].items.findIndex(
+      const itemIndex = updatedSchedule.items.findIndex(
         item => item.id === scheduleItem.id
       );
       
+      if (itemIndex === -1) {
+        console.error(`Item ${scheduleItem.id} not found in schedule`);
+        logStatus(`Item ${scheduleItem.id} not found in schedule`, 'error');
+        return null;
+      }
+      
       // Get the current status and normalize it
-      const currentStatus = normalizeStatus(schedules[scheduleIndex].items[itemIndex].status);
+      const currentStatus = normalizeStatus(updatedSchedule.items[itemIndex].status);
       const newStatus = SCHEDULE_STATUS.COMPLETED;
+      
+      console.log('Current status (normalized):', currentStatus);
+      console.log('New status:', newStatus);
+      console.log('Original item status:', updatedSchedule.items[itemIndex].status);
       
       // Validate the status transition
       if (!isValidStatusTransition(currentStatus, newStatus)) {
+        console.error(`Invalid status transition from ${currentStatus} to ${newStatus}`);
         logStatus(`Cannot confirm item with status ${currentStatus}`, 'error');
         return null;
       }
       
-      // Create updated schedule
-      const updatedSchedule = { ...schedules[scheduleIndex] };
-      updatedSchedule.items = [...updatedSchedule.items];
+      console.log('Status transition is valid');
       
-      // Update the item with confirmation data
+      // 1. Update the item with the new status and confirmation data
       updatedSchedule.items[itemIndex] = {
         ...updatedSchedule.items[itemIndex],
         status: newStatus,
@@ -512,34 +533,54 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
           },
           {
             field: 'actualQty',
-            oldValue: scheduleItem.actualQty,
-            newValue: confirmData.actualQty
+            oldValue: scheduleItem.actualQty || 0,
+            newValue: confirmData.actualQty || 0
           }
         ]
       });
       
-      // Save to API
-      await saveSchedule(updatedSchedule);
+      // 2. Save the updated schedule with the completed item
+      console.log('Saving updated schedule with completed item:', updatedSchedule);
+      await saveSchedule(department, updatedSchedule);
+      console.log('Schedule with completed item saved successfully');
       
-      // Create audit record
+      // 3. Create audit record
+      console.log('Creating audit record');
       const auditData = createAuditData(updatedSchedule.items[itemIndex], 
         recipes.find(r => r.code === updatedSchedule.items[itemIndex].recipeCode));
+      console.log('Audit data created:', auditData);
       
-      await saveAudit(auditData);
+      // 4. Save audit record
+      console.log('Saving audit record to API');
+      await saveAudit(department, auditData);
+      console.log('Audit record saved successfully');
       
-      // Update local state
+      // 5. Create a new version of the schedule with the completed item removed
+      const finalSchedule = {
+        ...updatedSchedule,
+        items: updatedSchedule.items.filter(item => item.id !== scheduleItem.id)
+      };
+      
+      // 6. Save the final schedule without the completed item
+      console.log('Saving final schedule without completed item:', finalSchedule);
+      await saveSchedule(department, finalSchedule);
+      console.log('Final schedule saved successfully');
+      
+      // 7. Update local state
+      console.log('Updating local state');
       const updatedSchedules = [...schedules];
-      updatedSchedules[scheduleIndex] = updatedSchedule;
+      updatedSchedules[scheduleIndex] = finalSchedule;
       setSchedules(updatedSchedules);
       
-      logStatus(`Confirmed production for ${scheduleItem.id}`, 'success');
-      return updatedSchedule;
+      console.log('Production confirmation process completed successfully');
+      logStatus('Production confirmed successfully');
+      return auditData;
     } catch (error) {
       logStatus(`Error confirming production: ${error.message}`, 'error');
       console.error('Error confirming production:', error);
       return null;
     }
-  }, [schedules, setSchedules, recipes, logStatus, createAuditData]);
+  }, [schedules, setSchedules, recipes, logStatus, createAuditData, department]);
 
   /**
    * Get color based on status

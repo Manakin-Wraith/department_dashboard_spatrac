@@ -1,5 +1,9 @@
 import React from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
+import { SCHEDULE_STATUS, getStatusLabel } from '../utils/statusUtils';
+import useNotifications from '../hooks/useNotifications';
+import NotificationSystem from './production/common/NotificationSystem';
+import { EVENT_TYPES, bus } from '../utils/eventBus';
 
 /**
  * DEPRECATED: This component has been replaced by UnifiedScheduleModal
@@ -10,7 +14,17 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography }
 const TimeSlotScheduleModal = (props) => {
   const { open, onClose, eventInfo, slotInfo, onSave } = props;
   
+  // Use the notification hook for consistent notifications
+  const { notification, closeNotification, showWarning } = useNotifications();
+  
   console.warn('TimeSlotScheduleModal is deprecated. Use UnifiedScheduleModal instead.');
+  
+  // Show a deprecation warning using our notification system
+  React.useEffect(() => {
+    if (open) {
+      showWarning('This component is deprecated. Please use UnifiedScheduleModal instead.');
+    }
+  }, [open, showWarning]);
   
   // Handle forwarding the save action to the parent with proper data mapping
   const handleForwardSave = () => {
@@ -24,7 +38,7 @@ const TimeSlotScheduleModal = (props) => {
         startTime: eventInfo?.start ? new Date(eventInfo.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false}) : '',
         endTime: eventInfo?.end ? new Date(eventInfo.end).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false}) : '',
         date: slotInfo?.date || (eventInfo?.start ? new Date(eventInfo.start).toISOString().split('T')[0] : ''),
-        status: 'scheduled'
+        status: SCHEDULE_STATUS.SCHEDULED
       };
       
       // Call the onSave function with the mapped data
@@ -55,6 +69,12 @@ const TimeSlotScheduleModal = (props) => {
           Continue Anyway
         </Button>
       </DialogActions>
+      
+      {/* Add NotificationSystem for consistent notifications */}
+      <NotificationSystem 
+        notification={notification} 
+        onClose={closeNotification} 
+      />
     </Dialog>
   );
 };

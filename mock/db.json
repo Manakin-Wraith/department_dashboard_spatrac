@@ -3790,25 +3790,25 @@
     {
       "id": 1,
       "department": "1154",
-      "weekStartDate": "2025-05-12",
+      "weekStartDate": "2025-05-13",
       "managerName": "Monica",
       "handlersNames": "Swazi",
       "items": [
         {
-          "id": "2025-05-12-26710-1747051685373",
+          "id": "2025-05-13-26710-1747124199609",
           "recipeCode": "26710",
           "plannedQty": 1,
           "handlerName": "Swazi",
           "startTime": "09:00",
           "endTime": "17:00",
-          "date": "2025-05-12",
+          "date": "2025-05-13",
           "status": "scheduled",
-          "notes": "extra x1",
+          "notes": "",
           "productDescription": "WHITE BREAD",
           "changeHistory": [
             {
-              "timestamp": "2025-05-12T12:07:57.266Z",
-              "changedBy": "Current User",
+              "timestamp": "2025-05-13T08:16:37.817Z",
+              "changedBy": "Manager",
               "changes": [
                 {
                   "field": "created",

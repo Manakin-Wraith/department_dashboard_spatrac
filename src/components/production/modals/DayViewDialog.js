@@ -4,6 +4,9 @@ import {
   Button, Typography, Box, Grid, Card, CardContent, 
   Chip, useTheme, alpha
 } from '@mui/material';
+import { normalizeStatus, getStatusColor } from '../../../utils/statusUtils';
+import useNotifications from '../../../hooks/useNotifications';
+import NotificationSystem from '../common/NotificationSystem';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PersonIcon from '@mui/icons-material/Person';
 
@@ -19,6 +22,9 @@ const DayViewDialog = ({
   schedules
 }) => {
   const theme = useTheme();
+  
+  // Use the notification hook for consistent notifications
+  const { notification, closeNotification } = useNotifications();
 
   return (
     <Dialog
@@ -51,11 +57,10 @@ const DayViewDialog = ({
             </Typography>
             <Grid container spacing={2} sx={{ mt: 1 }}>
               {dayEventsData.events.map((event, index) => {
-                const { status, scheduleId, itemIndex } = event.extendedProps;
-                const statusColor = 
-                  status === 'completed' ? theme.palette.success.light :
-                  status === 'scheduled' ? theme.palette.warning.light :
-                  status === 'cancelled' ? theme.palette.error.light : theme.palette.info.light;
+                const { status: rawStatus, scheduleId, itemIndex } = event.extendedProps;
+                const status = normalizeStatus(rawStatus);
+                // Use the centralized getStatusColor utility for consistent status colors
+                const statusColor = getStatusColor(status);
                 
                 return (
                   <Grid item xs={12} sm={6} key={index}>
@@ -149,6 +154,12 @@ const DayViewDialog = ({
           Close
         </Button>
       </DialogActions>
+      
+      {/* Add NotificationSystem for consistent notifications */}
+      <NotificationSystem 
+        notification={notification} 
+        onClose={closeNotification} 
+      />
     </Dialog>
   );
 };

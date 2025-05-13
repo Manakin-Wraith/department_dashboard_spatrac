@@ -1,5 +1,6 @@
 import React, { useEffect, useCallback, forwardRef } from 'react';
 import { Box } from '@mui/material';
+import { normalizeStatus } from '../../../utils/statusUtils';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -23,7 +24,8 @@ const ProductionCalendar = forwardRef((
    * Render custom content for calendar events
    */
   const renderEventContent = useCallback((eventInfo) => {
-    const { item, status } = eventInfo.event.extendedProps;
+    const { item, status: rawStatus } = eventInfo.event.extendedProps;
+    const status = normalizeStatus(rawStatus);
     
     return (
       <Box sx={{ 

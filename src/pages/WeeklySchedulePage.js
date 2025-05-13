@@ -11,7 +11,9 @@ import {
   deleteAudit 
 } from '../services/api';
 import supplierTable from '../data/supplier_table.json';
-import { Box, Button, Card, CardContent, Accordion, AccordionSummary, AccordionDetails, Typography, Snackbar, Alert } from '@mui/material';
+import { Box, Button, Card, CardContent, Accordion, AccordionSummary, AccordionDetails, Typography } from '@mui/material';
+import useNotifications from '../hooks/useNotifications';
+import NotificationSystem from '../components/production/common/NotificationSystem';
 import ConfirmScheduleModal from '../components/ConfirmScheduleModal';
 import TimeSlotScheduleModal from '../components/TimeSlotScheduleModal';
 import ExportScheduleModal from '../components/ExportScheduleModal';
@@ -29,6 +31,7 @@ import { Link } from 'react-router-dom';
 import { IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { bus } from '../utils/eventBus';
+import { SCHEDULE_STATUS, normalizeStatus } from '../utils/statusUtils';
 
 const WeeklySchedulePage = () => {
   const { department } = useParams();
@@ -44,8 +47,10 @@ const WeeklySchedulePage = () => {
   const [timeSlotModalOpen, setTimeSlotModalOpen] = useState(false);
   const [currentEventInfo, setCurrentEventInfo] = useState(null);
   const [currentSlotInfo, setCurrentSlotInfo] = useState(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [exportOpen, setExportOpen] = useState(false);
+  
+  // Use the notification hook instead of custom snackbar state
+  const { notification, closeNotification, showSuccess, showError, showInfo } = useNotifications();
 
   const theme = useTheme();
   
@@ -116,12 +121,14 @@ const WeeklySchedulePage = () => {
     initLoad();
   }, [loadData]); // Added loadData to dependency array (department is already a dep of loadData)
 
+  // We no longer need a separate toast listener as useNotifications handles this
+
   const handleSave = async (newItems, newManager, newHandler, dateToSave, scheduleIdToUpdate) => {
     try {
-      // Ensure all items have a status (always 'scheduled')
+      // Ensure all items have a status (always SCHEDULED)
       const itemsWithStatus = newItems.map(item => ({
         ...item,
-        status: 'scheduled'
+        status: SCHEDULE_STATUS.SCHEDULED
       }));
       
       let saved;
@@ -239,7 +246,7 @@ const WeeklySchedulePage = () => {
         items: [],
         managerName: managerName || (deptObj.department_manager && deptObj.department_manager[0]) || '',
         handlersNames: itemHandler || handlerName || (handlers[0]?.name) || '',
-        status: 'Planned',
+        status: SCHEDULE_STATUS.SCHEDULED, // Using SCHEDULED instead of legacy 'Planned'
         unique_ScheduledID: `${deptObj.department_code}-${date}-${Date.now()}`
       };
     }
@@ -330,7 +337,7 @@ const WeeklySchedulePage = () => {
       bus.emit('scheduleDeleted', scheduleId);
       setSchedules(schedules.filter(s => s.id !== scheduleId));
       // show feedback
-      setSnackbar({ open: true, message: 'Schedule deleted successfully', severity: 'success' });
+      showSuccess('Schedule deleted successfully');
       // remove related audits
       const audits = await fetchAudits(department);
       const toDelete = audits.filter(a => a.uid.startsWith(`${sel.weekStartDate}-`));
@@ -496,20 +503,10 @@ const WeeklySchedulePage = () => {
           schedules={schedules}
           recipes={recipes}
         />
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={3000}
-          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert
-            onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
+        <NotificationSystem 
+          notification={notification} 
+          onClose={closeNotification} 
+        />
       </Box>
     </Box>
   );

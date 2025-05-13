@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
+import { SCHEDULE_STATUS, normalizeStatus } from '../utils/statusUtils';
 import {
   Box, Avatar, Grid, Paper, Typography, Button
 } from '@mui/material';
@@ -160,7 +161,6 @@ const CreateProductionDocumentPage = () => {
   }, [loading.recipes, recipes, department]);
   
   const {
-    // Keep these variables for future implementation
     // eslint-disable-next-line no-unused-vars
     selectedSchedule,
     setSelectedSchedule,
@@ -174,9 +174,7 @@ const CreateProductionDocumentPage = () => {
     calendarEvents,
     setCalendarEvents,
     handleSaveTimeSlot,
-    handleDeleteScheduleItem,
-    // eslint-disable-next-line no-unused-vars
-    createAuditData,
+    deleteScheduleItem,
     updateCalendarEvents,
     // eslint-disable-next-line no-unused-vars
     getStatusColor,
@@ -312,7 +310,8 @@ const CreateProductionDocumentPage = () => {
     setSelectedSchedule(schedule);
     setSelectedItem({ ...item, index });
     setUnifiedModalItem(item);
-    setUnifiedModalMode(item.status === 'completed' ? 'production' : 'schedule');
+    const normalizedStatus = normalizeStatus(item.status);
+    setUnifiedModalMode(normalizedStatus === SCHEDULE_STATUS.COMPLETED ? 'production' : 'schedule');
     setUnifiedModalOpen(true);
   };
   
@@ -323,19 +322,26 @@ const CreateProductionDocumentPage = () => {
     if (!schedule || !item) return;
     
     try {
-      // Use the handleDeleteScheduleItem function from useScheduleManagement hook
-      await handleDeleteScheduleItem(schedule, item, index);
+      console.log('Deleting document:', { schedule, item, index });
       
-      // Update calendar events
-      setCalendarEvents(calendarEvents.filter(event => 
-        !(event.extendedProps.scheduleId === schedule.id && 
-          event.extendedProps.itemIndex === index)
-      ));
+      // Use the deleteScheduleItem function from useScheduleManagement hook
+      // Make sure we're passing the correct parameters based on the function signature
+      const result = await deleteScheduleItem(schedule, item);
       
-      showSuccess('Production document deleted successfully');
+      if (result) {
+        // Update calendar events
+        setCalendarEvents(calendarEvents.filter(event => 
+          !(event.extendedProps.scheduleId === schedule.id && 
+            event.extendedProps.itemId === item.id)
+        ));
+        
+        showSuccess('Production document deleted successfully');
+      } else {
+        showError('Failed to delete document: Operation returned no result');
+      }
     } catch (error) {
       console.error('Failed to delete document:', error);
-      showError('Failed to delete document: ' + error.message);
+      showError('Failed to delete document: ' + (error.message || 'Unknown error'));
     }
   };
   
@@ -356,16 +362,17 @@ const CreateProductionDocumentPage = () => {
       // The function will handle the appropriate actions based on the current status
       const result = await handleSaveTimeSlot(data);
       const newItem = result || data; // Use the result from handleSaveTimeSlot or fall back to data
-      const auditCreated = data.status === 'completed'; // Set auditCreated based on status
+      const normalizedStatus = normalizeStatus(data.status);
+      const auditCreated = normalizedStatus === SCHEDULE_STATUS.COMPLETED; // Set auditCreated based on status
       
       // Show appropriate message based on status
-      if (data.status === 'planned') {
-        console.log('Recipe planned successfully');
-      } else if (data.status === 'scheduled') {
+      if (normalizedStatus === 'planned') { // Legacy status
+        console.log('Production planned successfully');
+      } else if (normalizedStatus === SCHEDULE_STATUS.SCHEDULED) {
         console.log('Production scheduled successfully');
-      } else if (data.status === 'completed') {
+      } else if (normalizedStatus === SCHEDULE_STATUS.COMPLETED) {
         console.log('Production completed successfully');
-      } else if (data.status === 'cancelled') {
+      } else if (normalizedStatus === SCHEDULE_STATUS.CANCELLED) {
         console.log('Recipe cancelled');
       }
       

@@ -12,6 +12,10 @@ import supplierTable from '../data/supplier_table.json';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddCircleOutline from '@mui/icons-material/AddCircleOutline';
 import useDeptProductSupplier from '../utils/useDeptProductSupplier';
+import useNotifications from '../hooks/useNotifications';
+import NotificationSystem from './production/common/NotificationSystem';
+import { SCHEDULE_STATUS, getStatusLabel, getStatusColor } from '../utils/statusUtils';
+import { EVENT_TYPES, bus } from '../utils/eventBus';
 
 const ConfirmScheduleModal = ({ open, onClose, items, recipes, onConfirm, initialDate }) => {
   const [localItems, setLocalItems] = useState([]);
@@ -25,6 +29,9 @@ const ConfirmScheduleModal = ({ open, onClose, items, recipes, onConfirm, initia
   const deptObj = departments.find(d => d.department_code === department) || {};
   const accentColor = deptObj.color || theme.palette.primary.main;
   const suppliers = supplierTable.filter(s => !s.department || s.department === deptObj.department);
+  
+  // Use the notification hook for consistent notifications
+  const { notification, closeNotification, showSuccess, showError, showInfo } = useNotifications();
 
   // load department-specific product->supplier mappings (using department name for CSV lookup)
   const productSupplierMap = useDeptProductSupplier(deptObj.department);
@@ -265,6 +272,12 @@ const ConfirmScheduleModal = ({ open, onClose, items, recipes, onConfirm, initia
           sx={{ backgroundColor: accentColor, '&:hover': { backgroundColor: darken(accentColor, 0.2) } }}
         >Confirm & Save</Button>
       </DialogActions>
+      
+      {/* Add NotificationSystem for consistent notifications */}
+      <NotificationSystem 
+        notification={notification} 
+        onClose={closeNotification} 
+      />
     </Dialog>
   );
 };
