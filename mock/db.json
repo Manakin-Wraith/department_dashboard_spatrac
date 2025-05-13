@@ -3786,7 +3786,137 @@
       ]
     }
   ],
-  "schedules": [],
+  "schedules": [
+    {
+      "id": 1,
+      "department": "1154",
+      "weekStartDate": "2025-05-12",
+      "managerName": "Monica",
+      "handlersNames": "Swazi, Max, Lutho, Phumla, Skwash",
+      "items": [
+        {
+          "id": "2025-05-14-26710-1747134566956",
+          "recipeCode": "26710",
+          "plannedQty": 1,
+          "handlerName": "Swazi",
+          "startTime": "05:45",
+          "endTime": "07:15",
+          "date": "2025-05-14",
+          "status": "planned",
+          "productDescription": "WHITE BREAD",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-13T11:09:26.956Z",
+              "changedBy": "Current User",
+              "changes": [
+                {
+                  "field": "updated",
+                  "oldValue": null,
+                  "newValue": "updated item"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "2025-05-15-26710-1747134620611",
+          "recipeCode": "26710",
+          "plannedQty": 1,
+          "handlerName": "Max",
+          "startTime": "06:50",
+          "endTime": "08:25",
+          "date": "2025-05-15",
+          "status": "planned",
+          "productDescription": "WHITE BREAD",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-13T11:10:20.611Z",
+              "changedBy": "Current User",
+              "changes": [
+                {
+                  "field": "updated",
+                  "oldValue": null,
+                  "newValue": "updated item"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "2025-05-16-26710-1747134694745",
+          "recipeCode": "26710",
+          "plannedQty": 1,
+          "handlerName": "Lutho",
+          "startTime": "07:45",
+          "endTime": "09:30",
+          "date": "2025-05-16",
+          "status": "planned",
+          "productDescription": "WHITE BREAD",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-13T11:11:34.745Z",
+              "changedBy": "Current User",
+              "changes": [
+                {
+                  "field": "updated",
+                  "oldValue": null,
+                  "newValue": "updated item"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "2025-05-17-26710-1747135070756",
+          "recipeCode": "26710",
+          "plannedQty": 1,
+          "handlerName": "Phumla",
+          "startTime": "05:45",
+          "endTime": "07:15",
+          "date": "2025-05-17",
+          "status": "planned",
+          "productDescription": "WHITE BREAD",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-13T11:17:50.757Z",
+              "changedBy": "Current User",
+              "changes": [
+                {
+                  "field": "updated",
+                  "oldValue": null,
+                  "newValue": "updated item"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "2025-05-18-26710-1747135338710",
+          "recipeCode": "26710",
+          "plannedQty": 1,
+          "handlerName": "Skwash",
+          "startTime": "05:45",
+          "endTime": "06:58",
+          "date": "2025-05-18",
+          "status": "planned",
+          "productDescription": "WHITE BREAD",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-13T11:22:18.710Z",
+              "changedBy": "Current User",
+              "changes": [
+                {
+                  "field": "updated",
+                  "oldValue": null,
+                  "newValue": "updated item"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "audits": [],
   "production-documents": [],
   "department_staff": [

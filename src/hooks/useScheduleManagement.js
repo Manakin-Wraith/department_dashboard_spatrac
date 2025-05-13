@@ -151,7 +151,7 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
    */
   const handleSaveTimeSlot = useCallback(async (data, skipModal = false) => {
     try {
-      const { recipeCode, plannedQty, handlerName, date, startTime, endTime, status, id, notes } = data;
+      const { recipeCode, plannedQty, handlerName, date, startTime, endTime, status, id, notes, managerName: dataManagerName } = data;
       
       // Find the recipe for this item
       const recipe = recipes.find(r => r.product_code === recipeCode);
@@ -230,12 +230,31 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
         }
         
         // Update existing schedule via PUT
+        // Get all unique handler names from items, including the new one
+        const allHandlers = updatedSchedule.items
+          .map(item => item.handlerName)
+          .filter(Boolean);
+        
+        // Add the new handler if it's not already in the list
+        if (handlerName && !allHandlers.includes(handlerName)) {
+          allHandlers.push(handlerName);
+        }
+        
+        // If we have existing handlers in scheduleData.handlersNames, parse them and merge
+        let existingHandlers = [];
+        if (scheduleData.handlersNames) {
+          existingHandlers = scheduleData.handlersNames.split(',').map(h => h.trim()).filter(Boolean);
+        }
+        
+        // Combine all handlers and remove duplicates
+        const uniqueHandlers = [...new Set([...existingHandlers, ...allHandlers])].filter(Boolean);
+        
         const schedule = {
           id: scheduleData.id,
           department,
           weekStartDate,
-          managerName: scheduleData.managerName || '',
-          handlersNames: scheduleData.handlersNames || '',
+          managerName: dataManagerName || scheduleData.managerName || '',
+          handlersNames: uniqueHandlers.join(', '),
           items: updatedSchedule.items
         };
         
@@ -255,8 +274,8 @@ const useScheduleManagement = ({ schedules, setSchedules, recipes, department })
         const schedule = {
           department,
           weekStartDate,
-          managerName: '',
-          handlersNames: '',
+          managerName: dataManagerName || '',
+          handlersNames: handlerName || '',
           items: [newItem]
         };
         

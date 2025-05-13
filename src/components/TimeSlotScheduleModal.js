@@ -118,6 +118,8 @@ const TimeSlotScheduleModal = ({
       (Array.isArray(department.department_manager) ? department.department_manager[0] : department.department_manager) : 
       '';
     
+    console.log('Using manager name:', managerName);
+    
     const scheduleData = {
       recipeCode: selectedRecipe,
       plannedQty: quantity,
@@ -131,6 +133,8 @@ const TimeSlotScheduleModal = ({
       // Other relevant data like department, id (if editing)
       id: eventInfo ? eventInfo.id : null // Or a more specific event instance ID
     };
+    
+    console.log('Sending schedule data with manager:', scheduleData);
     onSave(scheduleData);
     onClose();
   };
