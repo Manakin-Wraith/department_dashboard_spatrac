@@ -3,8 +3,7 @@ import { useParams } from 'react-router-dom';
 import { deleteHandler, fetchSchedules, fetchRecipes, fetchAudits } from '../services/api';
 import { bus } from '../utils/eventBus';
 import { 
-  Box, Typography, TextField, TableContainer, Table, 
-  TableHead, TableRow, TableCell, TableBody, Paper, Chip, 
+  Box, Typography, TextField, ListItemButton, Paper, Chip, 
   IconButton, Card, CardContent, Avatar, Tabs, Tab, Divider,
   Rating, List, ListItem, ListItemText, ListItemIcon, Grid
 } from '@mui/material';
@@ -52,23 +51,74 @@ const StaffManagementPage = () => {
         fetchAudits(department)
       ]);
       
-      // Setup handlers with additional properties
-      const defaultList = (deptObj.handlers || []).map((name, idx) => ({ 
-        id: `handler-${idx}`, 
-        department, 
-        name,
-        role: 'Food Handler', // All are food handlers
-        skills: ['Food Safety', 'Recipe Preparation'],
-        performance: {
-          qualityScore: (Math.random() * 2 + 3).toFixed(1), // Random score between 3-5
-          completedRecipes: Math.floor(Math.random() * 50) + 5,
-          onTimePercentage: Math.floor(Math.random() * 20) + 80
-        }
-      }));
-      
       // Get the specific department manager name from department_table.json
       const managerName = deptObj.department_manager || 'Department Manager';
       setDepartmentManager(managerName);
+      
+      // Setup handlers with real data
+      const defaultList = (deptObj.handlers || []).map((name, idx) => {
+        // Get all schedules and audits for this handler
+        const handlerSchedules = sch.filter(s => {
+          // Check if this handler is mentioned in the schedule
+          return s.handlersNames && s.handlersNames.split(',').map(h => h.trim()).includes(name);
+        });
+        
+        // Get all production items for this handler from schedules
+        const scheduledItems = handlerSchedules.flatMap(s => 
+          s.items.filter(item => item.handlerName === name)
+        );
+        
+        // Get all completed productions for this handler from audits
+        const completedProductions = auditRecords.filter(a => 
+          a.food_handler_responsible === name
+        );
+        
+        // Calculate performance metrics from real data
+        const totalCompletedRecipes = completedProductions.length;
+        
+        // Calculate average quality score if available
+        let avgQualityScore = 0;
+        const qualityScores = completedProductions
+          .filter(p => p.quality_score)
+          .map(p => Number(p.quality_score));
+        
+        if (qualityScores.length > 0) {
+          avgQualityScore = (qualityScores.reduce((sum, score) => sum + score, 0) / qualityScores.length).toFixed(1);
+        }
+        
+        // Calculate on-time percentage if timestamps are available
+        let onTimeCount = 0;
+        let totalWithTimestamps = 0;
+        
+        completedProductions.forEach(p => {
+          if (p.scheduled_time && p.confirmation_timestamp) {
+            totalWithTimestamps++;
+            const scheduledTime = new Date(p.scheduled_time);
+            const completionTime = new Date(p.confirmation_timestamp);
+            if (completionTime <= scheduledTime) {
+              onTimeCount++;
+            }
+          }
+        });
+        
+        const onTimePercentage = totalWithTimestamps > 0 
+          ? Math.round((onTimeCount / totalWithTimestamps) * 100) 
+          : 100; // Default to 100% if no data
+        
+        return { 
+          id: `handler-${idx}`, 
+          department, 
+          name,
+          role: 'Food Handler', // All are food handlers
+          skills: ['Food Safety', 'Recipe Preparation'],
+          performance: {
+            qualityScore: avgQualityScore || '0.0',
+            completedRecipes: totalCompletedRecipes,
+            onTimePercentage: onTimePercentage,
+            scheduledItems: scheduledItems.length
+          }
+        };
+      });
       
       setHandlers(defaultList);
       setSchedules(sch);
@@ -207,7 +257,6 @@ const StaffManagementPage = () => {
   return (
     <Box component="main" sx={{ backgroundColor: pageBg, minHeight: '100vh', p: 2 }}>
       <Box sx={{ backgroundColor: theme.palette.grey[100], color: pageTextColor, borderRadius: 2, p: 3, maxWidth: '1200px', mx: 'auto', position: 'relative' }}>
-        {/* Back button removed as requested */}
         <PageHeader title="Staff Management" />
         <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, mb: 2 }}>
           <Typography variant="subtitle1" color="text.secondary">
@@ -216,87 +265,88 @@ const StaffManagementPage = () => {
         </Box>
         
         {/* Main content layout - staff list and details */}
-        <Box sx={{ display: 'flex', mt: 4, gap: 3 }}>
+        <Grid container spacing={3}>
           {/* Staff list panel */}
-          <Box sx={{ width: '35%', minWidth: 300 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <TextField
-                placeholder="Search staff..."
-                value={filter}
-                onChange={e => setFilter(e.target.value)}
-                size="small"
-                sx={{ width: 200 }}
-              />
-            </Box>
-            
-            <Typography variant="h6" sx={{ mb: 1 }}>Department Staff</Typography>
-            <TableContainer component={Paper} sx={{ mb: 3 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: alpha(accentColor, 0.1) }}>
-                    <TableCell>Staff Name</TableCell>
-                    <TableCell>Role</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredHandlers.map((handler) => (
-                    <TableRow 
-                      key={handler.id} 
-                      hover 
-                      onClick={() => handleSelectStaff(handler)}
-                      sx={{ 
-                        cursor: 'pointer',
-                        backgroundColor: selectedStaff?.id === handler.id ? alpha(accentColor, 0.1) : 'inherit'
-                      }}
-                    > 
-                      <TableCell>{handler.name}</TableCell>
-                      <TableCell>{handler.role}</TableCell>
-                      <TableCell align="right">
-                        {handler.id && (
-                          <IconButton size="small" color="error" onClick={(e) => {
+          <Grid item xs={12} md={4} lg={3}>
+            <Paper sx={{ p: 2, height: '100%' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6">Department Staff</Typography>
+                <TextField
+                  placeholder="Search staff..."
+                  value={filter}
+                  onChange={e => setFilter(e.target.value)}
+                  size="small"
+                  sx={{ width: 150 }}
+                />
+              </Box>
+              
+              <List sx={{ bgcolor: 'background.paper', borderRadius: 1 }}>
+                {filteredHandlers.map((handler) => {
+                  // Calculate activity indicators
+                  const hasCurrentAssignments = getAssignments(handler.name).length > 0;
+                  const hasCompletedProductions = getProductionHistory(handler.name).length > 0;
+                  
+                  return (
+                    <ListItem 
+                      key={handler.id}
+                      disablePadding
+                      secondaryAction={
+                        handler.id && (
+                          <IconButton edge="end" size="small" color="error" onClick={(e) => {
                             e.stopPropagation();
                             handleDelete(handler.id);
                           }}>
                             <DeleteIcon fontSize="small" />
                           </IconButton>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            
-            {/* Staff performance summary */}
-            <Typography variant="h6" sx={{ mb: 1 }}>Performance Overview</Typography>
-            <TableContainer component={Paper}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: alpha(accentColor, 0.1) }}>
-                    <TableCell>Staff Name</TableCell>
-                    <TableCell>Quality Score</TableCell>
-                    <TableCell>Completed Recipes</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredHandlers.map((handler) => (
-                    <TableRow key={`perf-${handler.id}`}>
-                      <TableCell>{handler.name}</TableCell>
-                      <TableCell>
-                        <Rating value={Number(handler.performance.qualityScore)} precision={0.5} readOnly size="small" />
-                      </TableCell>
-                      <TableCell>{handler.performance.completedRecipes}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Box>
+                        )
+                      }
+                    >
+                      <ListItemButton 
+                        onClick={() => handleSelectStaff(handler)}
+                        selected={selectedStaff?.id === handler.id}
+                        sx={{
+                          borderRadius: 1,
+                          '&.Mui-selected': {
+                            backgroundColor: alpha(accentColor, 0.1),
+                          }
+                        }}
+                      >
+                        <ListItemText 
+                          primary={handler.name}
+                          secondary={
+                            <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
+                              {hasCurrentAssignments && (
+                                <Chip 
+                                  label={`${handler.performance.scheduledItems} Scheduled`} 
+                                  size="small" 
+                                  color="primary" 
+                                  variant="outlined"
+                                  sx={{ height: 20, fontSize: '0.7rem' }}
+                                />
+                              )}
+                              {hasCompletedProductions && (
+                                <Chip 
+                                  label={`${handler.performance.completedRecipes} Completed`} 
+                                  size="small" 
+                                  color="success" 
+                                  variant="outlined"
+                                  sx={{ height: 20, fontSize: '0.7rem' }}
+                                />
+                              )}
+                            </Box>
+                          }
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  );
+                })}
+              </List>
+            </Paper>
+          </Grid>
           
           {/* Staff details panel */}
           {selectedStaff ? (
-            <Box sx={{ flex: 1 }}>
+            <Grid item xs={12} md={8} lg={9}>
               <Card sx={{ mb: 3 }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -310,9 +360,17 @@ const StaffManagementPage = () => {
                     >
                       {selectedStaff.name.charAt(0)}
                     </Avatar>
-                    <Box>
-                      <Typography variant="h5">{selectedStaff.name}</Typography>
-                      <Typography variant="body2" color="text.secondary">{selectedStaff.role}</Typography>
+                    <Box sx={{ flex: 1 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <Box>
+                          <Typography variant="h5">{selectedStaff.name}</Typography>
+                          <Typography variant="body2" color="text.secondary">{selectedStaff.role}</Typography>
+                        </Box>
+                        <Box sx={{ textAlign: 'right' }}>
+                          <Typography variant="body2" color="text.secondary">Staff ID</Typography>
+                          <Typography variant="body1">{selectedStaff.id.replace('handler-', '')}</Typography>
+                        </Box>
+                      </Box>
                       <Box sx={{ display: 'flex', mt: 1 }}>
                         {selectedStaff.skills.map((skill, index) => (
                           <Chip key={index} label={skill} size="small" sx={{ mr: 0.5 }} />
@@ -323,25 +381,31 @@ const StaffManagementPage = () => {
                   
                   <Divider sx={{ my: 2 }} />
                   
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Box>
-                      <Typography variant="subtitle2">Quality Score</Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Rating value={Number(selectedStaff.performance.qualityScore)} precision={0.5} readOnly />
-                        <Typography variant="body2" sx={{ ml: 1 }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={4}>
+                      <Paper sx={{ p: 2, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                        <Typography variant="subtitle2" gutterBottom>Quality Score</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Rating value={Number(selectedStaff.performance.qualityScore)} precision={0.5} readOnly />
+                        </Box>
+                        <Typography variant="h6" sx={{ mt: 1 }}>
                           {selectedStaff.performance.qualityScore}/5
                         </Typography>
-                      </Box>
-                    </Box>
-                    <Box>
-                      <Typography variant="subtitle2">Completed Recipes</Typography>
-                      <Typography variant="h6">{selectedStaff.performance.completedRecipes}</Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="subtitle2">On-Time Percentage</Typography>
-                      <Typography variant="h6">{selectedStaff.performance.onTimePercentage}%</Typography>
-                    </Box>
-                  </Box>
+                      </Paper>
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                      <Paper sx={{ p: 2, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                        <Typography variant="subtitle2" gutterBottom>Completed Productions</Typography>
+                        <Typography variant="h4">{selectedStaff.performance.completedRecipes}</Typography>
+                      </Paper>
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                      <Paper sx={{ p: 2, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                        <Typography variant="subtitle2" gutterBottom>Scheduled Productions</Typography>
+                        <Typography variant="h4">{selectedStaff.performance.scheduledItems}</Typography>
+                      </Paper>
+                    </Grid>
+                  </Grid>
                 </CardContent>
               </Card>
               
@@ -520,15 +584,17 @@ const StaffManagementPage = () => {
                   </CardContent>
                 </Card>
               )}
-            </Box>
+            </Grid>
           ) : (
-            <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <Typography variant="body1" color="text.secondary">
-                Select a staff member to view details
-              </Typography>
-            </Box>
+            <Grid item xs={12} md={8} lg={9}>
+              <Paper sx={{ p: 4, height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <Typography variant="body1" color="text.secondary">
+                  Select a staff member to view details
+                </Typography>
+              </Paper>
+            </Grid>
           )}
-        </Box>
+        </Grid>
 
       </Box>
     </Box>
