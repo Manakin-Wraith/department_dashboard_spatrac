@@ -16,6 +16,9 @@ const { normalizeDepartmentCode, findSupplierForIngredient } = require('../utils
 // Path to the mock database file
 const DB_PATH = path.join(__dirname, '../../mock/db.json');
 
+// Path to the department table file
+const DEPARTMENT_TABLE_PATH = path.join(__dirname, '../data/department_table.json');
+
 // CSV paths for each department
 const CSV_PATHS = {
   BAKERY: path.join(__dirname, '../../public/DEPT_DATA/Bakery.csv'),
@@ -119,6 +122,53 @@ function readDatabase() {
     console.error('Error reading database:', error);
     throw error;
   }
+}
+
+/**
+ * Load the department table
+ * @returns {Array} Department table data
+ */
+function loadDepartmentTable() {
+  try {
+    const content = fs.readFileSync(DEPARTMENT_TABLE_PATH, 'utf8');
+    return JSON.parse(content);
+  } catch (error) {
+    console.error('Error reading department table:', error);
+    return [];
+  }
+}
+
+/**
+ * Get the department manager name for a given department code
+ * @param {string} departmentCode - Department code
+ * @returns {string} Department manager name
+ */
+function getDepartmentManager(departmentCode) {
+  if (!departmentCode) return '';
+  
+  // Map department codes to manager names
+  const managerMap = {
+    '1154': 'Monica',  // Bakery
+    '1152': 'Clive',   // Butchery
+    '1155': 'Monica'   // HMR
+  };
+  
+  // Check if we have a direct mapping
+  if (managerMap[departmentCode]) {
+    return managerMap[departmentCode];
+  }
+  
+  // If not, try to look up in the department table
+  const departments = loadDepartmentTable();
+  
+  // Find the department with the matching code
+  const department = departments.find(dept => 
+    dept.department_code === departmentCode || 
+    dept.department === normalizeDepartmentCode(departmentCode)
+  );
+  
+  // Return the manager name if found, otherwise empty string
+  return department ? department.department_manager : '';
 }
 
 /**
@@ -333,6 +383,203 @@ function updateAuditsFromMapping() {
   writeDatabase(db);
 }
 
+/**
+ * Update department manager names in audit records
+ */
+function updateDepartmentManagers() {
+  console.log('Updating department manager names in audit records...');
+  
+  // Read the database
+  const db = readDatabase();
+  
+  if (!db.audits || !Array.isArray(db.audits)) {
+    console.error('No audits found in database');
+    return;
+  }
+  
+  console.log(`Found ${db.audits.length} audit records`);
+  let updatedCount = 0;
+  
+  // Process each audit record
+  db.audits = db.audits.map(audit => {
+    // Skip if department manager is already set
+    if (audit.department_manager && audit.department_manager.trim() !== '') {
+      return audit;
+    }
+    
+    // Map department codes to manager names
+    const managerMap = {
+      '1154': 'Monica',  // Bakery
+      '1152': 'Clive',   // Butchery
+      '1155': 'Monica'   // HMR
+    };
+    
+    // Get the department manager name
+    const managerName = managerMap[audit.department];
+    if (managerName) {
+      console.log(`Setting department manager for audit ${audit.uid} to ${managerName}`);
+      audit.department_manager = managerName;
+      updatedCount++;
+    }
+    
+    return audit;
+  });
+  
+  console.log(`Updated ${updatedCount} department manager names`);
+  
+  // Write the updated data back to the database file
+  writeDatabase(db);
+}
+
+/**
+ * Update both supplier details and department manager names in a single operation
+ * @param {string} dataSource - Data source to use ('csv' or 'mapping')
+ */
+function updateAuditRecords(dataSource) {
+  console.log(`Updating audit records using ${dataSource} data source...`);
+  
+  // Load data based on source
+  let sourceData = [];
+  if (dataSource === 'csv') {
+    sourceData = loadAllCSVData();
+    console.log(`Loaded ${sourceData.length} total rows from all CSV files`);
+  } else if (dataSource === 'mapping') {
+    const db = readDatabase();
+    sourceData = db.ingredient_supplier_mapping || [];
+    console.log(`Found ${sourceData.length} ingredient-supplier mappings`);
+  }
+  
+  if (sourceData.length === 0) {
+    console.error(`No data found for source: ${dataSource}`);
+    return;
+  }
+  
+  // Read the database
+  const db = readDatabase();
+  
+  if (!db.audits || !Array.isArray(db.audits)) {
+    console.error('No audits found in database');
+    return;
+  }
+  
+  console.log(`Found ${db.audits.length} audit records`);
+  let updatedSupplierCount = 0;
+  let updatedManagerCount = 0;
+  
+  // Process each audit record
+  db.audits = db.audits.map(audit => {
+    // Skip records without ingredients
+    if (!audit.ingredient_list || !audit.ingredient_list.length) {
+      return audit;
+    }
+    
+    console.log(`Processing audit ${audit.uid} with ${audit.ingredient_list.length} ingredients for department ${audit.department}`);
+    
+    // Update department manager if needed
+    if (!audit.department_manager || audit.department_manager.trim() === '') {
+      const managerName = getDepartmentManager(audit.department);
+      if (managerName) {
+        console.log(`Setting department manager for audit ${audit.uid} to ${managerName}`);
+        audit.department_manager = managerName;
+        updatedManagerCount++;
+      }
+    }
+    
+    // Create supplier_details array if it doesn't exist
+    if (!audit.supplier_details) {
+      audit.supplier_details = [];
+    }
+    
+    // Ensure supplier_name and address_of_supplier arrays exist
+    if (!audit.supplier_name) audit.supplier_name = [];
+    if (!audit.address_of_supplier) audit.address_of_supplier = [];
+    
+    // For each ingredient, look up supplier details
+    audit.ingredient_list.forEach((ingredient, index) => {
+      // First try to find supplier in the same department
+      let supplierDetail = findSupplierForIngredient(ingredient, audit.department, sourceData, { ignoreDepartment: false });
+      
+      // If not found, try searching across all departments
+      if (!supplierDetail) {
+        console.log(`No supplier found for "${ingredient}" in department ${audit.department}, searching all departments...`);
+        supplierDetail = findSupplierForIngredient(ingredient, audit.department, sourceData, { ignoreDepartment: true });
+      }
+      
+      if (supplierDetail) {
+        console.log(`Found supplier details for ingredient "${ingredient}": ${supplierDetail.name}`);
+        
+        // Create a complete supplier detail object
+        const completeSupplierDetail = {
+          name: supplierDetail.name || 'Unknown',
+          supplier_code: supplierDetail.supplier_code || '',
+          address: supplierDetail.address || '',
+          contact_person: supplierDetail.contact_person || '',
+          email: supplierDetail.email || '',
+          phone: supplierDetail.phone || '',
+          product_code: supplierDetail.supplier_product_code || supplierDetail.product_code || '',
+          ean: supplierDetail.ean || '',
+          description: supplierDetail.product_description || supplierDetail.description || ingredient,
+          pack_size: supplierDetail.pack_size || ''
+        };
+        
+        // Update supplier_details
+        audit.supplier_details[index] = completeSupplierDetail;
+        
+        // Also update supplier_name and address_of_supplier for backward compatibility
+        audit.supplier_name[index] = completeSupplierDetail.name;
+        audit.address_of_supplier[index] = completeSupplierDetail.address;
+        
+        updatedSupplierCount++;
+      } else {
+        console.log(`No supplier details found for ingredient "${ingredient}"`);
+        
+        // If we already have supplier details for this index, keep them
+        if (!audit.supplier_details[index]) {
+          // If we have a supplier name but no details, create a basic supplier detail object
+          if (audit.supplier_name && audit.supplier_name[index] && audit.supplier_name[index] !== 'Unknown') {
+            audit.supplier_details[index] = {
+              name: audit.supplier_name[index],
+              supplier_code: '',
+              address: audit.address_of_supplier ? audit.address_of_supplier[index] || '' : '',
+              contact_person: '',
+              email: '',
+              phone: '',
+              product_code: '',
+              ean: '',
+              description: ingredient,
+              pack_size: ''
+            };
+          } else {
+            // If we have no supplier information at all, create a placeholder
+            audit.supplier_details[index] = {
+              name: 'Unknown',
+              supplier_code: '',
+              address: '',
+              contact_person: '',
+              email: '',
+              phone: '',
+              product_code: '',
+              ean: '',
+              description: ingredient,
+              pack_size: ''
+            };
+            audit.supplier_name[index] = 'Unknown';
+            audit.address_of_supplier[index] = '';
+          }
+        }
+      }
+    });
+    
+    return audit;
+  });
+  
+  console.log(`Updated ${updatedSupplierCount} ingredient supplier details and ${updatedManagerCount} department manager names`);
+  
+  // Write the updated data back to the database file
+  writeDatabase(db);
+  console.log('Database updated successfully');
+}
+
 // Main function
 function main() {
   try {
@@ -340,10 +587,9 @@ function main() {
     
     console.log(`Using data source: ${options.source}`);
     
-    if (options.source === 'csv') {
-      updateAuditsFromCSV();
-    } else if (options.source === 'mapping') {
-      updateAuditsFromMapping();
+    if (options.source === 'csv' || options.source === 'mapping') {
+      // Use the combined update function
+      updateAuditRecords(options.source);
     } else {
       console.error(`Invalid source: ${options.source}. Use 'csv' or 'mapping'.`);
       process.exit(1);

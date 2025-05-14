@@ -35,6 +35,9 @@ This application is a departmental production dashboard (SPATRAC) designed for f
   - Flexible mapping of products and suppliers to departments.
   - Supports products available across multiple departments with department-specific supplier codes.
   - Automatic calculation of ingredient quantities based on production volume.
+  - Enhanced supplier-ingredient mapping system with automatic lookup across departments.
+  - Auto-population of department manager names based on department codes.
+  - Comprehensive chain of custody tracking for ingredients with supplier details.
 
 - **Staff Management**  
   - Assign and manage department staff and handlers for production runs.

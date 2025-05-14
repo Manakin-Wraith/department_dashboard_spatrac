@@ -6,30 +6,41 @@
  */
 
 /**
- * Normalize a department code to a standard format
- * @param {string} department - Department code to normalize
+ * Normalize department code to a standard format
+ * @param {string|number} departmentCode - The department code to normalize
  * @returns {string} Normalized department code
  */
-function normalizeDepartmentCode(department) {
-  if (!department) return 'BUTCHERY'; // Default to BUTCHERY if no department provided
+function normalizeDepartmentCode(departmentCode) {
+  if (!departmentCode) return 'BUTCHERY'; // Default to BUTCHERY if no department provided
   
-  // Map numeric codes to department names
-  const deptCodeMap = {
-    '1154': 'BAKERY',
-    '1152': 'BUTCHERY',
-    '1155': 'HMR'
-  };
+  // Convert to string and trim
+  const code = String(departmentCode).trim();
   
-  // Normalize input
-  const normalizedInput = String(department).trim();
+  // Map department codes to standard names
+  const departmentMap = {};
   
-  // Check if it's a numeric code
-  if (deptCodeMap[normalizedInput]) {
-    return deptCodeMap[normalizedInput];
+  // Add mappings for both string and number formats
+  // Bakery department
+  departmentMap['1154'] = 'BAKERY';
+  departmentMap[1154] = 'BAKERY';
+  
+  // Butchery department
+  departmentMap['1152'] = 'BUTCHERY';
+  departmentMap[1152] = 'BUTCHERY';
+  
+  // HMR department
+  departmentMap['1155'] = 'HMR';
+  departmentMap[1155] = 'HMR';
+  
+  // Add more mappings as needed
+  
+  // Check if it's a mapped code
+  if (departmentMap[code]) {
+    return departmentMap[code];
   }
   
-  // Check if it's a lowercase department name
-  const upperInput = normalizedInput.toUpperCase();
+  // Check if it's a department name
+  const upperInput = code.toUpperCase();
   if (['BAKERY', 'BUTCHERY', 'HMR'].includes(upperInput)) {
     return upperInput;
   }
@@ -86,128 +97,95 @@ function createSearchableText(text) {
 }
 
 /**
- * Find supplier details for an ingredient using various matching strategies
- * @param {string} ingredientCode - Ingredient code or search term
+ * Find supplier for an ingredient in CSV data
+ * @param {string} ingredientInput - Ingredient name or code to look up
  * @param {string} department - Department code
- * @param {Array} data - Array of supplier data (from CSV or mapping table)
- * @param {object} options - Options for the search
- * @returns {object|null} Supplier details or null if not found
+ * @param {Array} csvData - CSV data to search
+ * @param {Object} options - Search options
+ * @returns {Object|null} Supplier details or null if not found
  */
-function findSupplierForIngredient(ingredientCode, department, data, options = {}) {
-  if (!ingredientCode || !data || data.length === 0) {
+function findSupplierForIngredient(ingredientInput, department, csvData, options = {}) {
+  const { ignoreDepartment = false } = options;
+  
+  if (!ingredientInput || !csvData || !Array.isArray(csvData)) {
+    console.log(`Invalid input for findSupplierForIngredient: ingredientInput=${ingredientInput}, csvData length=${csvData?.length}`);
     return null;
   }
   
-  // Normalize inputs
+  // Normalize department
   const normalizedDept = normalizeDepartmentCode(department);
-  const normalizedCode = String(ingredientCode).trim();
+  console.log(`Looking up supplier for ingredient "${ingredientInput}" in department ${normalizedDept}`);
   
-  // Filter data by department if specified
-  let filteredData = data;
-  if (!options.ignoreDeparmtent) {
-    filteredData = data.filter(item => {
-      const itemDept = item.department || '';
-      return normalizeDepartmentCode(itemDept) === normalizedDept;
+  // Try to extract ingredient code from the ingredient name
+  // Format could be "INGREDIENT NAME (CODE)" or just "INGREDIENT NAME"
+  const codeMatch = String(ingredientInput).match(/\(([^)]+)\)$/);
+  const ingredientCode = codeMatch ? codeMatch[1] : null;
+  
+  // Clean the ingredient name for text search
+  const cleanName = String(ingredientInput).replace(/\([^)]+\)$/, '').trim().toUpperCase();
+  
+  // Filter by department if required
+  const deptFilteredData = ignoreDepartment 
+    ? csvData 
+    : csvData.filter(row => normalizeDepartmentCode(row._department) === normalizedDept);
+  
+  // First try exact match by ingredient code
+  if (ingredientCode) {
+    console.log(`Trying exact code match for "${ingredientCode}"`);
+    
+    // Look for exact code match
+    const exactMatch = deptFilteredData.find(row => {
+      const rowCode = row['ing.prod_code'] || '';
+      return rowCode === ingredientCode;
     });
     
-    // If no items for this department, fall back to all data
-    if (filteredData.length === 0) {
-      filteredData = data;
+    if (exactMatch) {
+      console.log(`Found exact code match for "${ingredientCode}": ${exactMatch.supplier_name}`);
+      return createSupplierDetail(exactMatch);
     }
   }
   
-  // Extract ingredient info if it's a full description
-  const { code: extractedCode, description: extractedDesc } = extractIngredientInfo(normalizedCode);
-  const searchCode = extractedCode || normalizedCode;
+  // If no exact match by code, try partial text match on description
+  console.log(`Trying text match for "${cleanName}"`);
   
-  // Determine if we're dealing with a numeric code or text search
-  const isNumeric = /^\d+$/.test(searchCode);
-  const isLongText = normalizedCode.length > 10;
+  // Look for partial text match
+  const textMatch = deptFilteredData.find(row => {
+    const rowDesc = (row.product_description || '').toUpperCase();
+    return rowDesc.includes(cleanName) || cleanName.includes(rowDesc);
+  });
   
-  let match = null;
-  
-  // Strategy 1: If it's a numeric code, try exact matches on various code fields
-  if (isNumeric) {
-    // Try exact match on ing.prod_code
-    match = filteredData.find(item => 
-      (item['ing.prod_code'] === searchCode) || 
-      (item.ingredient_code === searchCode)
-    );
-    
-    // If no match, try supplier_product_code
-    if (!match) {
-      match = filteredData.find(item => item.supplier_product_code === searchCode);
-    }
-    
-    // If no match, try ean
-    if (!match) {
-      match = filteredData.find(item => item.ean === searchCode);
-    }
+  if (textMatch) {
+    console.log(`Found text match for "${cleanName}": ${textMatch.supplier_name}`);
+    return createSupplierDetail(textMatch);
   }
   
-  // Strategy 2: If it's a text search term, try matching on product description
-  if (!match && isLongText) {
-    const searchableText = createSearchableText(normalizedCode);
-    const searchWords = searchableText.split(/\s+/).filter(word => word.length > 2);
-    
-    if (searchWords.length > 0) {
-      // Find products where the description contains all the search words
-      match = filteredData.find(item => {
-        const itemDesc = createSearchableText(item.product_description || item.description || '');
-        return searchWords.every(word => itemDesc.includes(word));
-      });
-      
-      // If no match, try a more lenient approach - match any of the words
-      if (!match) {
-        match = filteredData.find(item => {
-          const itemDesc = createSearchableText(item.product_description || item.description || '');
-          return searchWords.some(word => word.length > 2 && itemDesc.includes(word));
-        });
-      }
-    }
+  // If still no match and we're not already ignoring department, try again ignoring department
+  if (!ignoreDepartment) {
+    console.log(`No match found in department ${normalizedDept}, trying all departments...`);
+    return findSupplierForIngredient(ingredientInput, department, csvData, { ignoreDepartment: true });
   }
   
-  // Strategy 3: Try case-insensitive match on ing.prod_code or ingredient_code
-  if (!match) {
-    match = filteredData.find(item => {
-      const itemCode = String(item['ing.prod_code'] || item.ingredient_code || '').toLowerCase();
-      return itemCode === searchCode.toLowerCase();
-    });
-  }
-  
-  // Strategy 4: Try partial match on ing.prod_code or ingredient_code
-  if (!match) {
-    match = filteredData.find(item => {
-      const itemCode = String(item['ing.prod_code'] || item.ingredient_code || '').toLowerCase();
-      return itemCode.includes(searchCode.toLowerCase()) || searchCode.toLowerCase().includes(itemCode);
-    });
-  }
-  
-  // Strategy 5: Try partial match on product_description
-  if (!match) {
-    match = filteredData.find(item => {
-      const itemDesc = createSearchableText(item.product_description || item.description || '');
-      const searchTerm = createSearchableText(normalizedCode);
-      return itemDesc.includes(searchTerm) || searchTerm.includes(itemDesc);
-    });
-  }
-  
-  if (!match) {
-    return null;
-  }
-  
-  // Standardize the supplier details format
+  console.log(`No supplier found for "${ingredientInput}"`);
+  return null;
+}
+
+/**
+ * Create a supplier detail object from CSV row
+ * @param {Object} row - CSV row
+ * @returns {Object} Supplier detail object
+ */
+function createSupplierDetail(row) {
   return {
-    name: match.supplier_name || '',
-    supplier_code: match.supplier_code || '',
-    address: match.address || '',
-    contact_person: match.contact_person || '',
-    email: match.email || '',
-    phone: match.phone || '',
-    product_code: match.supplier_product_code || '',
-    ean: match.ean || '',
-    description: match.product_description || match.description || '',
-    pack_size: match.pack_size || ''
+    name: row.supplier_name || 'Unknown',
+    supplier_code: row.supplier_code || '',
+    address: row.supplier_address || '',
+    contact_person: '',
+    email: '',
+    phone: '',
+    product_code: row.supplier_product_code || row['ing.prod_code'] || '',
+    ean: row.ean || '',
+    description: row.product_description || '',
+    pack_size: row.pack_size || ''
   };
 }
 

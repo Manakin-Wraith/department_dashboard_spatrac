@@ -171,8 +171,11 @@ export function extractIngredientCodes(ingredientNames) {
   }).filter(Boolean); // Remove null values
 }
 
-export default {
+// Create a named object before exporting to fix ESLint warning
+const supplierLookupService = {
   findSupplierForIngredient,
   useSupplierLookup,
   extractIngredientCodes
 };
+
+export default supplierLookupService;

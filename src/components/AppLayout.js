@@ -7,6 +7,7 @@ import ListAltIcon from '@mui/icons-material/ListAlt'; // For Recipes List
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'; // For Weekly Schedule
 import PeopleIcon from '@mui/icons-material/People'; // For Staff Management
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn'; // For Audit
+import BusinessIcon from '@mui/icons-material/Business'; // For Suppliers
 
 import departmentsData from '../data/department_table.json'; // Import department data
 
@@ -25,8 +26,9 @@ const AppLayout = ({ children, pageTitle }) => {
 
   let currentNavItems = [];
 
-  // Always show Dashboard link first
+  // Always show Dashboard and Suppliers links first
   currentNavItems.push({ text: 'Dashboard', icon: <DashboardIcon />, path: '/' });
+  
 
   if (departmentCode) {
     const departmentObj = departmentsData.find(d => d.department_code === departmentCode);
@@ -52,6 +54,10 @@ const AppLayout = ({ children, pageTitle }) => {
         icon: <PeopleIcon />,
         path: `/production/${departmentCode}/staff`
       });
+      currentNavItems.push({ 
+        text: 'Suppliers', 
+        icon: <BusinessIcon />, 
+        path: `/production/${departmentCode}/suppliers` });
     }
   } else {
     // Global context (not inside a specific department)

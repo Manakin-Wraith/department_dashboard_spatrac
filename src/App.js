@@ -9,6 +9,7 @@ import RecipeListPage from './pages/RecipeListPage';
 import RecipeEditorPage from './pages/RecipeEditorPage';
 import AuditProductionDocumentsPage from './pages/AuditProductionDocumentsPage';
 import StaffManagementPage from './pages/StaffManagementPage';
+import SuppliersPage from './pages/SuppliersPage';
 
 import './App.css'; 
 
@@ -17,6 +18,7 @@ function App() {
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Routes>
         <Route path="/" element={<AppLayout pageTitle="Dashboard"><DashboardPage /></AppLayout>} />
+        <Route path="/production/:department/suppliers" element={<AppLayout pageTitle="Supplier Management"><SuppliersPage /></AppLayout>} />
         <Route path="/production/:department/overview" element={<AppLayout pageTitle="Department Overview"><CreateProductionDocumentPage /></AppLayout>} />
         {/* WeeklySchedulePage route removed - scheduling functionality consolidated in CreateProductionDocumentPage */}
         <Route path="/production/:department/audit" element={<AppLayout pageTitle="Audit Production Documents"><AuditProductionDocumentsPage /></AppLayout>} />
