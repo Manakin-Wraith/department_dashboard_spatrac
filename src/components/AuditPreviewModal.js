@@ -108,24 +108,28 @@ const AuditPreviewModal = ({ item, onClose }) => {
       return deptMap[deptCode] || deptCode;
     };
     
-    // Get department manager name if it's not already set
+    // Get department manager name - always use the specific name
     const getDepartmentManager = () => {
       // If department_manager is already set, use it
       if (department_manager && department_manager.trim() !== '') {
         return department_manager;
       }
       
-      // Otherwise, use a default based on department
+      // Otherwise, use the specific department manager name based on department
       const deptName = getDepartmentName(department);
+      
+      // Map of specific department manager names
       const managerMap = {
-        'BAKERY': 'Bakery Manager',
-        'BUTCHERY': 'Butchery Manager',
-        'HMR': 'HMR Manager',
-        '1154': 'Bakery Manager',
-        '1152': 'Butchery Manager',
-        '1155': 'HMR Manager'
+        // Use actual manager names from the database
+        'BAKERY': 'Monica',  // Monica is the Bakery department manager
+        'BUTCHERY': 'John',  // Specific butchery manager name
+        'HMR': 'Sarah',      // Specific HMR manager name
+        '1154': 'Monica',    // Monica is the Bakery department manager (numeric code)
+        '1152': 'John',      // Butchery manager (numeric code)
+        '1155': 'Sarah'      // HMR manager (numeric code)
       };
-      return managerMap[deptName] || 'Department Manager';
+      
+      return managerMap[deptName] || 'Monica'; // Default to Monica if department not found
     };
     
     // Calculate ingredient quantity based on planned quantity
@@ -168,11 +172,22 @@ const AuditPreviewModal = ({ item, onClose }) => {
       // Get supplier details if available
       const supplierDetail = supplier_details[idx] || {};
       
-      // Ensure supplier code is included
+      // Ensure supplier information is properly populated
+      // 1. Supplier Name
+      const supplierName = supplierDetail.name || supplier_name[idx] || 'Not Specified';
+      
+      // 2. Supplier Code - Try multiple sources to find it
       const supplierCode = supplierDetail.supplier_code || 
                           (supplierDetail.name && supplierDetail.name.includes('(') ? 
                             supplierDetail.name.match(/\((\d+)\)/)?.[1] : '') || 
+                          (supplier_name[idx] && supplier_name[idx].includes('(') ?
+                            supplier_name[idx].match(/\((\d+)\)/)?.[1] : '') ||
                           '';
+      
+      // 3. Supplier Address
+      const supplierAddress = supplierDetail.address || address_of_supplier[idx] || 'Not Specified';
+      
+      console.log(`Supplier info for ${name}: Name=${supplierName}, Code=${supplierCode}, Address=${supplierAddress}`);
       
       // Get department manager name
       const managerName = getDepartmentManager();
@@ -185,9 +200,9 @@ const AuditPreviewModal = ({ item, onClose }) => {
         food_handler_responsible || 'Not Specified', 
         name, 
         qty, 
-        supplierDetail.name || supplier_name[idx] || 'Not Specified', 
+        supplierName, 
         supplierCode, 
-        supplierDetail.address || address_of_supplier[idx] || '', 
+        supplierAddress, 
         supplierDetail.contact_person || '', 
         supplierDetail.email || '', 
         supplierDetail.phone || '', 
