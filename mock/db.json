@@ -3786,8 +3786,172 @@
       ]
     }
   ],
-  "schedules": [],
-  "audits": [],
+  "schedules": [
+    {
+      "id": 1,
+      "department": "1154",
+      "weekStartDate": "2025-05-12",
+      "managerName": "Monica",
+      "handlersNames": "Swazi",
+      "items": [
+        {
+          "id": "2025-05-14-26710-1747210898160",
+          "recipeCode": "26710",
+          "plannedQty": 1,
+          "handlerName": "Swazi",
+          "startTime": "12:00",
+          "endTime": "13:00",
+          "date": "2025-05-14",
+          "status": "completed",
+          "notes": "",
+          "productDescription": "WHITE BREAD",
+          "changeHistory": [
+            {
+              "timestamp": "2025-05-14T08:22:13.963Z",
+              "changedBy": "Current User",
+              "changes": [
+                {
+                  "field": "updated",
+                  "oldValue": null,
+                  "newValue": "updated item"
+                }
+              ]
+            },
+            {
+              "timestamp": "2025-05-14T08:21:38.161Z",
+              "changedBy": "Current User",
+              "changes": [
+                {
+                  "field": "updated",
+                  "oldValue": null,
+                  "newValue": "updated item"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "audits": [
+    {
+      "id": 1747210934003,
+      "uid": "2025-05-14-26710-1747210934003",
+      "department": "1154",
+      "department_manager": "",
+      "food_handler_responsible": "Swazi",
+      "packing_batch_code": [
+        "test"
+      ],
+      "product_name": [
+        "WHITE BREAD"
+      ],
+      "ingredient_list": [
+        "W/CAPE MILL  MIX WHT BRD",
+        "YEAST WET",
+        "SPAR WATER",
+        "SPAR WHITE BREAD BAG"
+      ],
+      "supplier_name": [
+        "WESTERN CAPE MILLING",
+        "CHIPKINS PURATOS (BIDVEST SOL)",
+        "Bakery In House",
+        "ACE PACKAGING (CAPE)(DESERTMOO"
+      ],
+      "address_of_supplier": [
+        "",
+        "",
+        "",
+        ""
+      ],
+      "batch_code": [
+        "BATCH-26710-1-919602",
+        "BATCH-26710-2-919602",
+        "BATCH-26710-3-919602",
+        "BATCH-26710-4-919602"
+      ],
+      "sell_by_date": [
+        "2025-05-21",
+        "2025-05-21",
+        "2025-05-21",
+        "2025-05-21"
+      ],
+      "receiving_date": [
+        "2025-05-14",
+        "2025-05-14",
+        "2025-05-14",
+        "2025-05-14"
+      ],
+      "country_of_origin": [
+        "Unknown",
+        "Unknown",
+        "Unknown",
+        "Unknown"
+      ],
+      "planned_qty": 1,
+      "actual_qty": 1,
+      "notes": "",
+      "quality_score": 1,
+      "deviations": [
+        "none"
+      ],
+      "confirmation_timestamp": "2025-05-14T08:22:14.003Z",
+      "productDescription": "WHITE BREAD",
+      "date": "2025-05-14",
+      "status": "completed",
+      "originalScheduleId": "2025-05-14-26710-1747210898160",
+      "supplier_details": [
+        {
+          "name": "WESTERN CAPE MILLING",
+          "supplier_code": "120",
+          "address": "",
+          "contact_person": "",
+          "email": "",
+          "phone": "",
+          "product_code": "WBMIX",
+          "ean": "6009667010210",
+          "description": "W/CAPE MILL  MIX WHT BRD",
+          "pack_size": "9.5KG"
+        },
+        {
+          "name": "CHIPKINS PURATOS (BIDVEST SOL)",
+          "supplier_code": "16",
+          "address": "",
+          "contact_person": "",
+          "email": "",
+          "phone": "",
+          "product_code": "13720",
+          "ean": "",
+          "description": "YEAST WET",
+          "pack_size": "P/KG"
+        },
+        {
+          "name": "Bakery In House",
+          "supplier_code": "1154",
+          "address": "",
+          "contact_person": "",
+          "email": "",
+          "phone": "",
+          "product_code": "",
+          "ean": "",
+          "description": "SPAR WATER",
+          "pack_size": "P/KG"
+        },
+        {
+          "name": "ACE PACKAGING (CAPE)(DESERTMOO",
+          "supplier_code": "128",
+          "address": "",
+          "contact_person": "",
+          "email": "",
+          "phone": "",
+          "product_code": "SW3",
+          "ean": "",
+          "description": "SPAR WHITE BREAD BAG",
+          "pack_size": "600GR"
+        }
+      ]
+    }
+  ],
   "production-documents": [],
   "suppliers": [
     {

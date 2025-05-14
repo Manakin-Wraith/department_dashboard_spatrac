@@ -1,5 +1,6 @@
-import React, { useRef } from 'react';
-import { GridLegacy as Grid, Dialog, DialogTitle, DialogContent, DialogActions, Button, Card, CardHeader, CardContent, Typography, Chip, Stack, Divider, Box, Link } from '@mui/material';
+import React, { useRef, useState, useEffect } from 'react';
+import { GridLegacy as Grid, Dialog, DialogTitle, DialogContent, DialogActions, Button, Card, CardHeader, CardContent, Typography, Chip, Stack, Divider, Box, Link, CircularProgress } from '@mui/material';
+import { findSupplierForIngredient } from '../services/supplierLookupService';
 import LocalPhoneIcon from '@mui/icons-material/LocalPhone';
 import EmailIcon from '@mui/icons-material/Email';
 import PersonIcon from '@mui/icons-material/Person';
@@ -8,9 +9,11 @@ import CodeIcon from '@mui/icons-material/Code';
 
 const AuditPreviewModal = ({ item, onClose }) => {
   const previewRef = useRef(null);
+  const [enhancedSupplierDetails, setEnhancedSupplierDetails] = useState([]);
+  const [loadingSuppliers, setLoadingSuppliers] = useState(false);
   
   // Log the item data for debugging
-  React.useEffect(() => {
+  useEffect(() => {
     if (item) {
       console.log('AuditPreviewModal received item:', item);
       console.log('Supplier details available:', !!item.supplier_details);
@@ -34,7 +37,7 @@ const AuditPreviewModal = ({ item, onClose }) => {
   }, [item]);
   
   // Create supplier_details if it doesn't exist but supplier_name does
-  React.useEffect(() => {
+  useEffect(() => {
     if (item && !item.supplier_details && item.supplier_name && Array.isArray(item.supplier_name)) {
       console.log('Creating supplier_details from supplier_name');
       item.supplier_details = item.supplier_name.map(name => ({
@@ -46,6 +49,64 @@ const AuditPreviewModal = ({ item, onClose }) => {
         phone: ''
       }));
     }
+  }, [item]);
+  
+  // Enhance supplier details by looking up ingredient codes in the CSV data
+  useEffect(() => {
+    async function enhanceSupplierDetails() {
+      if (!item || !item.ingredient_list || !item.ingredient_list.length) return;
+      
+      setLoadingSuppliers(true);
+      
+      try {
+        const enhancedDetails = [];
+        
+        // Process each ingredient to extract its code and look up supplier details
+        for (let i = 0; i < item.ingredient_list.length; i++) {
+          const ingredient = item.ingredient_list[i];
+          
+          // Try to extract ingredient code from the ingredient name
+          // Format could be "INGREDIENT NAME (CODE)" or just "INGREDIENT NAME"
+          const codeMatch = ingredient.match(/\(([^)]+)\)$/);
+          const ingredientCode = codeMatch ? codeMatch[1] : null;
+          
+          let supplierDetail = item.supplier_details && item.supplier_details[i] ? 
+                             { ...item.supplier_details[i] } : 
+                             { name: item.supplier_name && item.supplier_name[i] ? item.supplier_name[i] : 'Unknown' };
+          
+          // If we have an ingredient code, try to look up supplier details
+          if (ingredientCode) {
+            try {
+              const lookupResult = await findSupplierForIngredient(ingredientCode, item.department);
+              
+              if (lookupResult) {
+                // Merge the lookup result with existing supplier details
+                supplierDetail = {
+                  ...supplierDetail,
+                  ...lookupResult,
+                  // Preserve the existing name if it's more specific than 'Unknown'
+                  name: supplierDetail.name !== 'Unknown' ? supplierDetail.name : lookupResult.name
+                };
+                
+                console.log(`Enhanced supplier details for ingredient ${ingredientCode}:`, supplierDetail);
+              }
+            } catch (error) {
+              console.error(`Error looking up supplier for ingredient ${ingredientCode}:`, error);
+            }
+          }
+          
+          enhancedDetails.push(supplierDetail);
+        }
+        
+        setEnhancedSupplierDetails(enhancedDetails);
+      } catch (error) {
+        console.error('Error enhancing supplier details:', error);
+      } finally {
+        setLoadingSuppliers(false);
+      }
+    }
+    
+    enhanceSupplierDetails();
   }, [item]);
 
   const {
@@ -165,8 +226,8 @@ const AuditPreviewModal = ({ item, onClose }) => {
       // Calculate ingredient quantity based on planned production quantity
       const qty = calculateIngredientQuantity(match ? match[2] : '', idx);
       
-      // Get supplier details if available
-      const supplierDetail = supplier_details[idx] || {};
+      // Get supplier details if available - prefer enhanced details if they exist
+      const supplierDetail = enhancedSupplierDetails[idx] || supplier_details[idx] || {};
       
       // Ensure supplier code is included
       const supplierCode = supplierDetail.supplier_code || 
@@ -185,12 +246,12 @@ const AuditPreviewModal = ({ item, onClose }) => {
         food_handler_responsible || 'Not Specified', 
         name, 
         qty, 
-        supplierDetail.name || supplier_name[idx] || 'Not Specified', 
-        supplierCode, 
-        supplierDetail.address || address_of_supplier[idx] || '', 
-        supplierDetail.contact_person || '', 
-        supplierDetail.email || '', 
-        supplierDetail.phone || '', 
+        enhancedSupplierDetails[idx]?.name || supplierDetail.name || supplier_name[idx] || 'Not Specified', 
+        enhancedSupplierDetails[idx]?.supplier_code || supplierCode, 
+        enhancedSupplierDetails[idx]?.address || supplierDetail.address || address_of_supplier[idx] || '', 
+        enhancedSupplierDetails[idx]?.contact_person || supplierDetail.contact_person || '', 
+        enhancedSupplierDetails[idx]?.email || supplierDetail.email || '', 
+        enhancedSupplierDetails[idx]?.phone || supplierDetail.phone || '', 
         batch_code[idx] || '', 
         sell_by_date[idx] || '', 
         receiving_date[idx] || '', 
@@ -340,9 +401,11 @@ const AuditPreviewModal = ({ item, onClose }) => {
                                     title="Supplier Information" 
                                     titleTypographyProps={{ variant: 'subtitle1' }}
                                     sx={{ pb: 0 }}
+                                    action={loadingSuppliers && <CircularProgress size={20} />}
                                   />
                                   <CardContent>
-                                    {hasDetailedSupplierInfo ? (
+                                    {/* Use enhanced supplier details if available, otherwise fall back to original supplier details */}
+                                    {(enhancedSupplierDetails[idx] && Object.keys(enhancedSupplierDetails[idx]).length > 0) || hasDetailedSupplierInfo ? (
                                       <Grid container spacing={1}>
                                         <Grid item xs={12} sm={6}>
                                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -374,7 +437,7 @@ const AuditPreviewModal = ({ item, onClose }) => {
                                             <BusinessIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
                                             <Typography variant="subtitle2" fontWeight="bold">Address</Typography>
                                           </Box>
-                                          <Typography variant="body2">{supplierDetail.address || address_of_supplier[idx] || '-'}</Typography>
+                                          <Typography variant="body2">{enhancedSupplierDetails[idx]?.address || supplierDetail.address || address_of_supplier[idx] || '-'}</Typography>
                                         </Grid>
                                         
                                         <Grid item xs={12}>
@@ -386,7 +449,7 @@ const AuditPreviewModal = ({ item, onClose }) => {
                                             <PersonIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
                                             <Typography variant="subtitle2" fontWeight="bold">Contact Person</Typography>
                                           </Box>
-                                          <Typography variant="body2">{supplierDetail.contact_person || '-'}</Typography>
+                                          <Typography variant="body2">{enhancedSupplierDetails[idx]?.contact_person || supplierDetail.contact_person || '-'}</Typography>
                                         </Grid>
                                         
                                         <Grid item xs={12} sm={4}>
@@ -394,13 +457,13 @@ const AuditPreviewModal = ({ item, onClose }) => {
                                             <EmailIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
                                             <Typography variant="subtitle2" fontWeight="bold">Email</Typography>
                                           </Box>
-                                          {supplierDetail.email ? (
-                                            <Link href={`mailto:${supplierDetail.email}`} underline="hover">
-                                              {supplierDetail.email}
-                                            </Link>
-                                          ) : (
-                                            <Typography variant="body2">-</Typography>
-                                          )}
+                                          <Typography variant="body2">
+                                            {enhancedSupplierDetails[idx]?.email || supplierDetail.email ? (
+                                              <Link href={`mailto:${enhancedSupplierDetails[idx]?.email || supplierDetail.email}`}>
+                                                {enhancedSupplierDetails[idx]?.email || supplierDetail.email}
+                                              </Link>
+                                            ) : '-'}
+                                          </Typography>
                                         </Grid>
                                         
                                         <Grid item xs={12} sm={4}>
@@ -408,24 +471,27 @@ const AuditPreviewModal = ({ item, onClose }) => {
                                             <LocalPhoneIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
                                             <Typography variant="subtitle2" fontWeight="bold">Phone</Typography>
                                           </Box>
-                                          {supplierDetail.phone ? (
-                                            <Link href={`tel:${supplierDetail.phone}`} underline="hover">
-                                              {supplierDetail.phone}
-                                            </Link>
-                                          ) : (
-                                            <Typography variant="body2">-</Typography>
-                                          )}
+                                          <Typography variant="body2">
+                                            {enhancedSupplierDetails[idx]?.phone || supplierDetail.phone ? (
+                                              <Link href={`tel:${enhancedSupplierDetails[idx]?.phone || supplierDetail.phone}`}>
+                                                {enhancedSupplierDetails[idx]?.phone || supplierDetail.phone}
+                                              </Link>
+                                            ) : '-'}
+                                          </Typography>
                                         </Grid>
                                       </Grid>
                                     ) : (
                                       <Grid container spacing={1}>
                                         <Grid item xs={12} sm={6}>
                                           <Typography variant="subtitle2" fontWeight="bold">Supplier Name</Typography>
-                                          <Typography variant="body2">{supplier_name[idx] || '-'}</Typography>
+                                          <Typography variant="body2">{enhancedSupplierDetails[idx]?.name || supplier_name[idx] || '-'}</Typography>
+                                          <Typography variant="caption" color="text.secondary">
+                                            {enhancedSupplierDetails[idx]?.supplier_code ? `Code: ${enhancedSupplierDetails[idx].supplier_code}` : ''}
+                                          </Typography>
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
-                                          <Typography variant="subtitle2" fontWeight="bold">Supplier Address</Typography>
-                                          <Typography variant="body2">{address_of_supplier[idx] || '-'}</Typography>
+                                          <Typography variant="subtitle2" fontWeight="bold">Address</Typography>
+                                          <Typography variant="body2">{enhancedSupplierDetails[idx]?.address || address_of_supplier[idx] || '-'}</Typography>
                                         </Grid>
                                       </Grid>
                                     )}

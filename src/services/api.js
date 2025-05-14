@@ -1,4 +1,5 @@
-import { enhanceAuditWithSupplierDetails } from './ingredientSupplierService';
+import { findSupplierForIngredient } from './supplierLookupService';
+import { normalizeDepartmentCode } from '../utils/supplierIngredientUtils';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:4000';
 
@@ -28,38 +29,9 @@ const DEPARTMENT_CODE_MAP = {
 const mapDepartmentCode = (urlDepartment) => {
   if (!urlDepartment) return '';
   
-  // Normalize input by trimming and handling case
-  const normalizedDept = String(urlDepartment).trim();
-  
-  // Check direct mapping first (case-insensitive)
-  const lowerDept = normalizedDept.toLowerCase();
-  if (DEPARTMENT_CODE_MAP[lowerDept]) {
-    console.log(`Mapped department code ${urlDepartment} to ${DEPARTMENT_CODE_MAP[lowerDept]} via lowercase mapping`);
-    return DEPARTMENT_CODE_MAP[lowerDept];
-  }
-  
-  // Check uppercase mapping
-  const upperDept = normalizedDept.toUpperCase();
-  if (DEPARTMENT_CODE_MAP[upperDept]) {
-    console.log(`Mapped department code ${urlDepartment} to ${DEPARTMENT_CODE_MAP[upperDept]} via uppercase mapping`);
-    return DEPARTMENT_CODE_MAP[upperDept];
-  }
-  
-  // Check if it's a numeric department code directly in the mapping
-  if (DEPARTMENT_CODE_MAP[normalizedDept]) {
-    console.log(`Mapped department code ${urlDepartment} to ${DEPARTMENT_CODE_MAP[normalizedDept]} via direct mapping`);
-    return DEPARTMENT_CODE_MAP[normalizedDept];
-  }
-  
-  // If not in mapping but is numeric, return as is (for compatibility with numeric department codes)
-  if (/^\d+$/.test(normalizedDept)) {
-    console.log(`Using numeric department code as is: ${normalizedDept}`);
-    return normalizedDept;
-  }
-  
-  // Default to uppercase version if no mapping found
-  console.log(`No mapping found for ${urlDepartment}, defaulting to uppercase: ${upperDept}`);
-  return upperDept;
+  const result = normalizeDepartmentCode(urlDepartment);
+  console.log(`Mapped department code ${urlDepartment} to ${result}`);
+  return result;
 };
 
 export async function fetchRecipes(department, filters = {}) {
@@ -215,14 +187,68 @@ export async function fetchAudits(department) {
   console.log('Filtered audit data for department, count:', auditData.length);
   
   try {
-    console.log('Enhancing audits with supplier details using ingredient-supplier mapping service');
-    // Use the ingredient-supplier mapping service to enhance audits with supplier details
+    console.log('Enhancing audits with supplier details using supplier lookup service');
+    // Use the supplier lookup service to enhance audits with supplier details
     const enhancedAudits = await Promise.all(
       auditData.map(async audit => {
         console.log('Enhancing audit:', audit.uid);
-        const enhancedAudit = await enhanceAuditWithSupplierDetails(audit);
-        console.log('Enhanced audit with supplier details:', enhancedAudit.uid, 'supplier_details:', !!enhancedAudit.supplier_details);
-        return enhancedAudit;
+        
+        // If the audit has ingredient_list, enhance with supplier details
+        if (audit.ingredient_list && audit.ingredient_list.length > 0) {
+          // Create supplier_details array if it doesn't exist
+          if (!audit.supplier_details) {
+            audit.supplier_details = [];
+          }
+          
+          // For each ingredient, look up supplier details
+          await Promise.all(audit.ingredient_list.map(async (ingredient, index) => {
+            // Try to extract ingredient code from the ingredient name
+            // Format could be "INGREDIENT NAME (CODE)" or just "INGREDIENT NAME"
+            const codeMatch = ingredient.match(/\(([^)]+)\)$/);
+            const ingredientCode = codeMatch ? codeMatch[1] : null;
+            
+            if (ingredientCode) {
+              // Look up supplier details for this ingredient code
+              const supplierDetail = await findSupplierForIngredient(ingredientCode, audit.department);
+              
+              if (supplierDetail) {
+                audit.supplier_details[index] = supplierDetail;
+                
+                // Also update supplier_name and address_of_supplier for backward compatibility
+                if (!audit.supplier_name) audit.supplier_name = [];
+                if (!audit.address_of_supplier) audit.address_of_supplier = [];
+                
+                audit.supplier_name[index] = supplierDetail.name;
+                audit.address_of_supplier[index] = supplierDetail.address || '';
+              } else if (!audit.supplier_details[index]) {
+                // If no supplier found and no existing details, create a placeholder
+                const supplierName = audit.supplier_name && audit.supplier_name[index] ? audit.supplier_name[index] : 'Unknown';
+                audit.supplier_details[index] = {
+                  name: supplierName,
+                  supplier_code: '',
+                  address: audit.address_of_supplier && audit.address_of_supplier[index] ? audit.address_of_supplier[index] : '',
+                  contact_person: '',
+                  email: '',
+                  phone: ''
+                };
+              }
+            } else if (!audit.supplier_details[index]) {
+              // If no ingredient code and no existing details, create a placeholder
+              const supplierName = audit.supplier_name && audit.supplier_name[index] ? audit.supplier_name[index] : 'Unknown';
+              audit.supplier_details[index] = {
+                name: supplierName,
+                supplier_code: '',
+                address: audit.address_of_supplier && audit.address_of_supplier[index] ? audit.address_of_supplier[index] : '',
+                contact_person: '',
+                email: '',
+                phone: ''
+              };
+            }
+          }));
+        }
+        
+        console.log('Enhanced audit with supplier details:', audit.uid, 'supplier_details:', !!audit.supplier_details);
+        return audit;
       })
     );
     
@@ -279,51 +305,94 @@ export async function fetchAudits(department) {
 
 export async function saveAudit(department, auditRecord) {
   const mappedDepartment = mapDepartmentCode(department);
+  console.log('Saving audit for department:', mappedDepartment, 'with audit record:', auditRecord);
   
   // Ensure we have supplier details for each ingredient
   if (auditRecord.ingredient_list && auditRecord.ingredient_list.length > 0) {
     try {
-      // Use the ingredient-supplier mapping service to enhance the audit record
-      auditRecord = await enhanceAuditWithSupplierDetails(auditRecord);
-    } catch (err) {
-      console.error('Error enhancing audit with ingredient-supplier mapping service:', err);
+      console.log('Enhancing audit with supplier details before saving...');
+      // Create supplier_details array if it doesn't exist
+      if (!auditRecord.supplier_details) {
+        auditRecord.supplier_details = [];
+      }
       
-      // Fallback to the original method if the new service fails
-      try {
-        // Fetch suppliers for this department
-        const suppliers = await fetchSuppliers(mappedDepartment);
+      // Ensure supplier_name and address_of_supplier arrays exist
+      if (!auditRecord.supplier_name) auditRecord.supplier_name = [];
+      if (!auditRecord.address_of_supplier) auditRecord.address_of_supplier = [];
+      
+      // For each ingredient, look up supplier details
+      const supplierPromises = auditRecord.ingredient_list.map(async (ingredient, index) => {
+        // Try to extract ingredient code from the ingredient name
+        const codeMatch = ingredient.match(/\(([^)]+)\)$/);
+        const ingredientCode = codeMatch ? codeMatch[1] : null;
         
-        // If supplier_details doesn't exist, create it
-        if (!auditRecord.supplier_details) {
-          auditRecord.supplier_details = [];
+        console.log(`Processing ingredient ${index}: ${ingredient}, extracted code: ${ingredientCode}`);
+        
+        if (ingredientCode) {
+          try {
+            // Look up supplier details for this ingredient code
+            const supplierDetail = await findSupplierForIngredient(ingredientCode, auditRecord.department);
+            
+            if (supplierDetail) {
+              console.log(`Found supplier details for ingredient ${ingredientCode}:`, supplierDetail);
+              
+              // Update supplier_details
+              auditRecord.supplier_details[index] = supplierDetail;
+              
+              // Also update supplier_name and address_of_supplier for backward compatibility
+              auditRecord.supplier_name[index] = supplierDetail.name;
+              auditRecord.address_of_supplier[index] = supplierDetail.address || '';
+              
+              return supplierDetail;
+            } else {
+              console.log(`No supplier details found for ingredient ${ingredientCode}`);
+            }
+          } catch (error) {
+            console.error(`Error looking up supplier for ingredient ${ingredientCode}:`, error);
+          }
         }
         
-        // For each ingredient, ensure we have supplier details
-        auditRecord.ingredient_list.forEach((ingredient, index) => {
-          // If we have a supplier name but no details
-          if (auditRecord.supplier_name && auditRecord.supplier_name[index] && !auditRecord.supplier_details[index]) {
-            const supplierName = auditRecord.supplier_name[index];
-            const matchingSupplier = suppliers.find(s => s.name === supplierName);
-            
-            if (matchingSupplier) {
-              auditRecord.supplier_details[index] = matchingSupplier;
-            } else {
-              // Create a placeholder with the name we have
-              auditRecord.supplier_details[index] = {
-                name: supplierName,
-                supplier_code: '',
-                address: auditRecord.address_of_supplier ? auditRecord.address_of_supplier[index] || '' : '',
-                contact_person: '',
-                email: '',
-                phone: ''
-              };
-            }
-          }
-        });
-      } catch (fallbackErr) {
-        console.error('Fallback method also failed:', fallbackErr);
-        // Continue with saving even if we couldn't enhance with supplier details
-      }
+        // If we already have supplier details for this index, return them
+        if (auditRecord.supplier_details[index]) {
+          return auditRecord.supplier_details[index];
+        }
+        
+        // If we have a supplier name but no details, create a basic supplier detail object
+        if (auditRecord.supplier_name && auditRecord.supplier_name[index]) {
+          const basicSupplierDetail = {
+            name: auditRecord.supplier_name[index],
+            supplier_code: '',
+            address: auditRecord.address_of_supplier ? auditRecord.address_of_supplier[index] || '' : '',
+            contact_person: '',
+            email: '',
+            phone: ''
+          };
+          
+          auditRecord.supplier_details[index] = basicSupplierDetail;
+          return basicSupplierDetail;
+        }
+        
+        // If we have no supplier information at all, create a placeholder
+        const placeholderSupplier = {
+          name: 'Unknown',
+          supplier_code: '',
+          address: '',
+          contact_person: '',
+          email: '',
+          phone: ''
+        };
+        
+        auditRecord.supplier_details[index] = placeholderSupplier;
+        auditRecord.supplier_name[index] = 'Unknown';
+        return placeholderSupplier;
+      });
+      
+      // Wait for all supplier lookups to complete
+      await Promise.all(supplierPromises);
+      console.log('Enhanced audit record with supplier details:', auditRecord.supplier_details);
+    } catch (err) {
+      console.error('Error enhancing audit with supplier details:', err);
+      // Continue with saving even if we couldn't enhance with supplier details
     }
   }
   
