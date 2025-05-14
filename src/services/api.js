@@ -1,3 +1,5 @@
+import { enhanceAuditWithSupplierDetails } from './ingredientSupplierService';
+
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:4000';
 
 // Department code mapping between URL parameters and database values
@@ -147,13 +149,184 @@ export async function saveRecipe(department, id, data) {
   return res.json();
 }
 
+export async function fetchSuppliers(department) {
+  const mappedDepartment = mapDepartmentCode(department);
+  const res = await fetch(`${API_BASE}/api/suppliers?department=${mappedDepartment}`);
+  if (!res.ok) throw new Error('Failed to fetch suppliers');
+  
+  // Get suppliers from the database
+  const suppliers = await res.json();
+  
+  // Also fetch ingredient-supplier mappings to enhance the supplier data
+  try {
+    const mappingsRes = await fetch(`${API_BASE}/api/ingredient-supplier-mapping?department=${mappedDepartment}`);
+    if (mappingsRes.ok) {
+      const mappings = await mappingsRes.json();
+      
+      // Group mappings by supplier code
+      const supplierMappings = {};
+      mappings.forEach(mapping => {
+        if (!supplierMappings[mapping.supplier_code]) {
+          supplierMappings[mapping.supplier_code] = [];
+        }
+        supplierMappings[mapping.supplier_code].push(mapping);
+      });
+      
+      // Enhance suppliers with their product mappings
+      return suppliers.map(supplier => ({
+        ...supplier,
+        products: supplierMappings[supplier.supplier_code] || []
+      }));
+    }
+  } catch (err) {
+    console.warn('Could not fetch ingredient-supplier mappings:', err);
+  }
+  
+  return suppliers;
+}
+
 export async function fetchAudits(department) {
-  const res = await fetch(`${API_BASE}/api/audits?department=${department}`);
+  const mappedDepartment = mapDepartmentCode(department);
+  console.log('Fetching audits for department:', mappedDepartment);
+  
+  // Get all audits first, then filter by department on the client side
+  // This is more reliable with json-server which might not handle complex queries well
+  const res = await fetch(`${API_BASE}/api/audits`);
   if (!res.ok) throw new Error('Failed to fetch audits');
-  return res.json();
+  
+  // Get the audit data
+  let auditData = await res.json();
+  console.log('Raw audit data fetched, count:', auditData.length);
+  
+  // Check for numeric department codes (like 1154, 1152, 1155)
+  const numericDeptCodes = Object.keys(DEPARTMENT_CODE_MAP).filter(key => /^\d+$/.test(key));
+  
+  // Get the numeric code for the current department
+  const currentDeptNumericCode = numericDeptCodes.find(code => DEPARTMENT_CODE_MAP[code] === mappedDepartment);
+  console.log('Current department numeric code:', currentDeptNumericCode);
+  
+  // Filter audits by department (try both the mapped department and the numeric code)
+  auditData = auditData.filter(audit => {
+    return audit.department === mappedDepartment || 
+           audit.department === currentDeptNumericCode || 
+           DEPARTMENT_CODE_MAP[audit.department] === mappedDepartment;
+  });
+  
+  console.log('Filtered audit data for department, count:', auditData.length);
+  
+  try {
+    console.log('Enhancing audits with supplier details using ingredient-supplier mapping service');
+    // Use the ingredient-supplier mapping service to enhance audits with supplier details
+    const enhancedAudits = await Promise.all(
+      auditData.map(async audit => {
+        console.log('Enhancing audit:', audit.uid);
+        const enhancedAudit = await enhanceAuditWithSupplierDetails(audit);
+        console.log('Enhanced audit with supplier details:', enhancedAudit.uid, 'supplier_details:', !!enhancedAudit.supplier_details);
+        return enhancedAudit;
+      })
+    );
+    
+    console.log('All audits enhanced successfully');
+    return enhancedAudits;
+  } catch (err) {
+    console.error('Error enhancing audits with supplier details:', err);
+    
+    // Fallback to the original method if the new service fails
+    try {
+      const suppliers = await fetchSuppliers(mappedDepartment);
+      
+      // For each audit, enhance ingredient information with supplier details
+      return auditData.map(audit => {
+        // If the audit has ingredient_list but no supplier_details, add them
+        if (audit.ingredient_list && audit.ingredient_list.length > 0) {
+          // Create supplier_details array if it doesn't exist
+          if (!audit.supplier_details) {
+            audit.supplier_details = [];
+          }
+          
+          // For each ingredient, try to find a matching supplier
+          audit.ingredient_list.forEach((ingredient, index) => {
+            // If we already have supplier_name but no full details
+            if (audit.supplier_name && audit.supplier_name[index] && !audit.supplier_details[index]) {
+              const supplierName = audit.supplier_name[index];
+              const matchingSupplier = suppliers.find(s => s.name === supplierName);
+              
+              if (matchingSupplier) {
+                audit.supplier_details[index] = matchingSupplier;
+              } else {
+                // Create a placeholder with the name we have
+                audit.supplier_details[index] = {
+                  name: supplierName,
+                  supplier_code: '',
+                  address: audit.address_of_supplier ? audit.address_of_supplier[index] || '' : '',
+                  contact_person: '',
+                  email: '',
+                  phone: ''
+                };
+              }
+            }
+          });
+        }
+        return audit;
+      });
+    } catch (fallbackErr) {
+      console.error('Fallback method also failed:', fallbackErr);
+      // Return the original audit data if we can't enhance it
+      return auditData;
+    }
+  }
 }
 
 export async function saveAudit(department, auditRecord) {
+  const mappedDepartment = mapDepartmentCode(department);
+  
+  // Ensure we have supplier details for each ingredient
+  if (auditRecord.ingredient_list && auditRecord.ingredient_list.length > 0) {
+    try {
+      // Use the ingredient-supplier mapping service to enhance the audit record
+      auditRecord = await enhanceAuditWithSupplierDetails(auditRecord);
+    } catch (err) {
+      console.error('Error enhancing audit with ingredient-supplier mapping service:', err);
+      
+      // Fallback to the original method if the new service fails
+      try {
+        // Fetch suppliers for this department
+        const suppliers = await fetchSuppliers(mappedDepartment);
+        
+        // If supplier_details doesn't exist, create it
+        if (!auditRecord.supplier_details) {
+          auditRecord.supplier_details = [];
+        }
+        
+        // For each ingredient, ensure we have supplier details
+        auditRecord.ingredient_list.forEach((ingredient, index) => {
+          // If we have a supplier name but no details
+          if (auditRecord.supplier_name && auditRecord.supplier_name[index] && !auditRecord.supplier_details[index]) {
+            const supplierName = auditRecord.supplier_name[index];
+            const matchingSupplier = suppliers.find(s => s.name === supplierName);
+            
+            if (matchingSupplier) {
+              auditRecord.supplier_details[index] = matchingSupplier;
+            } else {
+              // Create a placeholder with the name we have
+              auditRecord.supplier_details[index] = {
+                name: supplierName,
+                supplier_code: '',
+                address: auditRecord.address_of_supplier ? auditRecord.address_of_supplier[index] || '' : '',
+                contact_person: '',
+                email: '',
+                phone: ''
+              };
+            }
+          }
+        });
+      } catch (fallbackErr) {
+        console.error('Fallback method also failed:', fallbackErr);
+        // Continue with saving even if we couldn't enhance with supplier details
+      }
+    }
+  }
+  
   const url = `${API_BASE}/api/audits`;
   const res = await fetch(url, {
     method: 'POST',

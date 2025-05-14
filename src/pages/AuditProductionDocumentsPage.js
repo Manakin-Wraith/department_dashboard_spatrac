@@ -31,6 +31,14 @@ const AuditProductionDocumentsPage = () => {
         const audits = await fetchAudits(department);
         console.log('Fetched audits:', audits);
         
+        // Verify that we received valid audit data
+        if (Array.isArray(audits) && audits.length > 0) {
+          console.log('Audit data sample:', audits[0]);
+          console.log('Supplier details available:', !!audits[0].supplier_details);
+        } else {
+          console.log('No audit records found for department:', department);
+        }
+        
         // Set all audits - we're no longer filtering by UIDs from schedules
         // since confirmed productions automatically create valid audits
         setData(audits);

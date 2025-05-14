@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { enhanceAuditWithSupplierDetails } from '../services/ingredientSupplierService';
 import {
   Dialog,
   DialogTitle,
@@ -133,22 +134,49 @@ const ConfirmProductionModal = ({ open, onClose, scheduleItem, recipes, onConfir
       date: scheduleItem.date
     };
 
-    // Log the audit data for debugging
-    console.log('Creating audit data:', auditData);
-
-    // Update the schedule item with the confirmed status
-    const updatedScheduleItem = {
-      ...scheduleItem,
-      status: 'Confirmed',
-      actualQty,
-      notes,
-      qualityScore,
-      deviations,
-      confirmationTimestamp: timestamp
-    };
-
-    onConfirm(updatedScheduleItem, auditData);
-    onClose();
+    // Log the initial audit data for debugging
+    console.log('Initial audit data:', auditData);
+    
+    // Enhance the audit data with supplier information using our mapping service
+    enhanceAuditWithSupplierDetails(auditData)
+      .then(enhancedAuditData => {
+        // Log the enhanced audit data
+        console.log('Enhanced audit data with supplier details:', enhancedAuditData);
+        
+        // Update the schedule item with the confirmed status
+        const updatedScheduleItem = {
+          ...scheduleItem,
+          status: 'Confirmed',
+          actualQty,
+          notes,
+          qualityScore,
+          deviations,
+          confirmationTimestamp: timestamp
+        };
+        
+        // Pass the enhanced audit data to the parent component
+        onConfirm(updatedScheduleItem, enhancedAuditData);
+        onClose();
+      })
+      .catch(error => {
+        console.error('Error enhancing audit data with supplier details:', error);
+        // If there's an error, fall back to the original audit data
+        
+        // Update the schedule item with the confirmed status
+        const updatedScheduleItem = {
+          ...scheduleItem,
+          status: 'Confirmed',
+          actualQty,
+          notes,
+          qualityScore,
+          deviations,
+          confirmationTimestamp: timestamp
+        };
+        
+        // Pass the original audit data to the parent component
+        onConfirm(updatedScheduleItem, auditData);
+        onClose();
+      });
   };
 
   if (!scheduleItem || !recipe) return null;
